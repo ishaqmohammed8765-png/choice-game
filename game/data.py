@@ -62,7 +62,7 @@ STORY_NODES: Dict[str, Dict[str, Any]] = {
                     "trait_delta": {"reputation": 2},
                     "set_flags": {"class_intro_done": True, "militia_drilled": True},
                     "seen_events": ["warrior_militia_drill"],
-                    "log": "You spend the dusk hour drilling shield lines; Oakrest starts to stand its ground.",
+                    "log": "You drill shield lines and hammer the militia into a wall of iron, defining the village by your warrior's discipline.",
                 },
                 "next": "village_square",
             },
@@ -74,7 +74,7 @@ STORY_NODES: Dict[str, Dict[str, Any]] = {
                     "trait_delta": {"trust": 1, "reputation": 1},
                     "set_flags": {"class_intro_done": True, "shadow_routes_marked": True},
                     "seen_events": ["rogue_shadow_routes"],
-                    "log": "You mark escape paths and listening posts, turning panic into quiet coordination.",
+                    "log": "You map escape routes and whisper lanes, turning panic into a rogue's network of quiet control.",
                 },
                 "next": "village_square",
             },
@@ -87,7 +87,7 @@ STORY_NODES: Dict[str, Dict[str, Any]] = {
                     "trait_delta": {"trust": 2},
                     "set_flags": {"class_intro_done": True, "archer_watch_established": True},
                     "seen_events": ["archer_watch_established"],
-                    "log": "From the belltower, your warning shots guide villagers to cover before raiders can strike.",
+                    "log": "From the belltower, your archer's signals choreograph the square, moving villagers before raiders can strike.",
                 },
                 "next": "village_square",
             },
@@ -1080,6 +1080,17 @@ STORY_NODES: Dict[str, Dict[str, Any]] = {
                 "next": "war_council_hub",
             },
             {
+                "label": "Hold a quiet vigil before the assault",
+                "requirements": {"flag_false": ["ember_ridge_vigil_taken"]},
+                "effects": {
+                    "hp": 1,
+                    "trait_delta": {"trust": 1},
+                    "set_flags": {"ember_ridge_vigil_taken": True},
+                    "log": "You take a measured pause at the ridge, letting the silence reset the war council's nerves.",
+                },
+                "next": "ember_ridge_vigil",
+            },
+            {
                 "label": "Lead an allied breach (Dawnwarden or Ashfang veterans)",
                 "requirements": {"any_of": [{"flag_true": ["dawnwarden_allied"]}, {"flag_true": ["ashfang_allied"]}]},
                 "conditional_effects": [
@@ -1160,6 +1171,38 @@ STORY_NODES: Dict[str, Dict[str, Any]] = {
                     "log": "You reject every banner and slip toward the ruin before anyone can stop you.",
                 },
                 "next": "lonely_approach",
+            },
+        ],
+    },
+    "ember_ridge_vigil": {
+        "id": "ember_ridge_vigil",
+        "title": "Quiet Beat — Ember Ridge Vigil",
+        "text": (
+            "A hush settles over the ridge as the last light fades. Fires are banked low and even the drummers pause, "
+            "giving you a moment to listen to the wind, the breathing of allies, and the ruin's distant hum."
+        ),
+        "dialogue": [
+            {"speaker": "Signal Runner Tams", "line": "Quiet now means fewer mistakes once we move."},
+            {"speaker": "Your Instinct", "line": "Let the silence remind you who you're bringing home."},
+        ],
+        "choices": [
+            {
+                "label": "Offer a few steadying words to the strike team",
+                "effects": {
+                    "trait_delta": {"trust": 1},
+                    "set_flags": {"ember_ridge_vigil_spoken": True},
+                    "log": "Your calm words steel the line without raising another drumbeat.",
+                },
+                "next": "war_council_hub",
+            },
+            {
+                "label": "Walk the ridge alone and focus on the plan ahead",
+                "effects": {
+                    "trait_delta": {"reputation": 1},
+                    "set_flags": {"ember_ridge_vigil_walked": True},
+                    "log": "You trace the ridge in silence, committing every route and risk to memory.",
+                },
+                "next": "war_council_hub",
             },
         ],
     },

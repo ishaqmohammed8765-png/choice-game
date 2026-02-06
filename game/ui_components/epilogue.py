@@ -13,16 +13,33 @@ def get_epilogue_aftermath_lines() -> List[str]:
         lines.append("Your final pre-assault briefing becomes standard doctrine for Oakrest's defenders.")
     if flags.get("charged_finale"):
         lines.append("Bards celebrate your ferocity, while elders debate the cost of your methods.")
+    if flags.get("ember_ridge_vigil_taken"):
+        lines.append("The quiet vigil at Ember Ridge becomes a ritual before every future campaign.")
+
+    if flags.get("militia_drilled"):
+        lines.append("The militia you drilled forms the core of Oakrest's new shieldwall companies.")
+    if flags.get("shadow_routes_marked"):
+        lines.append("Your early shadow routes become the town's emergency evacuation grid.")
+    if flags.get("archer_watch_established"):
+        lines.append("The belltower watch keeps your signal cadence, warning the valley hours in advance.")
 
     if flags.get("morality") == "merciful" or flags.get("mercy_reputation"):
         lines.append("Families you protected petition Elder Mara to create a standing refuge network.")
     if flags.get("morality") == "ruthless" or flags.get("cruel_reputation"):
         lines.append("Several border hamlets accept your protection, but only behind locked doors and wary silence.")
 
+    if flags.get("opened_cleanly"):
+        lines.append("The ruin gate breach leaves fewer graves, and survivors cite your careful approach.")
     if flags.get("tunnel_collapsed"):
         lines.append("Stone crews spend weeks clearing the sealed tunnel, searching for those trapped by your command.")
     if flags.get("rescued_prisoners"):
         lines.append("Former captives rebuild the valley road and openly credit your intervention.")
+    if flags.get("rogue_intel_leaked"):
+        lines.append("Leaked names from the smuggler ledger keep Oakrest a step ahead of future raids.")
+    if flags.get("warrior_line_held"):
+        lines.append("Ranger lieutenants teach your barricade stance as the standard for holding lines.")
+    if flags.get("archer_routes_marked"):
+        lines.append("Ridgewatch signal nests expand along the valley, following your overwatch example.")
 
     if traits.get("trust", 0) >= 4:
         lines.append("High trust earned you a seat at future war councils, not just a hero's farewell.")
@@ -44,4 +61,4 @@ def get_epilogue_aftermath_lines() -> List[str]:
     elif traits.get("alignment", 0) <= -3:
         lines.append("Your brutal efficiency ends the immediate threat, but hardens future conflicts across the frontier.")
 
-    return lines[:5]
+    return lines[:7]
