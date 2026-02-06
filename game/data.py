@@ -49,6 +49,40 @@ STORY_NODES: Dict[str, Dict[str, Any]] = {
         ],
         "choices": [
             {
+                "label": "Warrior lead: drill the village militia at the palisade",
+                "requirements": {"class": ["Warrior"], "flag_false": ["class_intro_done"]},
+                "effects": {
+                    "trait_delta": {"reputation": 2},
+                    "set_flags": {"class_intro_done": True, "militia_drilled": True},
+                    "seen_events": ["warrior_militia_drill"],
+                    "log": "You spend the dusk hour drilling shield lines; Oakrest starts to stand its ground.",
+                },
+                "next": "village_square",
+            },
+            {
+                "label": "Rogue lead: map hidden alleys and whisper routes",
+                "requirements": {"class": ["Rogue"], "flag_false": ["class_intro_done"]},
+                "effects": {
+                    "trait_delta": {"trust": 1, "reputation": 1},
+                    "set_flags": {"class_intro_done": True, "shadow_routes_marked": True},
+                    "seen_events": ["rogue_shadow_routes"],
+                    "log": "You mark escape paths and listening posts, turning panic into quiet coordination.",
+                },
+                "next": "village_square",
+            },
+            {
+                "label": "Archer lead: take the belltower and call scouting shots",
+                "requirements": {"class": ["Archer"], "flag_false": ["class_intro_done"]},
+                "effects": {
+                    "add_items": ["Signal Arrows"],
+                    "trait_delta": {"trust": 2},
+                    "set_flags": {"class_intro_done": True, "archer_watch_established": True},
+                    "seen_events": ["archer_watch_established"],
+                    "log": "From the belltower, your warning shots guide villagers to cover before raiders can strike.",
+                },
+                "next": "village_square",
+            },
+            {
                 "label": "Buy a rope from the quartermaster (3 gold)",
                 "requirements": {"min_gold": 3, "missing_items": ["Rope"]},
                 "effects": {
@@ -169,6 +203,17 @@ STORY_NODES: Dict[str, Dict[str, Any]] = {
                 "next": "bandit_camp",
             },
             {
+                "label": "Rogue route: plant false tracks around the bandit sentries",
+                "requirements": {"class": ["Rogue"], "flag_false": ["branch_bandit_completed"]},
+                "effects": {
+                    "trait_delta": {"reputation": 1, "trust": 1},
+                    "set_flags": {"branch_bandit_completed": True, "false_tracks_set": True},
+                    "seen_events": ["rogue_false_tracks"],
+                    "log": "Your decoys split the camp patrols before you slip in to face Kest.",
+                },
+                "next": "bandit_camp",
+            },
+            {
                 "label": "March openly to the bandit camp",
                 "requirements": {"flag_false": ["branch_bandit_completed"]},
                 "effects": {
@@ -187,11 +232,33 @@ STORY_NODES: Dict[str, Dict[str, Any]] = {
                 "next": "dawnwarden_outpost",
             },
             {
+                "label": "Archer route: send a signal arrow to the ranger lantern line",
+                "requirements": {"class": ["Archer"], "flag_false": ["branch_dawnwarden_completed"]},
+                "effects": {
+                    "trait_delta": {"trust": 1, "reputation": 1},
+                    "set_flags": {"branch_dawnwarden_completed": True, "met_dawnwardens": True, "signal_arrow_used": True},
+                    "seen_events": ["archer_signal_arrow"],
+                    "log": "Your signal arrow lands beside Serin's scouts, earning immediate escort to their outpost.",
+                },
+                "next": "dawnwarden_outpost",
+            },
+            {
                 "label": "Track the Ashfang war drums into the bramble valley",
                 "requirements": {"flag_false": ["branch_ashfang_completed"]},
                 "effects": {
                     "set_flags": {"met_ashfang": True, "branch_ashfang_completed": True},
                     "log": "You shadow the drumming trail toward an Ashfang hunting column.",
+                },
+                "next": "ashfang_hunt",
+            },
+            {
+                "label": "Warrior route: answer the war drums with a shield challenge",
+                "requirements": {"class": ["Warrior"], "flag_false": ["branch_ashfang_completed"]},
+                "effects": {
+                    "trait_delta": {"reputation": 2},
+                    "set_flags": {"branch_ashfang_completed": True, "met_ashfang": True, "ashfang_challenge_answered": True},
+                    "seen_events": ["warrior_drum_challenge"],
+                    "log": "You meet Drogath's vanguard in open challenge, forcing respect before a word is spoken.",
                 },
                 "next": "ashfang_hunt",
             },
@@ -1017,7 +1084,7 @@ STORY_NODES: Dict[str, Dict[str, Any]] = {
                     "set_flags": {"spared_bandit": True, "morality": "merciful"},
                     "log": "You spare Kest. He reveals a weakness in the Warden's guard.",
                 },
-                "next": "final_confrontation",
+                "next": "ember_ridge_quiet",
             },
             {
                 "label": "Execute Kest",
@@ -1028,7 +1095,7 @@ STORY_NODES: Dict[str, Dict[str, Any]] = {
                     "log": "You execute Kest and step over his body into the chamber.",
                 },
                 "irreversible": True,
-                "next": "final_confrontation",
+                "next": "ember_ridge_quiet",
             },
             {
                 "label": "Bind Kest with rope and move on",
@@ -1036,6 +1103,49 @@ STORY_NODES: Dict[str, Dict[str, Any]] = {
                 "effects": {
                     "set_flags": {"bound_kest": True, "morality": "merciful"},
                     "log": "You bind Kest securely, leaving him alive but helpless.",
+                },
+                "next": "ember_ridge_quiet",
+            },
+        ],
+    },
+    "ember_ridge_quiet": {
+        "id": "ember_ridge_quiet",
+        "title": "Quiet Beat — Breathing Stone",
+        "text": (
+            "Before the core door, the battle noise fades into dripping water and distant bells. For one measured minute, "
+            "you can center yourself, listen to your allies, or surge forward before fear catches up."
+        ),
+        "dialogue": [
+            {"speaker": "Your Instinct", "line": "This breath will shape your strike more than your blade."},
+            {"speaker": "Distant Voices", "line": "We're with you... choose how you carry us in there."},
+        ],
+        "choices": [
+            {
+                "label": "Steady your breathing and assess the chamber seams",
+                "effects": {
+                    "hp": 1,
+                    "trait_delta": {"trust": 1},
+                    "seen_events": ["quiet_beat_centered"],
+                    "log": "You slow your pulse and enter with clearer focus.",
+                },
+                "next": "final_confrontation",
+            },
+            {
+                "label": "Share a final plan with your nearby allies",
+                "effects": {
+                    "trait_delta": {"trust": 1, "reputation": 1},
+                    "set_flags": {"final_plan_shared": True},
+                    "seen_events": ["quiet_beat_allied_plan"],
+                    "log": "A few quiet words align everyone around one decisive push.",
+                },
+                "next": "final_confrontation",
+            },
+            {
+                "label": "Kick the core door and seize momentum now",
+                "effects": {
+                    "trait_delta": {"reputation": 1, "alignment": -1},
+                    "set_flags": {"charged_finale": True},
+                    "log": "You abandon hesitation and crash into the chamber at full speed.",
                 },
                 "next": "final_confrontation",
             },
