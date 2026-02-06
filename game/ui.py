@@ -15,6 +15,12 @@ from game.logic import (
 )
 from game.state import add_log, load_snapshot, reset_game_state, snapshot_state
 
+
+def should_force_injury_redirect(node_id: str, hp: int) -> bool:
+    """Return whether the current state should auto-redirect into the injured setback."""
+    return hp <= 0 and not node_id.startswith("failure_") and node_id != "death"
+
+
 def render_sidebar() -> None:
     """Render persistent player information in the sidebar."""
     with st.sidebar:
@@ -197,7 +203,7 @@ def render_node() -> None:
                 st.markdown(f"**{speaker}:** _\"{quote}\"_")
 
     # Death can happen from previous choice effects.
-    if st.session_state.stats["hp"] <= 0:
+    if should_force_injury_redirect(node_id, st.session_state.stats["hp"]):
         transition_to_failure("injured")
         st.rerun()
         return
