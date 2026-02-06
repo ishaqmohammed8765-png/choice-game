@@ -1888,8 +1888,8 @@ def _rebalance_choice_nodes(max_choices: int = 4) -> None:
 
             page_node = {
                 "id": page_id,
-                "title": f"{node['title']} — More Choices ({page_num})",
-                "text": "You review additional options before deciding your next move.",
+                "title": f"{node['title']} — Choice Page {page_num}",
+                "text": "You move to the next choice page before deciding your next move.",
                 "dialogue": [],
                 "choices": chunk,
             }
@@ -1898,8 +1898,8 @@ def _rebalance_choice_nodes(max_choices: int = 4) -> None:
                 next_page_num = page_num + 1
                 page_node["choices"].append(
                     {
-                        "label": "Review more options",
-                        "effects": {"log": "You review the remaining tactical options."},
+                        "label": "Go to the next choice page",
+                        "effects": {"log": "You move to the next page of choices."},
                         "next": f"{node_id}__choices_page_{next_page_num}",
                     }
                 )
@@ -1915,8 +1915,8 @@ def _rebalance_choice_nodes(max_choices: int = 4) -> None:
 
         node["choices"] = first_page_choices + [
             {
-                "label": "Review more options",
-                "effects": {"log": "You take a moment to review more options."},
+                "label": "Go to the next choice page",
+                "effects": {"log": "You move to a new node with the remaining choices."},
                 "next": page_node_ids[0],
             }
         ]
