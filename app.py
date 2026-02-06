@@ -38,11 +38,18 @@ def main() -> None:
 
     render_sidebar()
 
-    tab_story, tab_choices = st.tabs(["Story", "Choices & Outcomes"])
-    with tab_story:
+    st.markdown("### Adventure Console")
+    active_panel = st.radio(
+        "View",
+        ["Story", "Debug & Outcomes"],
+        horizontal=True,
+        label_visibility="collapsed",
+    )
+
+    if active_panel == "Story":
         render_node()
         render_log()
-    with tab_choices:
+    else:
         render_choice_outcomes_tab()
 
 

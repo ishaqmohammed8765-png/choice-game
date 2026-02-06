@@ -21,40 +21,46 @@ def render_sidebar() -> None:
         st.header("Adventurer")
         st.write(f"**Class:** {st.session_state.player_class}")
 
-        st.subheader("Stats")
-        st.write(f"HP: {st.session_state.stats['hp']}")
-        st.write(f"Gold: {st.session_state.stats['gold']}")
-        st.write(f"Strength: {st.session_state.stats['strength']}")
-        st.write(f"Dexterity: {st.session_state.stats['dexterity']}")
+        with st.container(border=True):
+            st.subheader("Vitals")
+            col_hp, col_gold = st.columns(2)
+            col_hp.metric("HP", st.session_state.stats["hp"])
+            col_gold.metric("Gold", st.session_state.stats["gold"])
+            col_str, col_dex = st.columns(2)
+            col_str.metric("Strength", st.session_state.stats["strength"])
+            col_dex.metric("Dexterity", st.session_state.stats["dexterity"])
 
         st.subheader("Inventory")
         if st.session_state.inventory:
             for item in st.session_state.inventory:
                 st.write(f"- {item}")
         else:
-            st.write("(empty)")
+            st.caption("(empty)")
 
-        st.subheader("Flags")
-        if st.session_state.flags:
-            for key, value in sorted(st.session_state.flags.items()):
-                st.write(f"- {key}: {value}")
-        else:
-            st.write("(none)")
+        with st.expander("Reputation & Factions", expanded=False):
+            st.subheader("Traits")
+            for trait in TRAIT_KEYS:
+                st.write(f"{trait.title()}: {st.session_state.traits[trait]}")
 
-        st.subheader("Traits")
-        for trait in TRAIT_KEYS:
-            st.write(f"{trait.title()}: {st.session_state.traits[trait]}")
+            st.subheader("Faction Standing")
+            for faction in FACTION_KEYS:
+                st.write(f"{faction.title()}: {st.session_state.factions[faction]}")
 
-        st.subheader("Faction Standing")
-        for faction in FACTION_KEYS:
-            st.write(f"{faction.title()}: {st.session_state.factions[faction]}")
+        with st.expander("Debug data (flags & events)", expanded=False):
+            st.caption("Quick access to runtime state while testing story branches.")
+            if st.session_state.flags:
+                st.write("**Flags**")
+                for key, value in sorted(st.session_state.flags.items()):
+                    st.write(f"- {key}: {value}")
+            else:
+                st.caption("No flags set.")
 
-        st.subheader("Key Events Seen")
-        if st.session_state.seen_events:
-            for event in st.session_state.seen_events[-6:]:
-                st.write(f"- {event}")
-        else:
-            st.write("(none)")
+            st.write("**Key Events Seen**")
+            if st.session_state.seen_events:
+                for event in st.session_state.seen_events[-8:]:
+                    st.write(f"- {event}")
+            else:
+                st.caption("(none)")
 
         st.divider()
         if st.button("⬅️ Back (undo last choice)", use_container_width=True, disabled=not st.session_state.history):
@@ -361,12 +367,14 @@ def format_outcomes(effects: Dict[str, Any] | None) -> str:
 
 def render_choice_outcomes_tab() -> None:
     """Render a separate tab that lists every node choice and its outcomes."""
-    st.subheader("All Choices & Outcomes")
+    st.subheader("Debug & Choice Outcomes")
+    st.caption("Inspect branching logic quickly from one place.")
     show_full_spoilers = st.toggle(
         "Show spoiler-heavy routing details",
         key="spoiler_debug_mode",
         help="Debug mode reveals routing destinations and full branch structure.",
     )
+    node_filter = st.text_input("Filter by node title or ID", value="", placeholder="e.g. crossroad, final_confrontation")
     if show_full_spoilers:
         st.caption("Spoilers enabled: next-node IDs are visible for every choice.")
     else:
@@ -375,6 +383,9 @@ def render_choice_outcomes_tab() -> None:
     for node_id, node in STORY_NODES.items():
         choices = node.get("choices", [])
         if not choices:
+            continue
+        filter_value = node_filter.strip().lower()
+        if filter_value and filter_value not in node_id.lower() and filter_value not in node["title"].lower():
             continue
 
         with st.expander(f"{node['title']} ({node_id})", expanded=False):
