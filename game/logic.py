@@ -97,6 +97,9 @@ def check_requirements(requirements: Dict[str, Any] | None) -> tuple[bool, str]:
     inventory = st.session_state.inventory
     flags = st.session_state.flags
     pclass = st.session_state.player_class
+    meta_state = st.session_state.get("meta_state", {"unlocked_items": [], "removed_nodes": []})
+    unlocked_meta_items = meta_state.get("unlocked_items", [])
+    removed_meta_nodes = meta_state.get("removed_nodes", [])
 
     if "class" in requirements and pclass not in requirements["class"]:
         return False, f"Requires class: {', '.join(requirements['class'])}"
@@ -125,6 +128,18 @@ def check_requirements(requirements: Dict[str, Any] | None) -> tuple[bool, str]:
     for flag in requirements.get("flag_false", []):
         if flags.get(flag, False):
             return False, f"Requires flag: {flag}=False"
+
+    for item in requirements.get("meta_items", []):
+        if item not in unlocked_meta_items:
+            return False, f"Requires legacy item unlocked: {item}"
+
+    for item in requirements.get("meta_missing_items", []):
+        if item in unlocked_meta_items:
+            return False, f"Legacy item already unlocked: {item}"
+
+    for node_id in requirements.get("meta_nodes_present", []):
+        if node_id in removed_meta_nodes:
+            return False, "That legacy site has already vanished."
 
     return True, ""
 
@@ -179,6 +194,14 @@ def merge_effects(base: Dict[str, Any], incoming: Dict[str, Any]) -> Dict[str, A
         merged.setdefault("seen_events", [])
         merged["seen_events"] = list({*merged["seen_events"], *incoming["seen_events"]})
 
+    if incoming.get("unlock_meta_items"):
+        merged.setdefault("unlock_meta_items", [])
+        merged["unlock_meta_items"] = list({*merged["unlock_meta_items"], *incoming["unlock_meta_items"]})
+
+    if incoming.get("remove_meta_nodes"):
+        merged.setdefault("remove_meta_nodes", [])
+        merged["remove_meta_nodes"] = list({*merged["remove_meta_nodes"], *incoming["remove_meta_nodes"]})
+
     if "log" in incoming:
         merged["log"] = incoming["log"]
 
@@ -195,6 +218,7 @@ def apply_effects(effects: Dict[str, Any] | None, *, label: str | None = None) -
     flags = st.session_state.flags
     traits = st.session_state.traits
     factions = st.session_state.factions
+    meta_state = st.session_state.get("meta_state", {"unlocked_items": [], "removed_nodes": []})
     feedback: List[str] = []
     before_stats = dict(stats)
     before_inventory = list(inventory)
@@ -243,6 +267,15 @@ def apply_effects(effects: Dict[str, Any] | None, *, label: str | None = None) -
         if event not in st.session_state.seen_events:
             st.session_state.seen_events.append(event)
             feedback.append(f"Key event recorded: {event}")
+
+    for item in effects.get("unlock_meta_items", []):
+        if item not in meta_state["unlocked_items"]:
+            meta_state["unlocked_items"].append(item)
+            feedback.append(f"Legacy item unlocked: {item}")
+
+    for node_id in effects.get("remove_meta_nodes", []):
+        if node_id not in meta_state["removed_nodes"]:
+            meta_state["removed_nodes"].append(node_id)
 
     apply_morality_flags(flags)
 

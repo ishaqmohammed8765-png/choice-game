@@ -22,6 +22,9 @@ class Requirements(TypedDict, total=False):
     missing_items: List[str]
     flag_true: List[str]
     flag_false: List[str]
+    meta_items: List[str]
+    meta_missing_items: List[str]
+    meta_nodes_present: List[str]
 
 
 class Effects(TypedDict, total=False):
@@ -38,6 +41,8 @@ class Effects(TypedDict, total=False):
     faction_delta: Dict[str, int]
     seen_events: List[str]
     log: str
+    unlock_meta_items: List[str]
+    remove_meta_nodes: List[str]
 
 
 class ConditionalEffect(TypedDict, total=False):

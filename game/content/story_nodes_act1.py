@@ -354,6 +354,12 @@ STORY_NODES_ACT1: Dict[str, Dict[str, Any]] = {
                 "next": "forest_crossroad_operations",
             },
             {
+                "label": "Follow the whispering chimes to a hidden shrine",
+                "requirements": {"min_dexterity": 3, "meta_nodes_present": ["echo_shrine"]},
+                "effects": {"log": "You trace the chimes through the brush toward a forgotten shrine."},
+                "next": "echo_shrine",
+            },
+            {
                 "label": "Warrior duty: fortify a ranger barricade line",
                 "requirements": {"class": ["Warrior"], "flag_false": ["warrior_mid_arc_done"]},
                 "effects": {
@@ -384,6 +390,37 @@ STORY_NODES_ACT1: Dict[str, Dict[str, Any]] = {
                 "label": "Return to the main crossroads routes",
                 "effects": {"log": "You roll up the operations map and step back to the central trails."},
                 "next": "forest_crossroad",
+            },
+        ],
+    },
+    "echo_shrine": {
+        "id": "echo_shrine",
+        "title": "Echo Shrine",
+        "text": (
+            "A mossy shrine sits between leaning pines. Wind chimes ring without a breeze, and a carved locket rests "
+            "on the altar as if it has been waiting for your return."
+        ),
+        "dialogue": [
+            {"speaker": "Your Instinct", "line": "This is not a gift. It's a promise that the forest remembers you."}
+        ],
+        "requirements": {"meta_nodes_present": ["echo_shrine"]},
+        "choices": [
+            {
+                "label": "Claim the Echo Locket and let it bind to your story",
+                "requirements": {"meta_missing_items": ["Echo Locket"]},
+                "effects": {
+                    "add_items": ["Echo Locket"],
+                    "unlock_meta_items": ["Echo Locket"],
+                    "remove_meta_nodes": ["echo_shrine"],
+                    "set_flags": {"echo_locket_claimed": True},
+                    "log": "The locket hums with every footstep, as if it knows your next journey already.",
+                },
+                "next": "forest_crossroad_operations",
+            },
+            {
+                "label": "Leave the shrine untouched and step back",
+                "effects": {"log": "You leave the shrine intact, the chimes fading behind you."},
+                "next": "forest_crossroad_operations",
             },
         ],
     },
