@@ -158,27 +158,6 @@ def get_epilogue_aftermath_lines() -> List[str]:
     return lines[:5]
 
 
-def get_active_objectives() -> List[str]:
-    """Build a lightweight quest journal from current flags."""
-    flags = st.session_state.flags
-    objectives: List[str] = []
-
-    if not flags.get("any_branch_completed"):
-        objectives.append("Scout at least one major threat from the forest crossroad.")
-    if flags.get("any_branch_completed") and not flags.get("midgame_commitment_made"):
-        objectives.append("Return to the crossroad and commit your gathered allies to Ember Ridge.")
-    if flags.get("met_dawnwardens") and not flags.get("branch_dawnwarden_completed"):
-        objectives.append("Earn deeper Dawnwarden trust before the final war council.")
-    if flags.get("met_ashfang") and not flags.get("branch_ashfang_completed"):
-        objectives.append("Resolve the Ashfang warband front before it threatens Oakrest.")
-    if flags.get("cache_salvaged"):
-        objectives.append("Leverage recovered scout cache intelligence in upcoming negotiations.")
-
-    if not objectives:
-        objectives.append("No urgent objectives. Press ahead and shape the ending.")
-
-    return objectives[:4]
-
 def render_node() -> None:
     """Render current node, narrative, choices, and edge-case handling."""
     node_id = st.session_state.current_node
@@ -251,10 +230,6 @@ def render_node() -> None:
                 if st.button("Cancel", key=f"cancel_{node_id}", use_container_width=True):
                     st.session_state.pending_choice_confirmation = None
                     st.rerun()
-
-    with st.expander("Current Objectives", expanded=False):
-        for objective in get_active_objectives():
-            st.write(f"- {objective}")
 
     for idx, choice in enumerate(available_choices):
         label = choice["label"]

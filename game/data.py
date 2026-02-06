@@ -106,6 +106,28 @@ STORY_NODES: Dict[str, Dict[str, Any]] = {
                 "next": "village_square",
             },
             {
+                "label": "Train at Tor's forge yard (+1 Strength, 4 gold)",
+                "requirements": {"min_gold": 4, "flag_false": ["trained_strength_once"]},
+                "effects": {
+                    "gold": -4,
+                    "strength": 1,
+                    "set_flags": {"trained_strength_once": True},
+                    "log": "Hours of hammer drills and shield carries leave you stronger for the road ahead.",
+                },
+                "next": "village_square",
+            },
+            {
+                "label": "Run scout footwork drills behind the chapel (+1 Dexterity, 4 gold)",
+                "requirements": {"min_gold": 4, "flag_false": ["trained_dexterity_once"]},
+                "effects": {
+                    "gold": -4,
+                    "dexterity": 1,
+                    "set_flags": {"trained_dexterity_once": True},
+                    "log": "You practice quick steps and low movement lanes until your reactions sharpen.",
+                },
+                "next": "village_square",
+            },
+            {
                 "label": "Visit the roadside trader and rest stop",
                 "effects": {"log": "You head to a lantern-lit camp where a trader tends supplies."},
                 "next": "camp_shop",
@@ -158,6 +180,28 @@ STORY_NODES: Dict[str, Dict[str, Any]] = {
                 "next": "camp_shop",
             },
             {
+                "label": "Spar with a retired legionnaire (+1 Strength, 5 gold)",
+                "requirements": {"min_gold": 5, "flag_false": ["camp_strength_training_done"]},
+                "effects": {
+                    "gold": -5,
+                    "strength": 1,
+                    "set_flags": {"camp_strength_training_done": True},
+                    "log": "A brutal round of drills hardens your stance and power.",
+                },
+                "next": "camp_shop",
+            },
+            {
+                "label": "Practice night marksmanship and quick draws (+1 Dexterity, 5 gold)",
+                "requirements": {"min_gold": 5, "flag_false": ["camp_dexterity_training_done"]},
+                "effects": {
+                    "gold": -5,
+                    "dexterity": 1,
+                    "set_flags": {"camp_dexterity_training_done": True},
+                    "log": "Under lantern light, you refine snap reactions and precision.",
+                },
+                "next": "camp_shop",
+            },
+            {
                 "label": "Leave the camp for the forest crossroad",
                 "effects": {"log": "You shoulder your gear and continue toward the ruin."},
                 "next": "forest_crossroad",
@@ -178,10 +222,11 @@ STORY_NODES: Dict[str, Dict[str, Any]] = {
         ],
         "choices": [
             {
-                "label": "Cross the ravine by hauling yourself on old beams (Strength 3)",
-                "requirements": {"min_strength": 3, "flag_false": ["branch_ravine_completed"]},
+                "label": "Cross the ravine by hauling yourself on old beams (Strength 4)",
+                "requirements": {"min_strength": 4, "flag_false": ["branch_ravine_completed"]},
                 "effects": {
-                    "log": "Your raw force carries you across the groaning beams.",
+                    "strength": 1,
+                    "log": "Your raw force carries you across the groaning beams and leaves your arms battle-hardened.",
                     "set_flags": {"branch_ravine_completed": True},
                 },
                 "next": "ravine_crossing",
@@ -196,10 +241,11 @@ STORY_NODES: Dict[str, Dict[str, Any]] = {
                 "next": "ravine_crossing",
             },
             {
-                "label": "Sneak toward the bandit camp (Dexterity 3)",
-                "requirements": {"min_dexterity": 3, "flag_false": ["branch_bandit_completed"]},
+                "label": "Sneak toward the bandit camp (Dexterity 4)",
+                "requirements": {"min_dexterity": 4, "flag_false": ["branch_bandit_completed"]},
                 "effects": {
-                    "log": "You melt into the brush and approach unheard.",
+                    "dexterity": 1,
+                    "log": "You melt into the brush and approach unheard, sharpening your movement control.",
                     "set_flags": {"branch_bandit_completed": True},
                 },
                 "next": "bandit_camp",
@@ -216,14 +262,48 @@ STORY_NODES: Dict[str, Dict[str, Any]] = {
                 "next": "bandit_camp",
             },
             {
-                "label": "March openly to the bandit camp",
-                "requirements": {"flag_false": ["branch_bandit_completed"]},
+                "label": "March openly to the bandit camp (Strength 3)",
+                "requirements": {"min_strength": 3, "flag_false": ["branch_bandit_completed"]},
                 "effects": {
                     "log": "Branches crack under your boots as you confront the raiders openly.",
                     "set_flags": {"branch_bandit_completed": True},
                 },
                 "next": "bandit_camp",
             },
+            {
+                "label": "Open your field map for side operations and support missions",
+                "effects": {
+                    "log": "You kneel at a stump, spread your map, and review side operations before the final push.",
+                },
+                "next": "forest_crossroad_operations",
+            },
+            {
+                "label": "Survey faction fronts and warband movement",
+                "effects": {"log": "You study fresh tracks and distant signal lights before choosing a faction front."},
+                "next": "forest_crossroad_fronts",
+            },
+            {
+                "label": "Leave the crossroads and commit your gathered allies to Ember Ridge",
+                "requirements": {"flag_true": ["any_branch_completed"]},
+                "effects": {
+                    "set_flags": {"midgame_commitment_made": True},
+                    "log": "After scouting multiple fronts, you call your banners and move to Ember Ridge.",
+                },
+                "next": "war_council_hub",
+            },
+        ],
+    },
+    "forest_crossroad_fronts": {
+        "id": "forest_crossroad_fronts",
+        "title": "Forest Crossroad - Faction Fronts",
+        "text": (
+            "You shift away from the central fork and watch the valley fronts unfold: ranger lanterns in one direction, "
+            "Ashfang war drums in another, and side roads where fresh threats keep emerging."
+        ),
+        "dialogue": [
+            {"speaker": "Scout Iven", "line": "Pick a front and finish it hard. Half-measures become tomorrow's ambush."}
+        ],
+        "choices": [
             {
                 "label": "Follow the ranger lanterns to their hidden outpost",
                 "requirements": {"flag_false": ["branch_dawnwarden_completed"]},
@@ -256,7 +336,7 @@ STORY_NODES: Dict[str, Dict[str, Any]] = {
             },
             {
                 "label": "Warrior route: answer the war drums with a shield challenge",
-                "requirements": {"class": ["Warrior"], "flag_false": ["branch_ashfang_completed"]},
+                "requirements": {"class": ["Warrior"], "min_strength": 4, "flag_false": ["branch_ashfang_completed"]},
                 "effects": {
                     "trait_delta": {"reputation": 2},
                     "faction_delta": {"ashfang": 2},
@@ -267,77 +347,9 @@ STORY_NODES: Dict[str, Dict[str, Any]] = {
                 "next": "ashfang_hunt",
             },
             {
-                "label": "Open your field map for side operations and support missions",
-                "effects": {
-                    "log": "You kneel at a stump, spread your map, and review side operations before the final push.",
-                },
-                "next": "forest_crossroad_operations",
-            },
-            {
-                "label": "Investigate the flooded causeway road",
-                "requirements": {"flag_false": ["branch_causeway_completed"]},
-                "effects": {
-                    "set_flags": {"branch_causeway_completed": True},
-                    "log": "You cut through marsh fog toward a drowned causeway where bells still toll underwater.",
-                },
-                "next": "flooded_causeway_approach",
-            },
-            {
-                "label": "Take the ash-choked mill trail",
-                "requirements": {"flag_false": ["branch_mill_completed"]},
-                "effects": {
-                    "set_flags": {"branch_mill_completed": True},
-                    "log": "You follow scorched wheel ruts toward an abandoned mill wrapped in ember smoke.",
-                },
-                "next": "charred_mill_approach",
-            },
-            {
-                "label": "Scavenge the collapsed scout cache with Rope and Torch",
-                "requirements": {"items": ["Rope", "Torch"], "flag_false": ["cache_salvaged"]},
-                "effects": {
-                    "gold": 4,
-                    "trait_delta": {"reputation": 1},
-                    "set_flags": {"cache_salvaged": True},
-                    "seen_events": ["cache_salvaged_combo"],
-                    "log": "Using rope and torch together, you recover a hidden cache that others missed.",
-                },
+                "label": "Return to the main crossroads",
+                "effects": {"log": "You step back to the central fork and reassess the wider battlefield."},
                 "next": "forest_crossroad",
-            },
-            {
-                "label": "Warrior duty: fortify a ranger barricade line",
-                "requirements": {"class": ["Warrior"], "flag_false": ["warrior_mid_arc_done"]},
-                "effects": {
-                    "set_flags": {"warrior_mid_arc_done": True},
-                    "log": "You step off-road to harden a weak barricade before nightfall.",
-                },
-                "next": "warrior_barricade",
-            },
-            {
-                "label": "Rogue duty: investigate a smuggler safehouse",
-                "requirements": {"class": ["Rogue"], "flag_false": ["rogue_mid_arc_done"]},
-                "effects": {
-                    "set_flags": {"rogue_mid_arc_done": True},
-                    "log": "You follow coded marks toward a hidden safehouse.",
-                },
-                "next": "rogue_safehouse",
-            },
-            {
-                "label": "Archer duty: secure a ridgewatch sniper nest",
-                "requirements": {"class": ["Archer"], "flag_false": ["archer_mid_arc_done"]},
-                "effects": {
-                    "set_flags": {"archer_mid_arc_done": True},
-                    "log": "You climb toward a windswept ridge to claim a tactical overlook.",
-                },
-                "next": "archer_ridgewatch",
-            },
-            {
-                "label": "Leave the crossroads and commit your gathered allies to Ember Ridge",
-                "requirements": {"flag_true": ["any_branch_completed"]},
-                "effects": {
-                    "set_flags": {"midgame_commitment_made": True},
-                    "log": "After scouting multiple fronts, you call your banners and move to Ember Ridge.",
-                },
-                "next": "war_council_hub",
             },
         ],
     },
@@ -596,9 +608,10 @@ STORY_NODES: Dict[str, Dict[str, Any]] = {
                 "label": "Leap and cling to the far ledge (Strength 4)",
                 "requirements": {"min_strength": 4},
                 "effects": {
+                    "strength": 1,
                     "trait_delta": {"reputation": 1},
                     "set_flags": {"ravine_crossed_clean": True},
-                    "log": "You catch the ledge with iron grip and pull yourself up.",
+                    "log": "You catch the ledge with iron grip, pull yourself up, and feel your power grow.",
                 },
                 "next": "war_council_hub",
             },
@@ -632,6 +645,7 @@ STORY_NODES: Dict[str, Dict[str, Any]] = {
                 "effects": {
                     "hp": -2,
                     "gold": 4,
+                    "strength": 1,
                     "trait_delta": {"trust": 1, "reputation": -1, "alignment": -2},
                     "seen_events": ["bandits_slain"],
                     "set_flags": {"rescued_scout": True, "spared_bandit": False, "cruel_reputation": True, "morality": "ruthless"},
@@ -643,6 +657,7 @@ STORY_NODES: Dict[str, Dict[str, Any]] = {
                 "label": "Cut the scout free while hidden (Dexterity 4)",
                 "requirements": {"min_dexterity": 4},
                 "effects": {
+                    "dexterity": 1,
                     "trait_delta": {"trust": 2, "reputation": 2, "alignment": 2},
                     "seen_events": ["scout_saved_silently"],
                     "set_flags": {"rescued_scout": True, "spared_bandit": True, "mercy_reputation": True, "morality": "merciful"},
@@ -1019,7 +1034,7 @@ STORY_NODES: Dict[str, Dict[str, Any]] = {
             },
             {
                 "label": "Use scout intelligence to approach through the hidden tunnel",
-                "requirements": {"flag_true": ["knows_hidden_route"]},
+                "requirements": {"flag_true": ["knows_hidden_route"], "min_dexterity": 4},
                 "effects": {
                     "trait_delta": {"trust": 1},
                     "set_flags": {"hub_plan": "hidden_route"},
@@ -1049,7 +1064,7 @@ STORY_NODES: Dict[str, Dict[str, Any]] = {
             },
             {
                 "label": "Launch while enemy supplies are crippled",
-                "requirements": {"flag_true": ["ruin_supply_line_cut"]},
+                "requirements": {"flag_true": ["ruin_supply_line_cut"], "min_strength": 4},
                 "effects": {
                     "set_flags": {"hub_plan": "supply_denial"},
                     "trait_delta": {"reputation": 1},
@@ -1058,7 +1073,8 @@ STORY_NODES: Dict[str, Dict[str, Any]] = {
                 "next": "ruin_gate",
             },
             {
-                "label": "Advance alone before reinforcements arrive",
+                "label": "Advance alone before reinforcements arrive (Strength 4, Dexterity 4)",
+                "requirements": {"min_strength": 4, "min_dexterity": 4},
                 "effects": {
                     "trait_delta": {"reputation": -1, "trust": -1},
                     "set_flags": {"hub_plan": "solo_push"},
@@ -1137,6 +1153,7 @@ STORY_NODES: Dict[str, Dict[str, Any]] = {
                 "requirements": {"min_strength": 5},
                 "effects": {
                     "hp": -2,
+                    "strength": 1,
                     "trait_delta": {"reputation": 1},
                     "set_flags": {"opened_cleanly": False},
                     "log": "You smash through shields and barbed stakes, reaching the gate bloodied but unbroken.",
@@ -1148,6 +1165,7 @@ STORY_NODES: Dict[str, Dict[str, Any]] = {
                 "requirements": {"min_dexterity": 4},
                 "effects": {
                     "hp": -1,
+                    "dexterity": 1,
                     "trait_delta": {"trust": -1, "reputation": 1},
                     "set_flags": {"opened_cleanly": True},
                     "log": "You crawl through black water and emerge inside the ruin perimeter unseen.",
@@ -1381,7 +1399,7 @@ STORY_NODES: Dict[str, Dict[str, Any]] = {
         "choices": [
             {
                 "label": "Warrior finale: hold the collapsing arch and strike the Warden down",
-                "requirements": {"class": ["Warrior"], "min_strength": 4},
+                "requirements": {"class": ["Warrior"], "min_strength": 5},
                 "effects": {
                     "hp": -2,
                     "set_flags": {"warden_defeated": True, "ending_quality": "best", "warrior_best_ending": True},
@@ -1391,7 +1409,7 @@ STORY_NODES: Dict[str, Dict[str, Any]] = {
             },
             {
                 "label": "Rogue finale: slip through the ward lattice and sever the Emblem feed",
-                "requirements": {"class": ["Rogue"], "min_dexterity": 4, "items": ["Lockpicks"]},
+                "requirements": {"class": ["Rogue"], "min_dexterity": 5, "items": ["Lockpicks"]},
                 "effects": {
                     "hp": -1,
                     "set_flags": {"warden_defeated": True, "ending_quality": "best", "rogue_best_ending": True},
@@ -1400,8 +1418,8 @@ STORY_NODES: Dict[str, Dict[str, Any]] = {
                 "next": "ending_best_rogue",
             },
             {
-                "label": "Overpower the Warden in direct combat (Strength 5)",
-                "requirements": {"min_strength": 5},
+                "label": "Overpower the Warden in direct combat (Strength 6)",
+                "requirements": {"min_strength": 6},
                 "effects": {
                     "hp": -2,
                     "set_flags": {"warden_defeated": True, "ending_quality": "good"},
@@ -1410,47 +1428,8 @@ STORY_NODES: Dict[str, Dict[str, Any]] = {
                 "next": "ending_good",
             },
             {
-                "label": "Exploit the opening from your mercy (requires spared Kest)",
-                "requirements": {"flag_true": ["spared_bandit"]},
-                "effects": {
-                    "set_flags": {"warden_defeated": True, "ending_quality": "good"},
-                    "log": "Using Kest's warning, you disable the device core and win cleanly.",
-                },
-                "next": "ending_good",
-            },
-            {
-                "label": "Use the hidden-route sabotage to destabilize the chamber",
-                "requirements": {"flag_true": ["tunnel_collapsed"]},
-                "effects": {
-                    "hp": -2,
-                    "set_flags": {"warden_defeated": True, "ending_quality": "mixed"},
-                    "log": "Your earlier demolition fractures the chamber floor, ending the device in chaos.",
-                },
-                "next": "ending_mixed",
-            },
-            {
-                "label": "Interrogate Kest's old crew code (Lockpicks + ruthless)",
-                "requirements": {"items": ["Lockpicks"], "flag_true": ["cruel_reputation"]},
-                "effects": {
-                    "hp": -1,
-                    "set_flags": {"warden_defeated": True, "ending_quality": "mixed"},
-                    "log": "Your ruthless reputation lets you force a confession and break the warding code.",
-                },
-                "next": "ending_mixed",
-            },
-            {
-                "label": "Protect trapped villagers first (requires merciful outlook)",
-                "requirements": {"flag_true": ["mercy_reputation"]},
-                "effects": {
-                    "hp": -3,
-                    "set_flags": {"warden_defeated": True, "ending_quality": "good"},
-                    "log": "You shield the captives, then turn their gratitude into momentum against the Warden.",
-                },
-                "next": "ending_good",
-            },
-            {
-                "label": "Strike from shadows at the device core (Dexterity 5)",
-                "requirements": {"min_dexterity": 5},
+                "label": "Strike from shadows at the device core (Dexterity 6)",
+                "requirements": {"min_dexterity": 6},
                 "effects": {
                     "hp": -1,
                     "set_flags": {"warden_defeated": True, "ending_quality": "mixed"},
@@ -1459,54 +1438,9 @@ STORY_NODES: Dict[str, Dict[str, Any]] = {
                 "next": "ending_mixed",
             },
             {
-                "label": "Use the drowned knight's bell-hammer to crack the Warden guard",
-                "requirements": {"flag_true": ["tidebound_knight_defeated"]},
-                "effects": {
-                    "hp": -1,
-                    "set_flags": {"warden_defeated": True, "ending_quality": "good"},
-                    "log": "One crushing blow from the recovered bell-hammer caves in the Warden's shield rig.",
-                },
-                "next": "ending_good",
-            },
-            {
-                "label": "The Tidebound Knight you left alive crashes into the chamber",
-                "requirements": {"flag_true": ["branch_causeway_completed"], "flag_false": ["tidebound_knight_defeated"]},
-                "effects": {
-                    "hp": -3,
-                    "set_flags": {"warden_defeated": True, "ending_quality": "mixed", "skipped_causeway_boss_returned": True},
-                    "log": "The drowned guardian answers the Warden's bell call. You survive a two-front duel, but the chamber collapses around you.",
-                },
-                "next": "ending_mixed",
-            },
-            {
-                "label": "Turn Vorga's seized firebombs against the Emblem pylons",
-                "requirements": {"flag_true": ["pyre_alchemist_defeated"]},
-                "effects": {
-                    "hp": -2,
-                    "set_flags": {"warden_defeated": True, "ending_quality": "mixed"},
-                    "log": "Your captured firebombs collapse two pylons, ending the channeling rite in violent ruin.",
-                },
-                "next": "ending_mixed",
-            },
-            {
-                "label": "Vorga returns with fresh firebombs after you left the mill unfinished",
-                "requirements": {"flag_true": ["branch_mill_completed"], "flag_false": ["pyre_alchemist_defeated"]},
-                "effects": {
-                    "hp": -3,
-                    "set_flags": {"warden_defeated": True, "ending_quality": "mixed", "skipped_mill_boss_returned": True},
-                    "log": "Pyre-Alchemist Vorga storms in with replacement bombs and forces a brutal running fight before you can reach the Emblem.",
-                },
-                "next": "ending_mixed",
-            },
-            {
-                "label": "Raise the Ancient Shield and endure the device backlash",
-                "requirements": {"items": ["Ancient Shield"]},
-                "effects": {
-                    "hp": -3,
-                    "set_flags": {"warden_defeated": True, "ending_quality": "mixed"},
-                    "log": "The shield saves you as you push through the backlash and fell the Warden.",
-                },
-                "next": "ending_mixed",
+                "label": "Review contingency plans and ally-dependent finishers",
+                "effects": {"log": "You shift position and assess prepared contingencies from earlier missions."},
+                "next": "final_confrontation_tactics",
             },
             {
                 "label": "Desperate assault without an advantage",
@@ -1517,6 +1451,132 @@ STORY_NODES: Dict[str, Dict[str, Any]] = {
                     "log": "You rush in blindly and suffer a devastating counterstrike.",
                 },
                 "next": "ending_bad",
+            },
+        ],
+    },
+    "final_confrontation_tactics": {
+        "id": "final_confrontation_tactics",
+        "title": "Final Confrontation - Contingency Plans",
+        "text": (
+            "You exploit chaos in the chamber to choose from backup plans earned through earlier mercy, brutality, "
+            "and unfinished rival fronts."
+        ),
+        "dialogue": [
+            {"speaker": "Your Instinct", "line": "Every unfinished debt just arrived at the same battlefield."}
+        ],
+        "choices": [
+            {
+                "label": "Exploit the opening from your mercy (requires spared Kest)",
+                "requirements": {"flag_true": ["spared_bandit"], "min_dexterity": 4},
+                "effects": {
+                    "set_flags": {"warden_defeated": True, "ending_quality": "good"},
+                    "log": "Using Kest's warning, you disable the device core and win cleanly.",
+                },
+                "next": "ending_good",
+            },
+            {
+                "label": "Use the hidden-route sabotage to destabilize the chamber",
+                "requirements": {"flag_true": ["tunnel_collapsed"], "min_strength": 4},
+                "effects": {
+                    "hp": -2,
+                    "set_flags": {"warden_defeated": True, "ending_quality": "mixed"},
+                    "log": "Your earlier demolition fractures the chamber floor, ending the device in chaos.",
+                },
+                "next": "ending_mixed",
+            },
+            {
+                "label": "Interrogate Kest's old crew code (Lockpicks + ruthless)",
+                "requirements": {"items": ["Lockpicks"], "flag_true": ["cruel_reputation"], "min_dexterity": 4},
+                "effects": {
+                    "hp": -1,
+                    "set_flags": {"warden_defeated": True, "ending_quality": "mixed"},
+                    "log": "Your ruthless reputation lets you force a confession and break the warding code.",
+                },
+                "next": "ending_mixed",
+            },
+            {
+                "label": "Protect trapped villagers first (requires merciful outlook)",
+                "requirements": {"flag_true": ["mercy_reputation"], "min_strength": 4},
+                "effects": {
+                    "hp": -3,
+                    "set_flags": {"warden_defeated": True, "ending_quality": "good"},
+                    "log": "You shield the captives, then turn their gratitude into momentum against the Warden.",
+                },
+                "next": "ending_good",
+            },
+            {
+                "label": "Review volatile fallback plans",
+                "effects": {"log": "You pivot toward raw fallback options tied to unresolved bosses and heavy gear."},
+                "next": "final_confrontation_fallbacks",
+            },
+            {
+                "label": "Return to your direct assault options",
+                "effects": {"log": "You pull back toward the central duel and commit to a direct finishing move."},
+                "next": "final_confrontation",
+            },
+        ],
+    },
+    "final_confrontation_fallbacks": {
+        "id": "final_confrontation_fallbacks",
+        "title": "Final Confrontation - Volatile Fallbacks",
+        "text": (
+            "The chamber destabilizes as old enemies and improvised tools become your last-resort finishers."
+        ),
+        "choices": [
+            {
+                "label": "Use the drowned knight's bell-hammer to crack the Warden guard",
+                "requirements": {"flag_true": ["tidebound_knight_defeated"], "min_strength": 4},
+                "effects": {
+                    "hp": -1,
+                    "set_flags": {"warden_defeated": True, "ending_quality": "good"},
+                    "log": "One crushing blow from the recovered bell-hammer caves in the Warden's shield rig.",
+                },
+                "next": "ending_good",
+            },
+            {
+                "label": "The Tidebound Knight you left alive crashes into the chamber",
+                "requirements": {"flag_true": ["branch_causeway_completed"], "flag_false": ["tidebound_knight_defeated"], "min_strength": 4},
+                "effects": {
+                    "hp": -3,
+                    "set_flags": {"warden_defeated": True, "ending_quality": "mixed", "skipped_causeway_boss_returned": True},
+                    "log": "The drowned guardian answers the Warden's bell call. You survive a two-front duel, but the chamber collapses around you.",
+                },
+                "next": "ending_mixed",
+            },
+            {
+                "label": "Turn Vorga's seized firebombs against the Emblem pylons",
+                "requirements": {"flag_true": ["pyre_alchemist_defeated"], "min_dexterity": 4},
+                "effects": {
+                    "hp": -2,
+                    "set_flags": {"warden_defeated": True, "ending_quality": "mixed"},
+                    "log": "Your captured firebombs collapse two pylons, ending the channeling rite in violent ruin.",
+                },
+                "next": "ending_mixed",
+            },
+            {
+                "label": "Vorga returns with fresh firebombs after you left the mill unfinished",
+                "requirements": {"flag_true": ["branch_mill_completed"], "flag_false": ["pyre_alchemist_defeated"], "min_dexterity": 4},
+                "effects": {
+                    "hp": -3,
+                    "set_flags": {"warden_defeated": True, "ending_quality": "mixed", "skipped_mill_boss_returned": True},
+                    "log": "Pyre-Alchemist Vorga storms in with replacement bombs and forces a brutal running fight before you can reach the Emblem.",
+                },
+                "next": "ending_mixed",
+            },
+            {
+                "label": "Raise the Ancient Shield and endure the device backlash",
+                "requirements": {"items": ["Ancient Shield"], "min_strength": 4},
+                "effects": {
+                    "hp": -3,
+                    "set_flags": {"warden_defeated": True, "ending_quality": "mixed"},
+                    "log": "The shield saves you as you push through the backlash and fell the Warden.",
+                },
+                "next": "ending_mixed",
+            },
+            {
+                "label": "Return to contingency plans",
+                "effects": {"log": "You back away from the worst-case options and reassess cleaner contingencies."},
+                "next": "final_confrontation_tactics",
             },
         ],
     },
