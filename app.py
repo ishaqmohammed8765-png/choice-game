@@ -2,7 +2,7 @@ from game.streamlit_compat import st
 
 from game.logic import validate_story_nodes
 from game.state import ensure_session_state, start_game
-from game.ui import render_choice_outcomes_tab, render_log, render_node, render_sidebar
+from game.ui import render_choice_outcomes_tab, render_log, render_node, render_path_map, render_sidebar
 
 
 def inject_game_theme() -> None:
@@ -87,7 +87,7 @@ def main() -> None:
     st.markdown("### Adventure Console")
     active_panel = st.radio(
         "View",
-        ["Story", "Debug & Outcomes"],
+        ["Story", "Path Map", "Debug & Outcomes"],
         horizontal=True,
         label_visibility="collapsed",
     )
@@ -95,6 +95,8 @@ def main() -> None:
     if active_panel == "Story":
         render_node()
         render_log()
+    elif active_panel == "Path Map":
+        render_path_map()
     else:
         render_choice_outcomes_tab()
 
