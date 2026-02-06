@@ -66,7 +66,13 @@ To prevent overloaded nodes, the story loader runs a simplification pass that:
 - Prunes log-only choices that duplicate another option with the same destination.
 - Reports all changes in the console report list.
 
-Tune the cap with `MAX_CHOICES_PER_NODE` in `game/data.py`. The UI will fail fast if any node exceeds the cap at runtime.
+Tune the cap with `MAX_CHOICES_PER_NODE` in `game/data.py`. The UI will gracefully group overflow choices and surface diagnostics instead of crashing.
+
+## Player feedback & overflow handling
+
+- Every choice now shows a compact outcome summary (stat deltas, items, and public flags).
+- Auto-applied events surface in a dedicated "Auto events" panel so changes are visible.
+- Dense nodes show a warning banner and grouped option expanders when choices exceed the cap.
 
 ### Before/after examples
 

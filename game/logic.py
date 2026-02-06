@@ -35,7 +35,10 @@ def execute_choice(node_id: str, label: str, choice: Dict[str, Any]) -> None:
     st.session_state.history.append(snapshot_state())
     st.session_state.decision_history.append({"node": node_id, "choice": label})
     resolved_effects, resolved_next = resolve_choice_outcome(choice)
-    apply_effects(resolved_effects)
+    summary = apply_effects(resolved_effects, label=label)
+    st.session_state.last_outcome_summary = summary
+    if summary:
+        add_log(f"Recent changes: {format_outcome_summary(summary)}")
     actual_next = _resolve_transition_node(resolved_next, choice.get("instant_death", False))
     _record_visit(node_id, actual_next)
     if choice.get("irreversible"):
@@ -182,10 +185,10 @@ def merge_effects(base: Dict[str, Any], incoming: Dict[str, Any]) -> Dict[str, A
     return merged
 
 
-def apply_effects(effects: Dict[str, Any] | None) -> None:
+def apply_effects(effects: Dict[str, Any] | None, *, label: str | None = None) -> Dict[str, Any]:
     """Apply deterministic choice outcomes to player state."""
     if not effects:
-        return
+        return {}
 
     stats = st.session_state.stats
     inventory = st.session_state.inventory
@@ -193,6 +196,9 @@ def apply_effects(effects: Dict[str, Any] | None) -> None:
     traits = st.session_state.traits
     factions = st.session_state.factions
     feedback: List[str] = []
+    before_stats = dict(stats)
+    before_inventory = list(inventory)
+    before_flags = dict(flags)
 
     for stat in STAT_KEYS:
         if stat in effects:
@@ -244,6 +250,13 @@ def apply_effects(effects: Dict[str, Any] | None) -> None:
         add_log(effects["log"])
 
     st.session_state.last_choice_feedback = feedback
+    return _build_outcome_summary(
+        before_stats=before_stats,
+        before_inventory=before_inventory,
+        before_flags=before_flags,
+        label=label,
+        effects=effects,
+    )
 
 
 def transition_to(next_node_id: str) -> None:
@@ -296,6 +309,8 @@ def get_available_choices(node: Dict[str, Any]) -> List[Dict[str, Any]]:
 def apply_node_auto_choices(node_id: str, node: Dict[str, Any]) -> bool:
     """Apply auto-choices once when entering a node. Returns True if any auto choice applied."""
     applied_any = False
+    summaries: List[Dict[str, Any]] = []
+    death_triggered = False
     for idx, choice in enumerate(node.get("auto_choices", [])):
         marker = f"auto_choice::{node_id}::{idx}"
         if st.session_state.flags.get(marker):
@@ -304,7 +319,76 @@ def apply_node_auto_choices(node_id: str, node: Dict[str, Any]) -> bool:
         if not is_valid:
             continue
         effects, _ = resolve_choice_outcome(choice)
-        apply_effects(effects)
+        label = choice.get("label") or "Auto event"
+        summary = apply_effects(effects, label=label)
+        if summary:
+            summaries.append(summary)
+            add_log(f"Auto event ({label}): {format_outcome_summary(summary)}")
         st.session_state.flags[marker] = True
         applied_any = True
+        if st.session_state.stats["hp"] <= 0:
+            death_triggered = True
+            break
+    if summaries:
+        st.session_state.auto_event_summary = summaries
+    if death_triggered:
+        st.session_state.pending_auto_death = True
     return applied_any
+
+
+def _is_public_flag(flag_name: str) -> bool:
+    internal_prefixes = ("auto_choice::", "branch_", "system_", "internal_", "visited_")
+    if flag_name == "any_branch_completed":
+        return False
+    return not flag_name.startswith(internal_prefixes)
+
+
+def _build_outcome_summary(
+    *,
+    before_stats: Dict[str, int],
+    before_inventory: List[str],
+    before_flags: Dict[str, Any],
+    label: str | None,
+    effects: Dict[str, Any],
+) -> Dict[str, Any]:
+    after_stats = st.session_state.stats
+    after_inventory = st.session_state.inventory
+    after_flags = st.session_state.flags
+
+    stats_delta = {stat: after_stats[stat] - before_stats.get(stat, 0) for stat in STAT_KEYS}
+    items_gained = [item for item in after_inventory if item not in before_inventory]
+    items_lost = [item for item in before_inventory if item not in after_inventory]
+    flags_set: List[tuple[str, Any]] = []
+    for flag_name in effects.get("set_flags", {}):
+        if _is_public_flag(flag_name):
+            flags_set.append((flag_name, after_flags.get(flag_name)))
+    return {
+        "label": label,
+        "stats_delta": stats_delta,
+        "items_gained": items_gained,
+        "items_lost": items_lost,
+        "flags_set": flags_set,
+    }
+
+
+def format_outcome_summary(summary: Dict[str, Any]) -> str:
+    """Build a compact summary string for logging."""
+    if not summary:
+        return "No immediate changes."
+    pieces: List[str] = []
+    for stat in STAT_KEYS:
+        delta = summary.get("stats_delta", {}).get(stat, 0)
+        if delta:
+            sign = "+" if delta > 0 else ""
+            pieces.append(f"{stat.upper()} {sign}{delta}")
+    items_gained = summary.get("items_gained", [])
+    items_lost = summary.get("items_lost", [])
+    flags_set = summary.get("flags_set", [])
+    if items_gained:
+        pieces.append(f"Gained: {', '.join(items_gained)}")
+    if items_lost:
+        pieces.append(f"Lost: {', '.join(items_lost)}")
+    if flags_set:
+        formatted_flags = ", ".join(f"{name}={value}" for name, value in flags_set)
+        pieces.append(f"Flags: {formatted_flags}")
+    return "; ".join(pieces) if pieces else "No immediate changes."

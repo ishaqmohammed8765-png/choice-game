@@ -57,6 +57,14 @@ def simplify_story_nodes(story_nodes: Dict[str, Dict[str, Any]]) -> None:
             deduped.append(choice)
 
         if len(deduped) > MAX_CHOICES_PER_NODE:
+            destination_counts: Dict[str | None, int] = {}
+            for choice in deduped:
+                destination_counts[choice.get("next")] = destination_counts.get(choice.get("next"), 0) + 1
+            for destination, count in destination_counts.items():
+                if count > 1:
+                    CHOICE_SIMPLIFICATION_REPORT.append(
+                        f"{node_id}: {count} choices lead to '{destination}' (groupable destination)"
+                    )
             low_impact = [choice for choice in deduped if is_low_impact(choice)]
             while len(deduped) > MAX_CHOICES_PER_NODE and low_impact:
                 removed = low_impact.pop(0)

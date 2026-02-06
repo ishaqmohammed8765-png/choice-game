@@ -219,6 +219,35 @@ class GoldClampingTests(unittest.TestCase):
         self.assertLess(st.session_state.stats["hp"], 0)
 
 
+class AutoChoiceSummaryTests(unittest.TestCase):
+    def setUp(self):
+        ensure_session_state()
+        reset_game_state()
+        st.session_state.player_class = "Warrior"
+        st.session_state.stats = {"hp": 10, "gold": 3, "strength": 4, "dexterity": 2}
+        st.session_state.inventory = []
+        st.session_state.flags = {}
+        st.session_state.traits = {"trust": 0, "reputation": 0, "alignment": 0}
+        st.session_state.factions = {"oakrest": 0, "dawnwardens": 0, "ashfang": 0, "bandits": 0}
+        st.session_state.seen_events = []
+        st.session_state.event_log = []
+        st.session_state.auto_event_summary = []
+        st.session_state.pending_auto_death = False
+
+    def test_apply_node_auto_choices_records_summary(self):
+        node = {
+            "auto_choices": [
+                {"label": "Auto setback", "effects": {"hp": -2, "gold": -5, "set_flags": {"met_scout": True}}}
+            ]
+        }
+        applied = apply_node_auto_choices("test_node", node)
+        self.assertTrue(applied)
+        self.assertEqual(st.session_state.stats["hp"], 8)
+        self.assertEqual(st.session_state.stats["gold"], 0)
+        self.assertTrue(st.session_state.auto_event_summary)
+        self.assertTrue(any("Auto event" in entry for entry in st.session_state.event_log))
+
+
 class AutoChoiceTests(unittest.TestCase):
     def setUp(self):
         ensure_session_state()

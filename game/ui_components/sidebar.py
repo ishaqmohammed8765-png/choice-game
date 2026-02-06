@@ -42,7 +42,7 @@ def render_sidebar() -> None:
         with st.container(border=True):
             st.subheader("Vitals")
             col_hp, col_gold = st.columns(2)
-            col_hp.metric("HP", st.session_state.stats["hp"])
+            col_hp.metric("HP", max(0, st.session_state.stats["hp"]))
             col_gold.metric("Gold", st.session_state.stats["gold"])
             col_str, col_dex = st.columns(2)
             col_str.metric("Strength", st.session_state.stats["strength"])

@@ -1,6 +1,7 @@
 import unittest
 
 from game.ui import format_requirement_tooltip, should_force_injury_redirect
+from game.ui_components.path_map import _escape_svg_text
 
 
 class UiLogicTests(unittest.TestCase):
@@ -51,6 +52,10 @@ class UiLogicTests(unittest.TestCase):
         self.assertIn("Any of:", tooltip)
         self.assertIn("Gold >= 5 (you: 2)", tooltip)
         self.assertIn("Needs item: Amulet (you: missing)", tooltip)
+
+    def test_escape_svg_text(self):
+        escaped = _escape_svg_text('<warn ">&')
+        self.assertEqual(escaped, "&lt;warn &quot;&gt;&amp;")
 
 
 if __name__ == "__main__":
