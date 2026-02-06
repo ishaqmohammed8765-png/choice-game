@@ -2,8 +2,9 @@ from typing import Any, Dict, List
 
 from game.streamlit_compat import st
 
-from game.data import STORY_NODES
+from game.data import CHOICE_SIMPLIFICATION_REPORT, MAX_CHOICES_PER_NODE, STORY_NODES
 from game.logic import (
+    apply_node_auto_choices,
     check_requirements,
     execute_choice,
     get_available_choices,
@@ -73,6 +74,10 @@ def render_node() -> None:
         st.rerun()
         return
 
+    if apply_node_auto_choices(node_id, node):
+        st.rerun()
+        return
+
     st.markdown(f"### 🧭 {node['title']}")
     with st.container(border=True):
         st.write(node["text"])
@@ -93,6 +98,15 @@ def render_node() -> None:
 
     choices = node.get("choices", [])
     available_choices = get_available_choices(node)
+    if len(available_choices) > MAX_CHOICES_PER_NODE:
+        st.error(
+            f"Choice overflow detected: {node_id} shows {len(available_choices)} options (max {MAX_CHOICES_PER_NODE})."
+        )
+        if CHOICE_SIMPLIFICATION_REPORT:
+            with st.expander("Choice simplification report", expanded=False):
+                for entry in CHOICE_SIMPLIFICATION_REPORT:
+                    st.write(f"- {entry}")
+        raise RuntimeError(f"Choice overflow at {node_id}: {len(available_choices)} choices.")
 
     if not choices:
         st.success("The story has reached an ending. Restart to explore another path.")
