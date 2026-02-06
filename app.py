@@ -1,58 +1,58 @@
 from game.streamlit_compat import st
- 
+
 from game.data import init_story_nodes
 from game.logic import validate_story_nodes
 from game.state import ensure_session_state, start_game
 from game.ui import render_log, render_node, render_path_map, render_sidebar
- 
- 
+
+
 CLASS_INFO = {
     "Warrior": {
         "icon": "shield",
-        "desc": "A stalwart defender with unmatched fortitude. Higher HP and Strength let you force through obstacles and endure punishment others cannot.",
+        "desc": (
+            "A stalwart defender with unmatched fortitude. Higher HP and Strength let you "
+            "force through obstacles and endure punishment others cannot."
+        ),
         "stats": "HP 14 | Gold 8 | STR 4 | DEX 2",
         "color": "#b91c1c",
         "accent": "#fca5a5",
     },
     "Rogue": {
         "icon": "dagger",
-        "desc": "A cunning shadow who thrives on guile. Higher Dexterity and starting Lockpicks open paths closed to brute strength.",
+        "desc": (
+            "A cunning shadow who thrives on guile. Higher Dexterity and starting Lockpicks "
+            "open paths closed to brute strength."
+        ),
         "stats": "HP 10 | Gold 10 | STR 2 | DEX 4",
         "color": "#6d28d9",
         "accent": "#c4b5fd",
     },
     "Archer": {
         "icon": "bow",
-        "desc": "A keen-eyed tactician with balanced capabilities. Adaptable Strength and Dexterity let you flex between combat styles as the story demands.",
+        "desc": (
+            "A keen-eyed tactician with balanced capabilities. Adaptable Strength and "
+            "Dexterity let you flex between combat styles as the story demands."
+        ),
         "stats": "HP 12 | Gold 9 | STR 3 | DEX 3",
         "color": "#047857",
         "accent": "#6ee7b7",
     },
 }
- 
- 
+
+
 def inject_game_theme() -> None:
     """Apply lightweight visual styling so the app feels closer to a fantasy game HUD."""
-    """Apply professional fantasy game visual styling."""
     st.markdown(
         """
         <style>
-        /* === Import fantasy-style font === */
         @import url('https://fonts.googleapis.com/css2?family=Cinzel:wght@400;600;700&family=Crimson+Text:ital,wght@0,400;0,600;1,400&display=swap');
- 
-        /* === Global dark fantasy background === */
+
         .stApp {
-            background: radial-gradient(circle at top, #1f2a44 0%, #0f172a 50%, #020617 100%);
-            color: #e2e8f0;
             background: radial-gradient(ellipse at top, #1a1a2e 0%, #0f0f1a 40%, #050510 100%);
             color: #d4d4dc;
             font-family: 'Crimson Text', Georgia, serif;
         }
-        h1, h2, h3 {
-            color: #f8fafc !important;
-            letter-spacing: 0.02em;
- 
-        /* === Headings with fantasy font === */
+
         h1, h2, h3, h4 {
             font-family: 'Cinzel', 'Times New Roman', serif !important;
             color: #e8d5b0 !important;
@@ -60,10 +60,8 @@ def inject_game_theme() -> None:
             text-shadow: 0 1px 3px rgba(0,0,0,0.5);
         }
         h1 { color: #facc15 !important; }
- 
-        /* === Metric values (stats) with gold color === */
+
         div[data-testid="stMetricValue"] {
-            color: #facc15;
             color: #facc15 !important;
             font-family: 'Cinzel', serif !important;
             font-weight: 700;
@@ -76,14 +74,11 @@ def inject_game_theme() -> None:
             letter-spacing: 0.08em;
             font-size: 0.75rem !important;
         }
- 
-        /* === Choice buttons with fantasy styling === */
+
         div.stButton > button {
-            border-radius: 10px;
-            border: 1px solid #334155;
-            background: linear-gradient(180deg, #1e293b 0%, #0f172a 100%) !important;
-            border: 1px solid #4a3728 !important;
             border-radius: 6px !important;
+            border: 1px solid #4a3728 !important;
+            background: linear-gradient(180deg, #1e293b 0%, #0f172a 100%) !important;
             color: #e2d5c1 !important;
             font-family: 'Crimson Text', Georgia, serif !important;
             font-size: 1.05rem !important;
@@ -107,11 +102,8 @@ def inject_game_theme() -> None:
             border-color: #f59e0b !important;
             box-shadow: 0 0 16px rgba(217, 119, 6, 0.25) !important;
         }
- 
-        /* === Expanders with dark borders === */
+
         div[data-testid="stExpander"] {
-            border-color: #334155 !important;
-            background: rgba(15, 23, 42, 0.5);
             border-color: #2a2015 !important;
             background: rgba(10, 10, 20, 0.6) !important;
             border-radius: 8px !important;
@@ -120,13 +112,11 @@ def inject_game_theme() -> None:
             font-family: 'Cinzel', serif !important;
             color: #c9a54e !important;
         }
- 
-        /* === Container borders === */
+
         div[data-testid="stVerticalBlock"] > div[data-testid="element-container"] > div[data-testid="stContainer"] {
             border-color: #2a2015 !important;
         }
- 
-        /* === Radio buttons (tab-like navigation) === */
+
         div[data-testid="stRadio"] > div {
             gap: 0.5rem !important;
         }
@@ -134,8 +124,7 @@ def inject_game_theme() -> None:
             font-family: 'Cinzel', serif !important;
             letter-spacing: 0.03em;
         }
- 
-        /* === Sidebar fantasy styling === */
+
         section[data-testid="stSidebar"] {
             background: linear-gradient(180deg, #13111a 0%, #0a0910 100%) !important;
             border-right: 1px solid #2a2015 !important;
@@ -145,32 +134,27 @@ def inject_game_theme() -> None:
         section[data-testid="stSidebar"] h3 {
             color: #c9a54e !important;
         }
- 
-        /* === Text area styling === */
+
         textarea {
             background: #0a0a15 !important;
             border-color: #2a2015 !important;
             color: #c4b5a0 !important;
             font-family: monospace !important;
         }
- 
-        /* === Toggle styling === */
+
         div[data-testid="stCheckbox"] label span {
             font-family: 'Crimson Text', Georgia, serif !important;
         }
- 
-        /* === Warning/info/success boxes === */
+
         div[data-testid="stAlert"] {
             border-radius: 6px !important;
             font-family: 'Crimson Text', Georgia, serif !important;
         }
- 
-        /* === Divider === */
+
         hr {
             border-color: #2a2015 !important;
         }
- 
-        /* === Scrollbar styling === */
+
         ::-webkit-scrollbar {
             width: 8px;
         }
@@ -186,10 +170,11 @@ def inject_game_theme() -> None:
         }
         </style>
         """,
- 
- 
+        unsafe_allow_html=True,
+    )
+
+
 def render_game_header() -> None:
-    """Display title and subtitle in a game-like top panel."""
     """Display title and subtitle in an ornate fantasy top panel."""
     st.markdown(
         """
@@ -231,8 +216,8 @@ def render_game_header() -> None:
         """,
         unsafe_allow_html=True,
     )
- 
- 
+
+
 def _render_class_selection() -> None:
     """Render a fantasy-themed class selection screen."""
     st.markdown(
@@ -242,6 +227,7 @@ def _render_class_selection() -> None:
                     margin-bottom: 0.75rem;">
             <h2 style="margin:0;">⚔️ Oakrest: Deterministic Adventure</h2>
             <p style="margin:0.25rem 0 0 0; color:#cbd5e1;">No dice. No randomness. Every choice carries weight.</p>
+        </div>
         <div style="text-align: center; margin: 1rem 0 2rem 0;">
             <h1 style="
                 font-family: 'Cinzel', serif;
@@ -260,7 +246,7 @@ def _render_class_selection() -> None:
         """,
         unsafe_allow_html=True,
     )
- 
+
     col1, col2, col3 = st.columns(3)
     classes = [("Warrior", col1), ("Rogue", col2), ("Archer", col3)]
     for class_name, col in classes:
@@ -301,47 +287,41 @@ def _render_class_selection() -> None:
                 """,
                 unsafe_allow_html=True,
             )
-            if st.button(f"Begin as {class_name}", use_container_width=True, type="primary", key=f"class_{class_name}"):
+            if st.button(
+                f"Begin as {class_name}",
+                use_container_width=True,
+                type="primary",
+                key=f"class_{class_name}",
+            ):
                 start_game(class_name)
                 st.rerun()
- 
- 
+
+
+def _render_validation_warnings() -> None:
+    warnings = validate_story_nodes()
+    if not warnings:
+        return
+
+    with st.expander("Story validation warnings", expanded=False):
+        st.warning("Validation found issues with story data. Review before publishing.")
+        for warning in warnings:
+            st.write(f"- {warning}")
+
+
 def main() -> None:
     st.set_page_config(page_title="Oakrest: Deterministic Adventure", page_icon="🛡️", layout="centered")
-    st.set_page_config(page_title="Oakrest: Deterministic Adventure", page_icon="shield", layout="centered")
     inject_game_theme()
     init_story_nodes()
     ensure_session_state()
     render_game_header()
- 
+    _render_validation_warnings()
+
     if st.session_state.player_class is None:
-        st.title("Oakrest: Choose Your Class")
-        st.write(
-            "Oakrest needs a hero. Your class changes available paths and solutions throughout the story."
-        )
-        col1, col2, col3 = st.columns(3)
-        with col1:
-            if st.button("Warrior", use_container_width=True, type="primary"):
-                start_game("Warrior")
-                st.rerun()
-        with col2:
-            if st.button("Rogue", use_container_width=True, type="primary"):
-                start_game("Rogue")
-                st.rerun()
-        with col3:
-            if st.button("Archer", use_container_width=True, type="primary"):
-                start_game("Archer")
-                st.rerun()
- 
-        st.markdown("**Warrior:** higher HP and Strength, excels at brute-force paths.")
-        st.markdown("**Rogue:** higher Dexterity and stealth options, excels at subtle paths.")
-        st.markdown("**Archer:** balanced HP with adaptable Strength and Dexterity, excels at flexible tactics.")
         _render_class_selection()
         return
- 
+
     render_sidebar()
- 
-    st.markdown("### Adventure Console")
+
     st.markdown(
         """
         <div style="
@@ -359,7 +339,21 @@ def main() -> None:
         """,
         unsafe_allow_html=True,
     )
- 
+
     active_panel = st.radio(
         "View",
         ["Story", "Path Map"],
+        horizontal=True,
+        label_visibility="collapsed",
+    )
+
+    if active_panel == "Story":
+        render_node()
+        render_log()
+    else:
+        render_path_map()
+        render_log()
+
+
+if __name__ == "__main__":
+    main()
