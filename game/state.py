@@ -1,7 +1,7 @@
 import copy
 from typing import Any, Dict
 
-import streamlit as st
+from game.streamlit_compat import st
 
 from game.data import CLASS_TEMPLATES
 
