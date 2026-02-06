@@ -6,6 +6,8 @@ import streamlit as st
 
 
 TRAIT_KEYS = ["trust", "reputation", "alignment"]
+HIGH_COST_HP_LOSS = 3
+HIGH_COST_GOLD_LOSS = 5
 
 
 # -----------------------------
@@ -542,6 +544,26 @@ STORY_NODES: Dict[str, Dict[str, Any]] = {
         ),
         "choices": [
             {
+                "label": "Warrior finale: hold the collapsing arch and strike the Warden down",
+                "requirements": {"class": ["Warrior"], "min_strength": 4},
+                "effects": {
+                    "hp": -2,
+                    "set_flags": {"warden_defeated": True, "ending_quality": "best", "warrior_best_ending": True},
+                    "log": "You brace the collapsing arch with raw strength, then land the decisive blow.",
+                },
+                "next": "ending_best_warrior",
+            },
+            {
+                "label": "Rogue finale: slip through the ward lattice and sever the Emblem feed",
+                "requirements": {"class": ["Rogue"], "min_dexterity": 4, "items": ["Lockpicks"]},
+                "effects": {
+                    "hp": -1,
+                    "set_flags": {"warden_defeated": True, "ending_quality": "best", "rogue_best_ending": True},
+                    "log": "You ghost through the ward lattice and cut the Emblem conduit before it can surge.",
+                },
+                "next": "ending_best_rogue",
+            },
+            {
                 "label": "Overpower the Warden in direct combat (Strength 5)",
                 "requirements": {"min_strength": 5},
                 "effects": {
@@ -631,6 +653,24 @@ STORY_NODES: Dict[str, Dict[str, Any]] = {
         ),
         "choices": [],
     },
+    "ending_best_warrior": {
+        "id": "ending_best_warrior",
+        "title": "Best Ending — Iron Dawn of Oakrest",
+        "text": (
+            "Your warrior's stand saves both the Dawn Emblem and the trapped villagers. Word spreads that you held "
+            "a collapsing ruin with your bare strength, and Oakrest names you Shield of the Valley."
+        ),
+        "choices": [],
+    },
+    "ending_best_rogue": {
+        "id": "ending_best_rogue",
+        "title": "Best Ending — Silent Dawn of Oakrest",
+        "text": (
+            "Your rogue precision prevents the surge before anyone else even sees the danger. The Rangers record the "
+            "night as a flawless victory, and Oakrest entrusts you with its hidden defenses."
+        ),
+        "choices": [],
+    },
     "ending_mixed": {
         "id": "ending_mixed",
         "title": "Ending — Victory at a Cost",
@@ -677,6 +717,7 @@ def reset_game_state() -> None:
     st.session_state.event_log = []
     st.session_state.history = []
     st.session_state.save_blob = ""
+    st.session_state.pending_choice_confirmation = None
 
 
 def start_game(player_class: str) -> None:
@@ -698,6 +739,7 @@ def start_game(player_class: str) -> None:
     st.session_state.last_choice_feedback = []
     st.session_state.event_log = [f"You begin your journey as a {player_class}."]
     st.session_state.history = []
+    st.session_state.pending_choice_confirmation = None
 
 
 def add_log(message: str) -> None:
@@ -719,6 +761,7 @@ def snapshot_state() -> Dict[str, Any]:
         "decision_history": copy.deepcopy(st.session_state.decision_history),
         "last_choice_feedback": copy.deepcopy(st.session_state.last_choice_feedback),
         "event_log": copy.deepcopy(st.session_state.event_log),
+        "pending_choice_confirmation": copy.deepcopy(st.session_state.pending_choice_confirmation),
     }
 
 
@@ -734,6 +777,34 @@ def load_snapshot(snapshot: Dict[str, Any]) -> None:
     st.session_state.decision_history = snapshot.get("decision_history", [])
     st.session_state.last_choice_feedback = snapshot.get("last_choice_feedback", [])
     st.session_state.event_log = snapshot["event_log"]
+    st.session_state.pending_choice_confirmation = snapshot.get("pending_choice_confirmation")
+
+
+def execute_choice(node_id: str, label: str, choice: Dict[str, Any]) -> None:
+    """Apply a selected choice and transition to its next node."""
+    st.session_state.pending_choice_confirmation = None
+    st.session_state.history.append(snapshot_state())
+    st.session_state.decision_history.append({"node": node_id, "choice": label})
+    apply_effects(choice.get("effects"))
+    if choice.get("irreversible"):
+        st.session_state.history = []
+        add_log("This decision is irreversible. You cannot undo beyond this point.")
+    transition_to(choice["next"])
+
+
+def get_choice_warnings(choice: Dict[str, Any]) -> List[str]:
+    """Return warning messages for irreversible or high-cost choices."""
+    warnings: List[str] = []
+    effects = choice.get("effects", {})
+
+    if choice.get("irreversible"):
+        warnings.append("Irreversible choice: this clears undo history once confirmed.")
+    if effects.get("hp", 0) <= -HIGH_COST_HP_LOSS:
+        warnings.append(f"High HP cost: {effects['hp']} HP")
+    if effects.get("gold", 0) <= -HIGH_COST_GOLD_LOSS:
+        warnings.append(f"High gold cost: {effects['gold']} gold")
+
+    return warnings
 
 
 def apply_morality_flags(flags: Dict[str, Any]) -> None:
@@ -1004,16 +1075,40 @@ def render_node() -> None:
         return
 
     st.subheader("What do you do?")
+    pending = st.session_state.pending_choice_confirmation
+
+    if pending and pending.get("node") == node_id:
+        with st.container(border=True):
+            st.warning(f"Confirm choice: **{pending['label']}**")
+            for warning in pending.get("warnings", []):
+                st.write(f"- ⚠️ {warning}")
+            col_confirm, col_cancel = st.columns(2)
+            with col_confirm:
+                if st.button("Confirm risky choice", type="primary", key=f"confirm_{node_id}", use_container_width=True):
+                    choice_index = pending["choice_index"]
+                    if 0 <= choice_index < len(available_choices):
+                        selected = available_choices[choice_index]
+                        execute_choice(node_id, selected["label"], selected)
+                    st.rerun()
+            with col_cancel:
+                if st.button("Cancel", key=f"cancel_{node_id}", use_container_width=True):
+                    st.session_state.pending_choice_confirmation = None
+                    st.rerun()
+
     for idx, choice in enumerate(available_choices):
         label = choice["label"]
-        if st.button(label, key=f"choice_{node_id}_{idx}", use_container_width=True):
-            st.session_state.history.append(snapshot_state())
-            st.session_state.decision_history.append({"node": node_id, "choice": label})
-            apply_effects(choice.get("effects"))
-            if choice.get("irreversible"):
-                st.session_state.history = []
-                add_log("This decision is irreversible. You cannot undo beyond this point.")
-            transition_to(choice["next"])
+        warnings = get_choice_warnings(choice)
+        display_label = f"⚠️ {label}" if warnings else label
+        if st.button(display_label, key=f"choice_{node_id}_{idx}", use_container_width=True):
+            if warnings:
+                st.session_state.pending_choice_confirmation = {
+                    "node": node_id,
+                    "choice_index": idx,
+                    "label": label,
+                    "warnings": warnings,
+                }
+            else:
+                execute_choice(node_id, label, choice)
             st.rerun()
 
     if not available_choices:
@@ -1122,6 +1217,8 @@ def ensure_session_state() -> None:
         st.session_state.decision_history = []
     if "last_choice_feedback" not in st.session_state:
         st.session_state.last_choice_feedback = []
+    if "pending_choice_confirmation" not in st.session_state:
+        st.session_state.pending_choice_confirmation = None
 
 
 # -----------------------------
