@@ -2,7 +2,7 @@ from typing import Any, Dict, List
 
 from game.streamlit_compat import st
 
-from game.data import HIGH_COST_GOLD_LOSS, HIGH_COST_HP_LOSS, STAT_KEYS, STORY_NODES, TRAIT_KEYS
+from game.data import FACTION_KEYS, HIGH_COST_GOLD_LOSS, HIGH_COST_HP_LOSS, STAT_KEYS, STORY_NODES, TRAIT_KEYS
 from game.state import add_log, snapshot_state
 
 ALLOWED_REQUIREMENT_KEYS = {
@@ -24,6 +24,7 @@ ALLOWED_EFFECT_KEYS = {
     "set_flags",
     "trait_delta",
     "seen_events",
+    "faction_delta",
     "log",
 }
 
@@ -146,6 +147,7 @@ def apply_effects(effects: Dict[str, Any] | None) -> None:
     inventory = st.session_state.inventory
     flags = st.session_state.flags
     traits = st.session_state.traits
+    factions = st.session_state.factions
     feedback: List[str] = []
 
     for stat in STAT_KEYS:
@@ -177,6 +179,12 @@ def apply_effects(effects: Dict[str, Any] | None) -> None:
             traits[trait] += delta
             sign = "+" if delta >= 0 else ""
             feedback.append(f"Trait shift: {trait} {sign}{delta}")
+
+    for faction, delta in effects.get("faction_delta", {}).items():
+        if faction in factions:
+            factions[faction] += delta
+            sign = "+" if delta >= 0 else ""
+            feedback.append(f"Faction shift: {faction} {sign}{delta}")
 
     for event in effects.get("seen_events", []):
         if event not in st.session_state.seen_events:
@@ -238,6 +246,13 @@ def validate_story_nodes() -> List[str]:
                 if unknown_traits:
                     warnings.append(
                         f"Choice '{label}' in node '{node_id}' uses unknown traits in trait_delta: {', '.join(unknown_traits)}."
+                    )
+
+            if "faction_delta" in effects:
+                unknown_factions = sorted(set(effects["faction_delta"]) - set(FACTION_KEYS))
+                if unknown_factions:
+                    warnings.append(
+                        f"Choice '{label}' in node '{node_id}' uses unknown factions in faction_delta: {', '.join(unknown_factions)}."
                     )
 
             if "class" in requirements and not requirements["class"]:
