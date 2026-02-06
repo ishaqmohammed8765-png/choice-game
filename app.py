@@ -880,17 +880,16 @@ def render_node() -> None:
         return
 
     choices = node.get("choices", [])
+    available_choices = get_available_choices(node)
 
     if not choices:
         st.success("The story has reached an ending. Restart to explore another path.")
         return
 
     st.subheader("What do you do?")
-    any_enabled = False
-    for idx, choice in enumerate(choices):
+    for idx, choice in enumerate(available_choices):
         label = choice["label"]
-        is_valid, reason = check_requirements(choice.get("requirements"))
-        if st.button(label, key=f"choice_{node_id}_{idx}", use_container_width=True, disabled=not is_valid):
+        if st.button(label, key=f"choice_{node_id}_{idx}", use_container_width=True):
             st.session_state.history.append(snapshot_state())
             st.session_state.decision_history.append({"node": node_id, "choice": label})
             apply_effects(choice.get("effects"))
@@ -899,12 +898,8 @@ def render_node() -> None:
                 add_log("This decision is irreversible. You cannot undo beyond this point.")
             transition_to(choice["next"])
             st.rerun()
-        if not is_valid:
-            st.caption(f"🔒 {reason}")
-        else:
-            any_enabled = True
 
-    if not any_enabled:
+    if not available_choices:
         st.warning("No valid choices remain based on your current stats, items, and flags.")
         if st.button("Accept your fate", type="primary"):
             transition_to("death")
