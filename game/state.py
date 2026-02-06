@@ -13,6 +13,7 @@ INTRO_NODE_BY_CLASS = {
 
 def reset_game_state() -> None:
     """Reset all session state values to begin a fresh run."""
+    meta_state = st.session_state.get("meta_state", {"unlocked_items": [], "removed_nodes": []})
     st.session_state.player_class = None
     st.session_state.current_node = None
     st.session_state.stats = {"hp": 0, "gold": 0, "strength": 0, "dexterity": 0}
@@ -33,10 +34,12 @@ def reset_game_state() -> None:
     st.session_state.show_locked_choices = False
     st.session_state.visited_nodes = []
     st.session_state.visited_edges = []
+    st.session_state.meta_state = meta_state
 
 def start_game(player_class: str) -> None:
     """Initialize game state from class template and enter first node."""
     template = CLASS_TEMPLATES[player_class]
+    meta_state = st.session_state.get("meta_state", {"unlocked_items": [], "removed_nodes": []})
     st.session_state.player_class = player_class
     st.session_state.current_node = INTRO_NODE_BY_CLASS.get(player_class, "village_square")
     st.session_state.stats = {
@@ -46,6 +49,9 @@ def start_game(player_class: str) -> None:
         "dexterity": template["dexterity"],
     }
     st.session_state.inventory = copy.deepcopy(template["inventory"])
+    for item in meta_state.get("unlocked_items", []):
+        if item not in st.session_state.inventory:
+            st.session_state.inventory.append(item)
     st.session_state.flags = {"class": player_class}
     st.session_state.traits = {"trust": 0, "reputation": 0, "alignment": 0}
     st.session_state.seen_events = []
@@ -56,6 +62,8 @@ def start_game(player_class: str) -> None:
     st.session_state.auto_event_summary = []
     st.session_state.pending_auto_death = False
     st.session_state.event_log = [f"You begin your journey as a {player_class}."]
+    if meta_state.get("unlocked_items"):
+        add_log(f"Legacy items carried forward: {', '.join(meta_state['unlocked_items'])}.")
     st.session_state.history = []
     st.session_state.pending_choice_confirmation = None
     st.session_state.show_locked_choices = False
@@ -195,3 +203,5 @@ def ensure_session_state() -> None:
         st.session_state.visited_nodes = []
     if "visited_edges" not in st.session_state:
         st.session_state.visited_edges = []
+    if "meta_state" not in st.session_state:
+        st.session_state.meta_state = {"unlocked_items": [], "removed_nodes": []}

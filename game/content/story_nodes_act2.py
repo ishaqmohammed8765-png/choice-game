@@ -419,6 +419,18 @@ STORY_NODES_ACT2: Dict[str, Dict[str, Any]] = {
                 "next": "ember_ridge_vigil",
             },
             {
+                "label": "Use the Echo Locket and Bronze Seal to unseal a reliquary",
+                "requirements": {
+                    "items": ["Bronze Seal"],
+                    "meta_items": ["Echo Locket"],
+                    "meta_nodes_present": ["ember_reliquary"],
+                },
+                "effects": {
+                    "log": "The locket resonates with the seal's markings, revealing a sealed stair beneath the ridge.",
+                },
+                "next": "ember_reliquary",
+            },
+            {
                 "label": "Lead an allied breach (Dawnwarden or Ashfang veterans)",
                 "requirements": {"any_of": [{"flag_true": ["dawnwarden_allied"]}, {"flag_true": ["ashfang_allied"]}]},
                 "conditional_effects": [
@@ -499,6 +511,38 @@ STORY_NODES_ACT2: Dict[str, Dict[str, Any]] = {
                     "log": "You reject every banner and slip toward the ruin before anyone can stop you.",
                 },
                 "next": "lonely_approach",
+            },
+        ],
+    },
+    "ember_reliquary": {
+        "id": "ember_reliquary",
+        "title": "Ember Reliquary",
+        "text": (
+            "Below Ember Ridge, a reliquary chamber hums with old warding lines. The Bronze Seal presses into a socket, "
+            "and the Echo Locket vibrates in your palm as if the ruin itself remembers you."
+        ),
+        "dialogue": [
+            {"speaker": "Ancient Script", "line": "Legacy is a door that only opens twice."},
+            {"speaker": "Your Instinct", "line": "Take what the ridge hid, and carry its weight forward."},
+        ],
+        "requirements": {"meta_nodes_present": ["ember_reliquary"]},
+        "choices": [
+            {
+                "label": "Claim the Ember Sigil and bind it to your fate",
+                "requirements": {"meta_missing_items": ["Ember Sigil"]},
+                "effects": {
+                    "add_items": ["Ember Sigil"],
+                    "unlock_meta_items": ["Ember Sigil"],
+                    "remove_meta_nodes": ["ember_reliquary"],
+                    "set_flags": {"ember_sigil_claimed": True},
+                    "log": "Heat crawls across your skin as the sigil brands itself into your story.",
+                },
+                "next": "war_council_hub",
+            },
+            {
+                "label": "Back away from the reliquary while it sleeps",
+                "effects": {"log": "You let the warding lines dim and return to the war council."},
+                "next": "war_council_hub",
             },
         ],
     },

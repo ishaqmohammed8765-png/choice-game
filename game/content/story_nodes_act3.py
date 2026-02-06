@@ -236,6 +236,14 @@ STORY_NODES_ACT3: Dict[str, Dict[str, Any]] = {
                 "next": "inner_hall",
             },
             {
+                "label": "Let the Ember Sigil reveal a sealed dawn vault",
+                "requirements": {"meta_items": ["Ember Sigil"], "meta_nodes_present": ["dawn_vault"]},
+                "effects": {
+                    "log": "The sigil's heat exposes a hidden vault door etched with a rising sun.",
+                },
+                "next": "dawn_vault",
+            },
+            {
                 "label": "Use a torch to spot hidden markings and a safer route",
                 "requirements": {"items": ["Torch"], "flag_false": ["torch_route_found"]},
                 "effects": {
@@ -252,6 +260,38 @@ STORY_NODES_ACT3: Dict[str, Dict[str, Any]] = {
                     "log": "The charm's scent terrifies ember-hounds guarding the corridor, clearing your path.",
                 },
                 "next": "core_approach",
+            },
+        ],
+    },
+    "dawn_vault": {
+        "id": "dawn_vault",
+        "title": "Vault of the First Dawn",
+        "text": (
+            "The vault air is warm and still. A crystal reliquary holds a shard of the Dawn Emblem, pulsing with light "
+            "that does not burn. It feels like it has been waiting for the one who returns."
+        ),
+        "dialogue": [
+            {"speaker": "Vault Whisper", "line": "Carry the dawn, and the ruin will remember you."},
+            {"speaker": "Your Instinct", "line": "This is the weight of every replay you survived."},
+        ],
+        "requirements": {"meta_nodes_present": ["dawn_vault"]},
+        "choices": [
+            {
+                "label": "Take the Dawn Relic and seal the vault behind you",
+                "requirements": {"meta_missing_items": ["Dawn Relic"]},
+                "effects": {
+                    "add_items": ["Dawn Relic"],
+                    "unlock_meta_items": ["Dawn Relic"],
+                    "remove_meta_nodes": ["dawn_vault"],
+                    "set_flags": {"dawn_relic_claimed": True},
+                    "log": "Light pools around your hands as the relic binds itself to your future journeys.",
+                },
+                "next": "inner_hall",
+            },
+            {
+                "label": "Close the vault and return to the hall",
+                "effects": {"log": "You leave the dawn sealed and step back into the echoing hall."},
+                "next": "inner_hall",
             },
         ],
     },
@@ -353,6 +393,15 @@ STORY_NODES_ACT3: Dict[str, Dict[str, Any]] = {
             {"speaker": "Captain Serin", "line": "If any old enemies still breathe, they'll throw in with the Warden now."},
         ],
         "choices": [
+            {
+                "label": "Invoke the Dawn Relic to stabilize the Emblem (legacy path)",
+                "requirements": {"items": ["Dawn Relic"]},
+                "effects": {
+                    "set_flags": {"warden_defeated": True, "ending_quality": "best", "legacy_ending": True},
+                    "log": "The relic's light steadies the Emblem, unraveling the Warden's control without burning Oakrest.",
+                },
+                "next": "ending_legacy",
+            },
             {
                 "label": "Elite class finisher (Warrior, Rogue, or Archer)",
                 "requirements": {
@@ -568,6 +617,20 @@ STORY_NODES_ACT3: Dict[str, Dict[str, Any]] = {
         "dialogue": [
             {"speaker": "Elder Mara", "line": "Oakrest sees the sunrise because you stood when others broke."},
             {"speaker": "Signal Runner Tams", "line": "For once I'm carrying harvest counts instead of casualty lists."},
+        ],
+        "choices": [],
+    },
+    "ending_legacy": {
+        "id": "ending_legacy",
+        "title": "Ending — Legacy Dawn",
+        "text": (
+            "The Dawn Relic steadies the Emblem without destroying it. Oakrest inherits a calm sunrise and a relic "
+            "that answers only to your lineage of choices. The valley's leaders seal a new oath: no future warden "
+            "can wield the Emblem without the trust earned by those who carried it across more than one life."
+        ),
+        "dialogue": [
+            {"speaker": "Elder Mara", "line": "You've done what no single journey could. Oakrest will remember every return."},
+            {"speaker": "Signal Runner Tams", "line": "It's like the valley knows your footsteps now."},
         ],
         "choices": [],
     },

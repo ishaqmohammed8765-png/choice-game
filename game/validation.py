@@ -15,6 +15,9 @@ ALLOWED_REQUIREMENT_KEYS = {
     "missing_items",
     "flag_true",
     "flag_false",
+    "meta_items",
+    "meta_missing_items",
+    "meta_nodes_present",
 }
 
 ALLOWED_EFFECT_KEYS = {
@@ -26,6 +29,8 @@ ALLOWED_EFFECT_KEYS = {
     "seen_events",
     "faction_delta",
     "log",
+    "unlock_meta_items",
+    "remove_meta_nodes",
 }
 
 SYSTEM_FLAG_KEYS = {"class", "any_branch_completed"}
