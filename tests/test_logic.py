@@ -4,6 +4,7 @@ from game.logic import (
     apply_effects,
     check_requirements,
     get_available_choices,
+    resolve_choice_outcome,
     validate_story_nodes,
 )
 from game.state import ensure_session_state, reset_game_state
@@ -32,6 +33,10 @@ class LogicTests(unittest.TestCase):
         ok, reason = check_requirements({"min_dexterity": 3})
         self.assertFalse(ok)
         self.assertIn("dexterity", reason.lower())
+
+    def test_check_requirements_any_of(self):
+        ok, _ = check_requirements({"any_of": [{"min_strength": 99}, {"min_gold": 5}]})
+        self.assertTrue(ok)
 
     def test_apply_effects_updates_state(self):
         apply_effects(
@@ -68,6 +73,18 @@ class LogicTests(unittest.TestCase):
         }
         available = get_available_choices(node)
         self.assertEqual([c["label"] for c in available], ["valid"])
+
+    def test_resolve_choice_outcome_uses_conditional_next(self):
+        choice = {
+            "label": "Conditional jump",
+            "next": "ending_good",
+            "conditional_effects": [
+                {"requirements": {"min_strength": 4}, "effects": {"hp": -1}, "next": "ending_bad"}
+            ],
+        }
+        effects, next_node = resolve_choice_outcome(choice)
+        self.assertEqual(next_node, "ending_bad")
+        self.assertEqual(effects["hp"], -1)
 
     def test_validate_story_nodes_has_no_warnings(self):
         warnings = validate_story_nodes()

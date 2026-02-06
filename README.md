@@ -39,3 +39,31 @@ Players must feel the impact through:
 - New options appearing or disappearing
 
 Never say **"this mattered"** — show it.
+
+## Choice simplification (max 6 options)
+
+To prevent overloaded nodes, the story loader runs a simplification pass that:
+
+- Auto-applies marked, low-impact choices (ex: class intro beats, judgment barks).
+- Merges exact duplicates.
+- Prunes log-only choices that duplicate another option with the same destination.
+- Reports all changes in the debug panel and console report list.
+
+Tune the cap with `MAX_CHOICES_PER_NODE` in `game/data.py`. The UI will fail fast if any node exceeds the cap at runtime.
+
+### Before/after examples
+
+**Village Square (before):**
+- 9 options (class intro + multiple prep/buy choices + two departures).
+
+**Village Square (after):**
+- Class intro is auto-applied on first visit.
+- 6 remaining player-facing choices (prep/buy options plus the two departure paths).
+
+**War Council Hub (before):**
+- 11 options (judgment barks, multiple allied breaches, tactical routes).
+
+**War Council Hub (after):**
+- Judgment barks are auto-applied.
+- Allied breach and tactical advantage options are merged into clear, single entries.
+- 6 remaining player-facing choices.

@@ -5,6 +5,8 @@ TRAIT_KEYS = ("trust", "reputation", "alignment")
 FACTION_KEYS = ("oakrest", "dawnwardens", "ashfang", "bandits")
 HIGH_COST_HP_LOSS = 3
 HIGH_COST_GOLD_LOSS = 5
+MAX_CHOICES_PER_NODE = 6
+CHOICE_SIMPLIFICATION_REPORT: List[str] = []
 
 
 # -----------------------------
@@ -55,6 +57,7 @@ STORY_NODES: Dict[str, Dict[str, Any]] = {
             {
                 "label": "Warrior lead: drill the village militia at the palisade",
                 "requirements": {"class": ["Warrior"], "flag_false": ["class_intro_done"]},
+                "auto_apply": True,
                 "effects": {
                     "trait_delta": {"reputation": 2},
                     "set_flags": {"class_intro_done": True, "militia_drilled": True},
@@ -66,6 +69,7 @@ STORY_NODES: Dict[str, Dict[str, Any]] = {
             {
                 "label": "Rogue lead: map hidden alleys and whisper routes",
                 "requirements": {"class": ["Rogue"], "flag_false": ["class_intro_done"]},
+                "auto_apply": True,
                 "effects": {
                     "trait_delta": {"trust": 1, "reputation": 1},
                     "set_flags": {"class_intro_done": True, "shadow_routes_marked": True},
@@ -77,6 +81,7 @@ STORY_NODES: Dict[str, Dict[str, Any]] = {
             {
                 "label": "Archer lead: take the belltower and call scouting shots",
                 "requirements": {"class": ["Archer"], "flag_false": ["class_intro_done"]},
+                "auto_apply": True,
                 "effects": {
                     "add_items": ["Signal Arrows"],
                     "trait_delta": {"trust": 2},
@@ -184,7 +189,11 @@ STORY_NODES: Dict[str, Dict[str, Any]] = {
             },
             {
                 "label": "Spar with a retired legionnaire (+1 Strength, 5 gold)",
-                "requirements": {"min_gold": 5, "flag_false": ["camp_strength_training_done"]},
+                "requirements": {
+                    "class": ["Warrior"],
+                    "min_gold": 5,
+                    "flag_false": ["camp_strength_training_done"],
+                },
                 "effects": {
                     "gold": -5,
                     "strength": 1,
@@ -195,7 +204,11 @@ STORY_NODES: Dict[str, Dict[str, Any]] = {
             },
             {
                 "label": "Practice night marksmanship and quick draws (+1 Dexterity, 5 gold)",
-                "requirements": {"min_gold": 5, "flag_false": ["camp_dexterity_training_done"]},
+                "requirements": {
+                    "class": ["Rogue", "Archer"],
+                    "min_gold": 5,
+                    "flag_false": ["camp_dexterity_training_done"],
+                },
                 "effects": {
                     "gold": -5,
                     "dexterity": 1,
@@ -226,52 +239,67 @@ STORY_NODES: Dict[str, Dict[str, Any]] = {
         ],
         "choices": [
             {
-                "label": "Cross the ravine by hauling yourself on old beams (Strength 4)",
-                "requirements": {"min_strength": 4, "flag_false": ["branch_ravine_completed"]},
-                "effects": {
-                    "strength": 1,
-                    "log": "Your raw force carries you across the groaning beams and leaves your arms battle-hardened.",
-                    "set_flags": {"branch_ravine_completed": True},
+                "label": "Cross the ravine (Strength 4 or Rope)",
+                "requirements": {
+                    "any_of": [
+                        {"min_strength": 4, "flag_false": ["branch_ravine_completed"]},
+                        {"items": ["Rope"], "flag_false": ["branch_ravine_completed"]},
+                    ]
                 },
+                "conditional_effects": [
+                    {
+                        "requirements": {"min_strength": 4, "flag_false": ["branch_ravine_completed"]},
+                        "effects": {
+                            "strength": 1,
+                            "log": "Your raw force carries you across the groaning beams and leaves your arms battle-hardened.",
+                            "set_flags": {"branch_ravine_completed": True},
+                        },
+                    },
+                    {
+                        "requirements": {"items": ["Rope"], "flag_false": ["branch_ravine_completed"]},
+                        "effects": {
+                            "log": "You anchor your rope and swing across the ravine safely.",
+                            "set_flags": {"used_rope_crossing": True, "branch_ravine_completed": True},
+                        },
+                    },
+                ],
                 "next": "ravine_crossing",
             },
             {
-                "label": "Cross the ravine using your rope",
-                "requirements": {"items": ["Rope"], "flag_false": ["branch_ravine_completed"]},
-                "effects": {
-                    "log": "You anchor your rope and swing across the ravine safely.",
-                    "set_flags": {"used_rope_crossing": True, "branch_ravine_completed": True},
+                "label": "Approach the bandit camp (sneak, misdirect, or march)",
+                "requirements": {
+                    "any_of": [
+                        {"min_dexterity": 4, "flag_false": ["branch_bandit_completed"]},
+                        {"class": ["Rogue"], "flag_false": ["branch_bandit_completed"]},
+                        {"min_strength": 3, "flag_false": ["branch_bandit_completed"]},
+                    ]
                 },
-                "next": "ravine_crossing",
-            },
-            {
-                "label": "Sneak toward the bandit camp (Dexterity 4)",
-                "requirements": {"min_dexterity": 4, "flag_false": ["branch_bandit_completed"]},
-                "effects": {
-                    "dexterity": 1,
-                    "log": "You melt into the brush and approach unheard, sharpening your movement control.",
-                    "set_flags": {"branch_bandit_completed": True},
-                },
-                "next": "bandit_camp",
-            },
-            {
-                "label": "Rogue route: plant false tracks around the bandit sentries",
-                "requirements": {"class": ["Rogue"], "flag_false": ["branch_bandit_completed"]},
-                "effects": {
-                    "trait_delta": {"reputation": 1, "trust": 1},
-                    "set_flags": {"branch_bandit_completed": True, "false_tracks_set": True},
-                    "seen_events": ["rogue_false_tracks"],
-                    "log": "Your decoys split the camp patrols before you slip in to face Kest.",
-                },
-                "next": "bandit_camp",
-            },
-            {
-                "label": "March openly to the bandit camp (Strength 3)",
-                "requirements": {"min_strength": 3, "flag_false": ["branch_bandit_completed"]},
-                "effects": {
-                    "log": "Branches crack under your boots as you confront the raiders openly.",
-                    "set_flags": {"branch_bandit_completed": True},
-                },
+                "conditional_effects": [
+                    {
+                        "requirements": {"class": ["Rogue"], "flag_false": ["branch_bandit_completed"]},
+                        "effects": {
+                            "trait_delta": {"reputation": 1, "trust": 1},
+                            "set_flags": {"branch_bandit_completed": True, "false_tracks_set": True},
+                            "seen_events": ["rogue_false_tracks"],
+                            "log": "Your decoys split the camp patrols before you slip in to face Kest.",
+                        },
+                    },
+                    {
+                        "requirements": {"min_dexterity": 4, "flag_false": ["branch_bandit_completed"]},
+                        "effects": {
+                            "dexterity": 1,
+                            "log": "You melt into the brush and approach unheard, sharpening your movement control.",
+                            "set_flags": {"branch_bandit_completed": True},
+                        },
+                    },
+                    {
+                        "requirements": {"min_strength": 3, "flag_false": ["branch_bandit_completed"]},
+                        "effects": {
+                            "log": "Branches crack under your boots as you confront the raiders openly.",
+                            "set_flags": {"branch_bandit_completed": True},
+                        },
+                    },
+                ],
                 "next": "bandit_camp",
             },
             {
@@ -1032,6 +1060,7 @@ STORY_NODES: Dict[str, Dict[str, Any]] = {
             {
                 "label": "Hear Serin's judgment of your command",
                 "requirements": {"flag_true": ["mercy_reputation"]},
+                "auto_apply": True,
                 "effects": {
                     "trait_delta": {"trust": 1},
                     "set_flags": {"serin_endorsement": True},
@@ -1042,6 +1071,7 @@ STORY_NODES: Dict[str, Dict[str, Any]] = {
             {
                 "label": "Hear Drogath's judgment of your command",
                 "requirements": {"flag_true": ["cruel_reputation"]},
+                "auto_apply": True,
                 "effects": {
                     "trait_delta": {"reputation": 1, "trust": -1},
                     "set_flags": {"drogath_endorsement": True},
@@ -1050,24 +1080,27 @@ STORY_NODES: Dict[str, Dict[str, Any]] = {
                 "next": "war_council_hub",
             },
             {
-                "label": "Coordinate a lawful breach with Dawnwarden support",
-                "requirements": {"flag_true": ["dawnwarden_allied"]},
-                "effects": {
-                    "trait_delta": {"trust": 1, "reputation": 1},
-                    "set_flags": {"opened_cleanly": True, "hub_plan": "dawnwarden_breach"},
-                    "log": "Serin's rangers secure the perimeter and hand you a clear line to the gate.",
-                },
-                "next": "ruin_gate",
-            },
-            {
-                "label": "Lead an intimidation push with Ashfang veterans",
-                "requirements": {"flag_true": ["ashfang_allied"]},
-                "effects": {
-                    "hp": -1,
-                    "trait_delta": {"reputation": 2, "alignment": -1},
-                    "set_flags": {"cruel_reputation": True, "hub_plan": "ashfang_push"},
-                    "log": "Ashfang drums break enemy nerve, but the assault leaves casualties in its wake.",
-                },
+                "label": "Lead an allied breach (Dawnwarden or Ashfang veterans)",
+                "requirements": {"any_of": [{"flag_true": ["dawnwarden_allied"]}, {"flag_true": ["ashfang_allied"]}]},
+                "conditional_effects": [
+                    {
+                        "requirements": {"flag_true": ["dawnwarden_allied"]},
+                        "effects": {
+                            "trait_delta": {"trust": 1, "reputation": 1},
+                            "set_flags": {"opened_cleanly": True, "hub_plan": "dawnwarden_breach"},
+                            "log": "Serin's rangers secure the perimeter and hand you a clear line to the gate.",
+                        },
+                    },
+                    {
+                        "requirements": {"flag_true": ["ashfang_allied"]},
+                        "effects": {
+                            "hp": -1,
+                            "trait_delta": {"reputation": 2, "alignment": -1},
+                            "set_flags": {"cruel_reputation": True, "hub_plan": "ashfang_push"},
+                            "log": "Ashfang drums break enemy nerve, but the assault leaves casualties in its wake.",
+                        },
+                    },
+                ],
                 "next": "ruin_gate",
             },
             {
@@ -1091,23 +1124,31 @@ STORY_NODES: Dict[str, Dict[str, Any]] = {
                 "next": "ruin_gate",
             },
             {
-                "label": "Exploit the flooded causeway route opened by your victory",
-                "requirements": {"flag_true": ["tidebound_knight_defeated"]},
-                "effects": {
-                    "set_flags": {"hub_plan": "causeway_route", "opened_cleanly": True},
-                    "trait_delta": {"trust": 1, "reputation": 1},
-                    "log": "Scouts surge down the drained causeway, giving your assault a disciplined flank.",
+                "label": "Exploit your battlefield advantage (causeway or supply denial)",
+                "requirements": {
+                    "any_of": [
+                        {"flag_true": ["tidebound_knight_defeated"]},
+                        {"flag_true": ["ruin_supply_line_cut"], "min_strength": 4},
+                    ]
                 },
-                "next": "ruin_gate",
-            },
-            {
-                "label": "Launch while enemy supplies are crippled",
-                "requirements": {"flag_true": ["ruin_supply_line_cut"], "min_strength": 4},
-                "effects": {
-                    "set_flags": {"hub_plan": "supply_denial"},
-                    "trait_delta": {"reputation": 1},
-                    "log": "With bomb stocks and river routes cut, enemy resistance at the gate falters.",
-                },
+                "conditional_effects": [
+                    {
+                        "requirements": {"flag_true": ["tidebound_knight_defeated"]},
+                        "effects": {
+                            "set_flags": {"hub_plan": "causeway_route", "opened_cleanly": True},
+                            "trait_delta": {"trust": 1, "reputation": 1},
+                            "log": "Scouts surge down the drained causeway, giving your assault a disciplined flank.",
+                        },
+                    },
+                    {
+                        "requirements": {"flag_true": ["ruin_supply_line_cut"], "min_strength": 4},
+                        "effects": {
+                            "set_flags": {"hub_plan": "supply_denial"},
+                            "trait_delta": {"reputation": 1},
+                            "log": "With bomb stocks and river routes cut, enemy resistance at the gate falters.",
+                        },
+                    },
+                ],
                 "next": "ruin_gate",
             },
             {
@@ -1239,18 +1280,34 @@ STORY_NODES: Dict[str, Dict[str, Any]] = {
                 "next": "inner_hall",
             },
             {
-                "label": "Pick the ancient lock (Rogue only)",
-                "requirements": {"items": ["Lockpicks"]},
-                "effects": {
-                    "log": "Your lockpicks whisper through tumblers untouched for centuries.",
-                    "set_flags": {"opened_cleanly": True},
+                "label": "Use tools or credentials to open the gate",
+                "requirements": {
+                    "any_of": [
+                        {"items": ["Lockpicks"]},
+                        {"items": ["Bronze Seal"]},
+                        {"items": ["Warden Token"]},
+                    ]
                 },
-                "next": "inner_hall",
-            },
-            {
-                "label": "Use the bronze seal to open the warded door",
-                "requirements": {"items": ["Bronze Seal"]},
-                "effects": {"log": "The bronze seal clicks into place and the door parts silently."},
+                "conditional_effects": [
+                    {
+                        "requirements": {"items": ["Warden Token"]},
+                        "effects": {
+                            "log": "Ruin sentries mistake you for sanctioned enforcers and open the outer lock.",
+                            "set_flags": {"opened_cleanly": True},
+                        },
+                    },
+                    {
+                        "requirements": {"items": ["Bronze Seal"]},
+                        "effects": {"log": "The bronze seal clicks into place and the door parts silently."},
+                    },
+                    {
+                        "requirements": {"items": ["Lockpicks"]},
+                        "effects": {
+                            "log": "Your lockpicks whisper through tumblers untouched for centuries.",
+                            "set_flags": {"opened_cleanly": True},
+                        },
+                    },
+                ],
                 "next": "inner_hall",
             },
             {
@@ -1268,15 +1325,6 @@ STORY_NODES: Dict[str, Dict[str, Any]] = {
                 "label": "Threaten the lookouts into opening a side gate (ruthless path)",
                 "requirements": {"flag_true": ["cruel_reputation"]},
                 "effects": {"hp": -1, "log": "They obey, but one lookout stabs you before fleeing."},
-                "next": "inner_hall",
-            },
-            {
-                "label": "Present the Warden Token and demand lawful entry",
-                "requirements": {"items": ["Warden Token"]},
-                "effects": {
-                    "log": "Ruin sentries mistake you for sanctioned enforcers and open the outer lock.",
-                    "set_flags": {"opened_cleanly": True},
-                },
                 "next": "inner_hall",
             },
         ],
@@ -1436,34 +1484,44 @@ STORY_NODES: Dict[str, Dict[str, Any]] = {
         ],
         "choices": [
             {
-                "label": "Warrior finale: hold the collapsing arch and strike the Warden down",
-                "requirements": {"class": ["Warrior"], "min_strength": 5},
-                "effects": {
-                    "hp": -2,
-                    "set_flags": {"warden_defeated": True, "ending_quality": "best", "warrior_best_ending": True},
-                    "log": "You brace the collapsing arch with raw strength, then land the decisive blow.",
+                "label": "Elite class finisher (Warrior, Rogue, or Archer)",
+                "requirements": {
+                    "any_of": [
+                        {"class": ["Warrior"], "min_strength": 5},
+                        {"class": ["Rogue"], "min_dexterity": 5, "items": ["Lockpicks"]},
+                        {"class": ["Archer"], "min_dexterity": 5, "items": ["Signal Arrows"]},
+                    ]
                 },
+                "conditional_effects": [
+                    {
+                        "requirements": {"class": ["Warrior"], "min_strength": 5},
+                        "effects": {
+                            "hp": -2,
+                            "set_flags": {"warden_defeated": True, "ending_quality": "best", "warrior_best_ending": True},
+                            "log": "You brace the collapsing arch with raw strength, then land the decisive blow.",
+                        },
+                        "next": "ending_best_warrior",
+                    },
+                    {
+                        "requirements": {"class": ["Rogue"], "min_dexterity": 5, "items": ["Lockpicks"]},
+                        "effects": {
+                            "hp": -1,
+                            "set_flags": {"warden_defeated": True, "ending_quality": "best", "rogue_best_ending": True},
+                            "log": "You ghost through the ward lattice and cut the Emblem conduit before it can surge.",
+                        },
+                        "next": "ending_best_rogue",
+                    },
+                    {
+                        "requirements": {"class": ["Archer"], "min_dexterity": 5, "items": ["Signal Arrows"]},
+                        "effects": {
+                            "hp": -1,
+                            "set_flags": {"warden_defeated": True, "ending_quality": "best", "archer_best_ending": True},
+                            "log": "Your impossible shot severs the vent lattice and collapses the Emblem surge before detonation.",
+                        },
+                        "next": "ending_best_archer",
+                    },
+                ],
                 "next": "ending_best_warrior",
-            },
-            {
-                "label": "Rogue finale: slip through the ward lattice and sever the Emblem feed",
-                "requirements": {"class": ["Rogue"], "min_dexterity": 5, "items": ["Lockpicks"]},
-                "effects": {
-                    "hp": -1,
-                    "set_flags": {"warden_defeated": True, "ending_quality": "best", "rogue_best_ending": True},
-                    "log": "You ghost through the ward lattice and cut the Emblem conduit before it can surge.",
-                },
-                "next": "ending_best_rogue",
-            },
-            {
-                "label": "Archer finale: thread a signal arrow through the overload vents",
-                "requirements": {"class": ["Archer"], "min_dexterity": 5, "items": ["Signal Arrows"]},
-                "effects": {
-                    "hp": -1,
-                    "set_flags": {"warden_defeated": True, "ending_quality": "best", "archer_best_ending": True},
-                    "log": "Your impossible shot severs the vent lattice and collapses the Emblem surge before detonation.",
-                },
-                "next": "ending_best_archer",
             },
             {
                 "label": "Overpower the Warden in direct combat (Strength 6)",
@@ -1857,72 +1915,78 @@ STORY_NODES: Dict[str, Dict[str, Any]] = {
 }
 
 
-def _rebalance_choice_nodes(max_choices: int = 4) -> None:
-    """Split overloaded nodes into paged subnodes so each node exposes at most max_choices."""
-    if max_choices < 3:
-        return
+def _simplify_choice_nodes(max_choices: int = MAX_CHOICES_PER_NODE) -> None:
+    """Simplify choices at load time by pruning redundant options and staging auto-applied outcomes."""
+    def freeze(value: Any) -> Any:
+        if isinstance(value, dict):
+            return tuple((key, freeze(value[key])) for key in sorted(value))
+        if isinstance(value, list):
+            return tuple(freeze(item) for item in value)
+        return value
 
-    original_nodes = [
-        node_id
-        for node_id in STORY_NODES
-        if "__choices_page_" not in node_id and len(STORY_NODES[node_id].get("choices", [])) > max_choices
-    ]
+    def is_low_impact(choice: Dict[str, Any]) -> bool:
+        effects = choice.get("effects", {})
+        return set(effects.keys()) <= {"log"} and not choice.get("conditional_effects")
 
-    first_page_size = max_choices - 1
-    page_size = max_choices - 2
-    for node_id in original_nodes:
-        node = STORY_NODES[node_id]
+    for node_id, node in STORY_NODES.items():
         choices = list(node.get("choices", []))
-        if len(choices) <= max_choices:
-            continue
+        auto_choices: List[Dict[str, Any]] = []
+        simplified: List[Dict[str, Any]] = []
 
-        first_page_choices = choices[:first_page_size]
-        remaining = choices[first_page_size:]
-        page_node_ids: List[str] = []
-
-        for page_index in range(0, len(remaining), page_size):
-            page_num = (page_index // page_size) + 2
-            page_id = f"{node_id}__choices_page_{page_num}"
-            page_node_ids.append(page_id)
-            chunk = remaining[page_index : page_index + page_size]
-
-            page_node = {
-                "id": page_id,
-                "title": f"{node['title']} — Choice Page {page_num}",
-                "text": "You move to the next choice page before deciding your next move.",
-                "dialogue": [],
-                "choices": chunk,
-            }
-
-            if page_index + page_size < len(remaining):
-                next_page_num = page_num + 1
-                page_node["choices"].append(
-                    {
-                        "label": "Go to the next choice page",
-                        "effects": {"log": "You move to the next page of choices."},
-                        "next": f"{node_id}__choices_page_{next_page_num}",
-                    }
+        for choice in choices:
+            if choice.get("auto_apply"):
+                auto_choice = dict(choice)
+                auto_choice.pop("auto_apply", None)
+                auto_choices.append(auto_choice)
+                CHOICE_SIMPLIFICATION_REPORT.append(
+                    f"{node_id}: auto-applied '{choice.get('label', 'unnamed choice')}'"
                 )
+                continue
+            simplified.append(choice)
 
-            page_node["choices"].append(
-                {
-                    "label": "Return to the previous options",
-                    "effects": {"log": "You return to the previous set of options."},
-                    "next": node_id if page_num == 2 else f"{node_id}__choices_page_{page_num - 1}",
-                }
+        if auto_choices:
+            node["auto_choices"] = auto_choices
+
+        deduped: List[Dict[str, Any]] = []
+        seen: Dict[Any, Dict[str, Any]] = {}
+        for choice in simplified:
+            key = (
+                choice.get("next"),
+                freeze(choice.get("requirements", {})),
+                freeze(choice.get("effects", {})),
+                freeze(choice.get("conditional_effects", [])),
             )
-            STORY_NODES[page_id] = page_node
+            if key in seen:
+                CHOICE_SIMPLIFICATION_REPORT.append(
+                    f"{node_id}: merged duplicate choice '{choice.get('label', 'unnamed choice')}'"
+                )
+                continue
+            seen[key] = choice
+            deduped.append(choice)
 
-        node["choices"] = first_page_choices + [
-            {
-                "label": "Go to the next choice page",
-                "effects": {"log": "You move to a new node with the remaining choices."},
-                "next": page_node_ids[0],
-            }
-        ]
+        pruned: List[Dict[str, Any]] = []
+        meaningful_map = {
+            (freeze(choice.get("requirements", {})), choice.get("next"))
+            for choice in deduped
+            if not is_low_impact(choice)
+        }
+        for choice in deduped:
+            key = (freeze(choice.get("requirements", {})), choice.get("next"))
+            if is_low_impact(choice) and key in meaningful_map:
+                CHOICE_SIMPLIFICATION_REPORT.append(
+                    f"{node_id}: pruned low-impact choice '{choice.get('label', 'unnamed choice')}'"
+                )
+                continue
+            pruned.append(choice)
+
+        node["choices"] = pruned
+        if len(pruned) > max_choices:
+            CHOICE_SIMPLIFICATION_REPORT.append(
+                f"{node_id}: still has {len(pruned)} choices after simplification (max {max_choices})"
+            )
 
 
-_rebalance_choice_nodes()
+_simplify_choice_nodes()
 
 
 # -----------------------------

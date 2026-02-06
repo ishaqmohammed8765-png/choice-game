@@ -7,6 +7,7 @@ from game.state import add_log, snapshot_state
 
 ALLOWED_REQUIREMENT_KEYS = {
     "class",
+    "any_of",
     "min_hp",
     "min_gold",
     "min_strength",
@@ -56,7 +57,8 @@ def execute_choice(node_id: str, label: str, choice: Dict[str, Any]) -> None:
     st.session_state.pending_choice_confirmation = None
     st.session_state.history.append(snapshot_state())
     st.session_state.decision_history.append({"node": node_id, "choice": label})
-    apply_effects(choice.get("effects"))
+    resolved_effects, resolved_next = resolve_choice_outcome(choice)
+    apply_effects(resolved_effects)
     if choice.get("irreversible"):
         st.session_state.history = []
         add_log("This decision is irreversible. You cannot undo beyond this point.")
@@ -66,13 +68,13 @@ def execute_choice(node_id: str, label: str, choice: Dict[str, Any]) -> None:
         add_log("This choice proves fatal. Your journey ends immediately.")
         return
 
-    transition_to(choice["next"])
+    transition_to(resolved_next)
 
 
 def get_choice_warnings(choice: Dict[str, Any]) -> List[str]:
     """Return warning messages for irreversible or high-cost choices."""
     warnings: List[str] = []
-    effects = choice.get("effects", {})
+    effects, _ = resolve_choice_outcome(choice)
 
     if choice.get("irreversible"):
         warnings.append("Irreversible choice: this clears undo history once confirmed.")
@@ -101,6 +103,13 @@ def check_requirements(requirements: Dict[str, Any] | None) -> tuple[bool, str]:
     """Validate requirements against current player state."""
     if not requirements:
         return True, ""
+
+    if "any_of" in requirements:
+        for option in requirements["any_of"]:
+            ok, _ = check_requirements(option)
+            if ok:
+                return True, ""
+        return False, "Requires one of multiple conditions"
 
     stats = st.session_state.stats
     inventory = st.session_state.inventory
@@ -136,6 +145,62 @@ def check_requirements(requirements: Dict[str, Any] | None) -> tuple[bool, str]:
             return False, f"Requires flag: {flag}=False"
 
     return True, ""
+
+
+def resolve_choice_outcome(choice: Dict[str, Any]) -> tuple[Dict[str, Any], str]:
+    """Return the effective effects and next node for a choice based on current state."""
+    effects = dict(choice.get("effects", {}))
+    next_node = choice.get("next")
+
+    for variant in choice.get("conditional_effects", []):
+        ok, _ = check_requirements(variant.get("requirements"))
+        if not ok:
+            continue
+        effects = merge_effects(effects, variant.get("effects", {}))
+        if variant.get("next"):
+            next_node = variant["next"]
+        break
+
+    return effects, next_node
+
+
+def merge_effects(base: Dict[str, Any], incoming: Dict[str, Any]) -> Dict[str, Any]:
+    """Merge two effect dicts deterministically, favoring incoming for log text."""
+    merged = dict(base)
+    for stat in STAT_KEYS:
+        if stat in incoming:
+            merged[stat] = merged.get(stat, 0) + incoming[stat]
+
+    if incoming.get("add_items"):
+        merged.setdefault("add_items", [])
+        merged["add_items"] = list({*merged["add_items"], *incoming["add_items"]})
+
+    if incoming.get("remove_items"):
+        merged.setdefault("remove_items", [])
+        merged["remove_items"] = list({*merged["remove_items"], *incoming["remove_items"]})
+
+    if incoming.get("set_flags"):
+        merged.setdefault("set_flags", {})
+        merged["set_flags"].update(incoming["set_flags"])
+
+    if incoming.get("trait_delta"):
+        merged.setdefault("trait_delta", {})
+        for trait, delta in incoming["trait_delta"].items():
+            merged["trait_delta"][trait] = merged["trait_delta"].get(trait, 0) + delta
+
+    if incoming.get("faction_delta"):
+        merged.setdefault("faction_delta", {})
+        for faction, delta in incoming["faction_delta"].items():
+            merged["faction_delta"][faction] = merged["faction_delta"].get(faction, 0) + delta
+
+    if incoming.get("seen_events"):
+        merged.setdefault("seen_events", [])
+        merged["seen_events"] = list({*merged["seen_events"], *incoming["seen_events"]})
+
+    if "log" in incoming:
+        merged["log"] = incoming["log"]
+
+    return merged
 
 
 def apply_effects(effects: Dict[str, Any] | None) -> None:
@@ -228,6 +293,13 @@ def validate_story_nodes() -> List[str]:
                 warnings.append(f"Choice '{label}' in node '{node_id}' points to missing node '{next_id}'.")
 
             requirements = choice.get("requirements", {})
+            if "any_of" in requirements:
+                for option in requirements["any_of"]:
+                    unknown_any_of = sorted(set(option) - ALLOWED_REQUIREMENT_KEYS)
+                    if unknown_any_of:
+                        warnings.append(
+                            f"Choice '{label}' in node '{node_id}' has unknown requirement keys: {', '.join(unknown_any_of)}."
+                        )
             unknown_req_keys = sorted(set(requirements) - ALLOWED_REQUIREMENT_KEYS)
             if unknown_req_keys:
                 warnings.append(
@@ -255,6 +327,31 @@ def validate_story_nodes() -> List[str]:
                         f"Choice '{label}' in node '{node_id}' uses unknown factions in faction_delta: {', '.join(unknown_factions)}."
                     )
 
+            for variant in choice.get("conditional_effects", []):
+                variant_req = variant.get("requirements", {})
+                if "any_of" in variant_req:
+                    for option in variant_req["any_of"]:
+                        unknown_any_of = sorted(set(option) - ALLOWED_REQUIREMENT_KEYS)
+                        if unknown_any_of:
+                            warnings.append(
+                                f"Choice '{label}' in node '{node_id}' has unknown requirement keys: {', '.join(unknown_any_of)}."
+                            )
+                unknown_variant_req = sorted(set(variant_req) - ALLOWED_REQUIREMENT_KEYS)
+                if unknown_variant_req:
+                    warnings.append(
+                        f"Choice '{label}' in node '{node_id}' has unknown requirement keys: {', '.join(unknown_variant_req)}."
+                    )
+                variant_effects = variant.get("effects", {})
+                unknown_variant_effects = sorted(set(variant_effects) - ALLOWED_EFFECT_KEYS)
+                if unknown_variant_effects:
+                    warnings.append(
+                        f"Choice '{label}' in node '{node_id}' has unknown effect keys: {', '.join(unknown_variant_effects)}."
+                    )
+                if "next" in variant and variant["next"] not in STORY_NODES:
+                    warnings.append(
+                        f"Choice '{label}' in node '{node_id}' has conditional next pointing to missing node '{variant['next']}'."
+                    )
+
             if "class" in requirements and not requirements["class"]:
                 warnings.append(f"Choice '{label}' in node '{node_id}' has empty class requirements list.")
 
@@ -269,3 +366,20 @@ def get_available_choices(node: Dict[str, Any]) -> List[Dict[str, Any]]:
         if is_valid:
             valid_choices.append(choice)
     return valid_choices
+
+
+def apply_node_auto_choices(node_id: str, node: Dict[str, Any]) -> bool:
+    """Apply auto-choices once when entering a node. Returns True if any auto choice applied."""
+    applied_any = False
+    for idx, choice in enumerate(node.get("auto_choices", [])):
+        marker = f"auto_choice::{node_id}::{idx}"
+        if st.session_state.flags.get(marker):
+            continue
+        is_valid, _ = check_requirements(choice.get("requirements"))
+        if not is_valid:
+            continue
+        effects, _ = resolve_choice_outcome(choice)
+        apply_effects(effects)
+        st.session_state.flags[marker] = True
+        applied_any = True
+    return applied_any

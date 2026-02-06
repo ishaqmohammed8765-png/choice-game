@@ -2,7 +2,7 @@ from typing import Any, Dict, List
 
 from game.streamlit_compat import st
 
-from game.data import STAT_KEYS, STORY_NODES
+from game.data import CHOICE_SIMPLIFICATION_REPORT, STAT_KEYS, STORY_NODES
 
 
 def format_requirements(requirements: Dict[str, Any] | None) -> str:
@@ -11,6 +11,11 @@ def format_requirements(requirements: Dict[str, Any] | None) -> str:
         return "None"
 
     details: List[str] = []
+    if "any_of" in requirements:
+        option_lines = []
+        for option in requirements["any_of"]:
+            option_lines.append(format_requirements(option))
+        details.append("Any of: " + " / ".join(option_lines))
     if "class" in requirements:
         details.append(f"Class: {', '.join(requirements['class'])}")
     if "min_hp" in requirements:
@@ -72,6 +77,10 @@ def render_choice_outcomes_tab() -> None:
     """Render a separate tab that lists every node choice and its outcomes."""
     st.subheader("Debug & Choice Outcomes")
     st.caption("Inspect branching logic quickly from one place.")
+    if CHOICE_SIMPLIFICATION_REPORT:
+        with st.expander("Choice simplification report", expanded=False):
+            for entry in CHOICE_SIMPLIFICATION_REPORT:
+                st.write(f"- {entry}")
     show_full_spoilers = st.toggle(
         "Show spoiler-heavy routing details",
         key="spoiler_debug_mode",
