@@ -206,16 +206,17 @@ STORY_NODES: Dict[str, Dict[str, Any]] = {
                     "add_items": ["Warden Token"],
                     "log": "Serin clasps your forearm and grants a Warden Token recognized by local patrols.",
                 },
-                "next": "ruin_gate",
+                "next": "war_council_hub",
             },
             {
                 "label": "Ask Archivist Pell for enemy intelligence",
                 "effects": {
+                    "trait_delta": {"trust": 1},
                     "set_flags": {"knows_enemy_roster": True},
                     "seen_events": ["learned_enemy_roster"],
                     "log": "Pell briefs you on raider ranks: Ember Troopers, Bonebreakers, and the Emblem Warden.",
                 },
-                "next": "ruin_gate",
+                "next": "war_council_hub",
             },
             {
                 "label": "Challenge Nima in a spar to earn respect (Strength 4)",
@@ -225,7 +226,7 @@ STORY_NODES: Dict[str, Dict[str, Any]] = {
                     "set_flags": {"earned_dawnwarden_respect": True},
                     "log": "After a brutal spar, Nima salutes you and marks a safer approach to the gate.",
                 },
-                "next": "ruin_gate",
+                "next": "war_council_hub",
             },
         ],
     },
@@ -247,12 +248,12 @@ STORY_NODES: Dict[str, Dict[str, Any]] = {
                 "effects": {
                     "hp": -1,
                     "gold": 4,
-                    "trait_delta": {"reputation": 2, "alignment": -1},
+                    "trait_delta": {"trust": -1, "reputation": 2, "alignment": -1},
                     "set_flags": {"ashfang_allied": True, "cruel_reputation": True},
                     "seen_events": ["ashfang_convoy_slain"],
                     "log": "You and Drogath tear through raiders and scatter ember-hounds into the dark.",
                 },
-                "next": "ruin_gate",
+                "next": "war_council_hub",
             },
             {
                 "label": "Duel scout Yara in silence and win by finesse (Dexterity 4)",
@@ -263,16 +264,16 @@ STORY_NODES: Dict[str, Dict[str, Any]] = {
                     "add_items": ["Ashfang Charm"],
                     "log": "Yara yields and gifts you an Ashfang Charm that frightens lesser convoy beasts.",
                 },
-                "next": "ruin_gate",
+                "next": "war_council_hub",
             },
             {
                 "label": "Refuse bloodshed and guide prisoners to safety",
                 "effects": {
-                    "trait_delta": {"trust": 1, "alignment": 2},
+                    "trait_delta": {"trust": 2, "reputation": 1, "alignment": 2},
                     "set_flags": {"rescued_prisoners": True, "mercy_reputation": True},
                     "log": "You escort shaken prisoners away while the warband fights on without you.",
                 },
-                "next": "ruin_gate",
+                "next": "war_council_hub",
             },
         ],
     },
@@ -291,13 +292,22 @@ STORY_NODES: Dict[str, Dict[str, Any]] = {
             {
                 "label": "Leap and cling to the far ledge (Strength 4)",
                 "requirements": {"min_strength": 4},
-                "effects": {"log": "You catch the ledge with iron grip and pull yourself up."},
-                "next": "ruin_gate",
+                "effects": {
+                    "trait_delta": {"reputation": 1},
+                    "set_flags": {"ravine_crossed_clean": True},
+                    "log": "You catch the ledge with iron grip and pull yourself up.",
+                },
+                "next": "war_council_hub",
             },
             {
                 "label": "Take the fall and climb out",
-                "effects": {"hp": -3, "log": "You hit the ravine floor hard before scrambling back up."},
-                "next": "ruin_gate",
+                "effects": {
+                    "hp": -3,
+                    "trait_delta": {"trust": -1},
+                    "set_flags": {"ravine_injured": True},
+                    "log": "You hit the ravine floor hard before scrambling back up.",
+                },
+                "next": "war_council_hub",
             },
         ],
     },
@@ -346,7 +356,7 @@ STORY_NODES: Dict[str, Dict[str, Any]] = {
                     "set_flags": {"abandoned_scout": True, "cruel_reputation": True, "morality": "ruthless"},
                     "log": "You pocket the bribe and leave the scout to fate.",
                 },
-                "next": "ruin_gate",
+                "next": "war_council_hub",
             },
         ],
     },
@@ -373,7 +383,7 @@ STORY_NODES: Dict[str, Dict[str, Any]] = {
                     "set_flags": {"has_seal": True},
                     "log": "You take the bronze seal; old markings glow faintly.",
                 },
-                "next": "ruin_gate",
+                "next": "war_council_hub",
             },
             {
                 "label": "Ask the scout for a hidden approach to the raiders",
@@ -388,8 +398,11 @@ STORY_NODES: Dict[str, Dict[str, Any]] = {
             },
             {
                 "label": "Refuse and hurry to the ruin",
-                "effects": {"log": "You refuse the token and press onward."},
-                "next": "ruin_gate",
+                "effects": {
+                    "trait_delta": {"reputation": -1},
+                    "log": "You refuse the token and press onward.",
+                },
+                "next": "war_council_hub",
             },
         ],
     },
@@ -415,7 +428,7 @@ STORY_NODES: Dict[str, Dict[str, Any]] = {
                     "log": "Stone crashes behind you. The route is sealed forever, along with anyone still below.",
                 },
                 "irreversible": True,
-                "next": "ruin_gate",
+                "next": "war_council_hub",
             },
             {
                 "label": "Leave the supports intact and continue quietly",
@@ -423,6 +436,71 @@ STORY_NODES: Dict[str, Dict[str, Any]] = {
                     "trait_delta": {"trust": 1, "alignment": 1},
                     "seen_events": ["tunnel_spared"],
                     "log": "You preserve the passage, choosing caution over collateral damage.",
+                },
+                "next": "war_council_hub",
+            },
+        ],
+    },
+    "war_council_hub": {
+        "id": "war_council_hub",
+        "title": "War Council at Ember Ridge",
+        "text": (
+            "Trails from every skirmish converge at Ember Ridge, where scouts trade reports before the final push. "
+            "Allies and rivals judge you by what you've done: spared lives, won respect, or ruled through fear. "
+            "Your next move decides who stands with you at the ruin gate."
+        ),
+        "dialogue": [
+            {"speaker": "Signal Runner", "line": "Everyone's waiting on your call. Pick a plan and own the cost."},
+            {"speaker": "Your Instinct", "line": "This is the hinge point. Past choices are now present weapons."},
+        ],
+        "choices": [
+            {
+                "label": "Coordinate a lawful breach with Dawnwarden support",
+                "requirements": {"flag_true": ["dawnwarden_allied"]},
+                "effects": {
+                    "trait_delta": {"trust": 1, "reputation": 1},
+                    "set_flags": {"opened_cleanly": True, "hub_plan": "dawnwarden_breach"},
+                    "log": "Serin's rangers secure the perimeter and hand you a clear line to the gate.",
+                },
+                "next": "ruin_gate",
+            },
+            {
+                "label": "Lead an intimidation push with Ashfang veterans",
+                "requirements": {"flag_true": ["ashfang_allied"]},
+                "effects": {
+                    "hp": -1,
+                    "trait_delta": {"reputation": 2, "alignment": -1},
+                    "set_flags": {"cruel_reputation": True, "hub_plan": "ashfang_push"},
+                    "log": "Ashfang drums break enemy nerve, but the assault leaves casualties in its wake.",
+                },
+                "next": "ruin_gate",
+            },
+            {
+                "label": "Use scout intelligence to approach through the hidden tunnel",
+                "requirements": {"flag_true": ["knows_hidden_route"]},
+                "effects": {
+                    "trait_delta": {"trust": 1},
+                    "set_flags": {"hub_plan": "hidden_route"},
+                    "log": "You trust the scout's map and steer the strike team underground.",
+                },
+                "next": "hidden_tunnel",
+            },
+            {
+                "label": "Rally survivors you rescued to create a diversion",
+                "requirements": {"flag_true": ["rescued_prisoners"]},
+                "effects": {
+                    "trait_delta": {"trust": 1, "alignment": 1},
+                    "set_flags": {"mercy_reputation": True, "hub_plan": "survivor_diversion"},
+                    "log": "Freed prisoners light decoy fires, drawing raiders off your intended route.",
+                },
+                "next": "ruin_gate",
+            },
+            {
+                "label": "Advance alone before reinforcements arrive",
+                "effects": {
+                    "trait_delta": {"reputation": -1},
+                    "set_flags": {"hub_plan": "solo_push"},
+                    "log": "You reject every banner and move on the ruin with only your own judgment.",
                 },
                 "next": "ruin_gate",
             },
