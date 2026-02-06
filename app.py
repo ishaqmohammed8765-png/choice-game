@@ -120,7 +120,8 @@ STORY_NODES: Dict[str, Dict[str, Any]] = {
         "title": "Forest Crossroad",
         "text": (
             "Pines crowd around a fork in the path. To the left: a narrow ravine crossing. "
-            "To the right: a campfire glow where bandits argue over spoils."
+            "To the right: a campfire glow where bandits argue over spoils. Ahead, war drums echo from "
+            "the Ashfang warband while silver lanterns of the Dawnwardens flicker between trees."
         ),
         "choices": [
             {
@@ -148,6 +149,104 @@ STORY_NODES: Dict[str, Dict[str, Any]] = {
                 "label": "March openly to the bandit camp",
                 "effects": {"log": "Branches crack under your boots as you confront the raiders openly."},
                 "next": "bandit_camp",
+            },
+            {
+                "label": "Follow the Dawnwarden lanterns to their hidden outpost",
+                "effects": {
+                    "set_flags": {"met_dawnwardens": True},
+                    "log": "You leave the road and follow coded lantern flashes to a concealed Dawnwarden camp.",
+                },
+                "next": "dawnwarden_outpost",
+            },
+            {
+                "label": "Track the Ashfang war drums into the bramble valley",
+                "effects": {
+                    "set_flags": {"met_ashfang": True},
+                    "log": "You shadow the drumming trail toward an Ashfang hunting column.",
+                },
+                "next": "ashfang_hunt",
+            },
+        ],
+    },
+    "dawnwarden_outpost": {
+        "id": "dawnwarden_outpost",
+        "title": "Dawnwarden Outpost",
+        "text": (
+            "Captain Serin of the Dawnwardens studies maps pinned by dagger points. Archivist Pell and "
+            "shield-bearer Nima argue about whether to assault the ruin now or save trapped villagers first."
+        ),
+        "choices": [
+            {
+                "label": "Swear temporary alliance with Captain Serin",
+                "effects": {
+                    "trait_delta": {"trust": 2, "reputation": 1, "alignment": 1},
+                    "set_flags": {"dawnwarden_allied": True, "mercy_reputation": True},
+                    "add_items": ["Warden Token"],
+                    "log": "Serin clasps your forearm and grants a Warden Token recognized by local patrols.",
+                },
+                "next": "ruin_gate",
+            },
+            {
+                "label": "Ask Archivist Pell for enemy intelligence",
+                "effects": {
+                    "set_flags": {"knows_enemy_roster": True},
+                    "seen_events": ["learned_enemy_roster"],
+                    "log": "Pell briefs you on cult ranks: Ember Acolytes, Bonecallers, and the Sigil Warden.",
+                },
+                "next": "ruin_gate",
+            },
+            {
+                "label": "Challenge Nima in a spar to earn respect (Strength 4)",
+                "requirements": {"min_strength": 4},
+                "effects": {
+                    "trait_delta": {"reputation": 2},
+                    "set_flags": {"earned_dawnwarden_respect": True},
+                    "log": "After a brutal spar, Nima salutes you and marks a safer approach to the gate.",
+                },
+                "next": "ruin_gate",
+            },
+        ],
+    },
+    "ashfang_hunt": {
+        "id": "ashfang_hunt",
+        "title": "Ashfang Hunting Grounds",
+        "text": (
+            "Warchief Drogath leads the Ashfangs with scout Yara and beast-handler Korr. They stalk a cult "
+            "convoy guarded by ember-hounds and masked zealots. The warband invites you to prove yourself."
+        ),
+        "choices": [
+            {
+                "label": "Join the ambush and crush the convoy (Strength 4)",
+                "requirements": {"min_strength": 4},
+                "effects": {
+                    "hp": -1,
+                    "gold": 4,
+                    "trait_delta": {"reputation": 2, "alignment": -1},
+                    "set_flags": {"ashfang_allied": True, "cruel_reputation": True},
+                    "seen_events": ["ashfang_convoy_slain"],
+                    "log": "You and Drogath tear through zealots and scatter ember-hounds into the dark.",
+                },
+                "next": "ruin_gate",
+            },
+            {
+                "label": "Duel scout Yara in silence and win by finesse (Dexterity 4)",
+                "requirements": {"min_dexterity": 4},
+                "effects": {
+                    "trait_delta": {"trust": 1, "reputation": 1},
+                    "set_flags": {"ashfang_respect": True},
+                    "add_items": ["Ashfang Charm"],
+                    "log": "Yara yields and gifts you an Ashfang Charm that frightens lesser cult beasts.",
+                },
+                "next": "ruin_gate",
+            },
+            {
+                "label": "Refuse bloodshed and guide prisoners to safety",
+                "effects": {
+                    "trait_delta": {"trust": 1, "alignment": 2},
+                    "set_flags": {"rescued_prisoners": True, "mercy_reputation": True},
+                    "log": "You escort shaken prisoners away while the warband fights on without you.",
+                },
+                "next": "ruin_gate",
             },
         ],
     },
@@ -333,6 +432,15 @@ STORY_NODES: Dict[str, Dict[str, Any]] = {
                 "effects": {"hp": -1, "log": "They obey, but one acolyte stabs you before fleeing."},
                 "next": "inner_hall",
             },
+            {
+                "label": "Present the Warden Token and demand lawful entry",
+                "requirements": {"items": ["Warden Token"]},
+                "effects": {
+                    "log": "Cult sentries mistake you for sanctioned enforcers and open the outer lock.",
+                    "set_flags": {"opened_cleanly": True},
+                },
+                "next": "inner_hall",
+            },
         ],
     },
     "inner_hall": {
@@ -373,6 +481,15 @@ STORY_NODES: Dict[str, Dict[str, Any]] = {
                 "effects": {
                     "set_flags": {"torch_route_found": True},
                     "log": "Torchlight reveals chalk marks pointing to a concealed side passage.",
+                },
+                "next": "ritual_approach",
+            },
+            {
+                "label": "Use the Ashfang Charm to scatter ember-hounds",
+                "requirements": {"items": ["Ashfang Charm"]},
+                "effects": {
+                    "set_flags": {"hounds_scattered": True},
+                    "log": "The charm's scent terrifies ember-hounds guarding the corridor, clearing your path.",
                 },
                 "next": "ritual_approach",
             },
