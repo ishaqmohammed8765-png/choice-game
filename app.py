@@ -4,13 +4,59 @@ from game.logic import validate_story_nodes
 from game.state import ensure_session_state, start_game
 from game.ui import render_choice_outcomes_tab, render_log, render_node, render_sidebar
 
+
+def inject_game_theme() -> None:
+    """Apply lightweight visual styling so the app feels closer to a fantasy game HUD."""
+    st.markdown(
+        """
+        <style>
+        .stApp {
+            background: radial-gradient(circle at top, #1f2a44 0%, #0f172a 50%, #020617 100%);
+            color: #e2e8f0;
+        }
+        h1, h2, h3 {
+            color: #f8fafc !important;
+            letter-spacing: 0.02em;
+        }
+        div[data-testid="stMetricValue"] {
+            color: #facc15;
+        }
+        div.stButton > button {
+            border-radius: 10px;
+            border: 1px solid #334155;
+        }
+        div[data-testid="stExpander"] {
+            border-color: #334155 !important;
+            background: rgba(15, 23, 42, 0.5);
+        }
+        </style>
+        """,
+        unsafe_allow_html=True,
+    )
+
+
+def render_game_header() -> None:
+    """Display title and subtitle in a game-like top panel."""
+    st.markdown(
+        """
+        <div style="padding: 0.8rem 1rem; border: 1px solid #334155; border-radius: 12px;
+                    background: linear-gradient(90deg, rgba(30,41,59,.75), rgba(51,65,85,.45));
+                    margin-bottom: 0.75rem;">
+            <h2 style="margin:0;">⚔️ Oakrest: Deterministic Adventure</h2>
+            <p style="margin:0.25rem 0 0 0; color:#cbd5e1;">No dice. No randomness. Every choice carries weight.</p>
+        </div>
+        """,
+        unsafe_allow_html=True,
+    )
+
 def main() -> None:
     st.set_page_config(page_title="Oakrest: Deterministic Adventure", page_icon="🛡️", layout="centered")
+    inject_game_theme()
     ensure_session_state()
     for warning in validate_story_nodes():
         st.warning(f"Story validator: {warning}")
 
-    st.caption("A deterministic D&D-style choice adventure. No dice, only decisions.")
+    render_game_header()
 
     if st.session_state.player_class is None:
         st.title("Oakrest: Choose Your Class")

@@ -177,8 +177,15 @@ def render_node() -> None:
         st.rerun()
         return
 
-    st.title(node["title"])
-    st.write(node["text"])
+    st.markdown(f"### 🧭 {node['title']}")
+    with st.container(border=True):
+        st.write(node["text"])
+
+    if st.session_state.last_choice_feedback:
+        with st.container(border=True):
+            st.caption("Outcome recap")
+            for line in st.session_state.last_choice_feedback[:5]:
+                st.write(f"- {line}")
 
     dialogue = node.get("dialogue", [])
     if dialogue:
@@ -209,7 +216,7 @@ def render_node() -> None:
                         st.write(f"- {detail}")
         return
 
-    st.subheader("What do you do?")
+    st.subheader("🎮 What do you do?")
     st.toggle("Show locked choices", key="show_locked_choices", help="Toggle off to hide paths you cannot currently take.")
     pending = st.session_state.pending_choice_confirmation
 
