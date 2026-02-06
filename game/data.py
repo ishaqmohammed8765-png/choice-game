@@ -674,7 +674,7 @@ STORY_NODES: Dict[str, Dict[str, Any]] = {
         ),
         "dialogue": [
             {"speaker": "Ruin Warden", "line": "Witness the old kingdom's dawn reborn in fire."},
-            {"speaker": "You", "line": "No more villages for your altar. It ends here."},
+            {"speaker": "You", "line": "No more villages burn because of you. It ends here."},
         ],
         "choices": [
             {
