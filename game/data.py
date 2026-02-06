@@ -184,11 +184,11 @@ STORY_NODES: Dict[str, Dict[str, Any]] = {
                 "next": "ashfang_hunt",
             },
             {
-                "label": "Investigate the flooded shrine road",
+                "label": "Investigate the flooded causeway road",
                 "effects": {
-                    "log": "You cut through marsh fog toward a drowned shrine where bells still toll underwater.",
+                    "log": "You cut through marsh fog toward a drowned causeway where bells still toll underwater.",
                 },
-                "next": "flooded_shrine_approach",
+                "next": "flooded_causeway_approach",
             },
             {
                 "label": "Take the ash-choked mill trail",
@@ -455,15 +455,15 @@ STORY_NODES: Dict[str, Dict[str, Any]] = {
             },
         ],
     },
-    "flooded_shrine_approach": {
-        "id": "flooded_shrine_approach",
-        "title": "Flooded Shrine Causeway",
+    "flooded_causeway_approach": {
+        "id": "flooded_causeway_approach",
+        "title": "Flooded Causeway",
         "text": (
             "Half-sunken statues line a cracked causeway while cold water swirls around your knees. "
             "Villagers whisper that a tidebound knight has guarded this ruin road for years, drowning scouts and raiders alike."
         ),
         "dialogue": [
-            {"speaker": "Broken Shrine Bell", "line": "Dong... dong... each toll comes from beneath the water."},
+            {"speaker": "Broken Causeway Bell", "line": "Dong... dong... each toll comes from beneath the water."},
             {"speaker": "Your Instinct", "line": "This path could save Oakrest's flank, if you can survive what's guarding it."},
         ],
         "choices": [
@@ -472,19 +472,19 @@ STORY_NODES: Dict[str, Dict[str, Any]] = {
                 "requirements": {"min_strength": 4},
                 "effects": {
                     "hp": -1,
-                    "set_flags": {"shrine_reached": True},
-                    "log": "You muscle through the current and reach the shrine terrace bruised but steady.",
+                    "set_flags": {"causeway_reached": True},
+                    "log": "You muscle through the current and reach the upper terrace bruised but steady.",
                 },
-                "next": "shrine_depths",
+                "next": "causeway_depths",
             },
             {
                 "label": "Anchor rope lines between statues",
                 "requirements": {"items": ["Rope"]},
                 "effects": {
-                    "set_flags": {"shrine_reached": True},
+                    "set_flags": {"causeway_reached": True},
                     "log": "Your rope rig keeps you above the undertow as you cross safely.",
                 },
-                "next": "shrine_depths",
+                "next": "causeway_depths",
             },
             {
                 "label": "Backtrack and rejoin the war council",
@@ -493,9 +493,9 @@ STORY_NODES: Dict[str, Dict[str, Any]] = {
             },
         ],
     },
-    "shrine_depths": {
-        "id": "shrine_depths",
-        "title": "Undershrine Vault",
+    "causeway_depths": {
+        "id": "causeway_depths",
+        "title": "Undervault Chamber",
         "text": (
             "Below the altar, a rusted floodgate seals a vault of old warding engines. You can reactivate the pumps "
             "to drain the road and expose a safer assault lane, but something massive is chained in the dark water."
@@ -566,7 +566,7 @@ STORY_NODES: Dict[str, Dict[str, Any]] = {
                 "next": "war_council_hub",
             },
             {
-                "label": "Retreat with injuries and abandon the shrine",
+                "label": "Retreat with injuries and abandon the flooded route",
                 "effects": {"hp": -2, "log": "You escape the vault battered, leaving the guardian undefeated."},
                 "next": "war_council_hub",
             },
@@ -740,10 +740,10 @@ STORY_NODES: Dict[str, Dict[str, Any]] = {
                 "next": "ruin_gate",
             },
             {
-                "label": "Exploit the flooded shrine route opened by your victory",
+                "label": "Exploit the flooded causeway route opened by your victory",
                 "requirements": {"flag_true": ["tidebound_knight_defeated"]},
                 "effects": {
-                    "set_flags": {"hub_plan": "shrine_route", "opened_cleanly": True},
+                    "set_flags": {"hub_plan": "causeway_route", "opened_cleanly": True},
                     "trait_delta": {"trust": 1, "reputation": 1},
                     "log": "Scouts surge down the drained causeway, giving your assault a disciplined flank.",
                 },
