@@ -630,6 +630,7 @@ STORY_NODES: Dict[str, Dict[str, Any]] = {
             },
             {
                 "label": "Desperate assault without an advantage",
+                "instant_death": True,
                 "effects": {
                     "hp": -8,
                     "set_flags": {"warden_defeated": False, "ending_quality": "bad"},
@@ -684,6 +685,128 @@ STORY_NODES: Dict[str, Dict[str, Any]] = {
             "Oakrest is abandoned by sunrise, and your tale becomes a warning."
         ),
         "choices": [],
+    },
+    "failure_injured": {
+        "id": "failure_injured",
+        "title": "Setback — Broken but Breathing",
+        "text": (
+            "You wake in a healer's lean-to, battered and stitched. You lost momentum, but Oakrest still needs you. "
+            "Choose how you re-enter the conflict."
+        ),
+        "choices": [
+            {
+                "label": "Recover slowly and return to the village supply line",
+                "effects": {
+                    "hp": 4,
+                    "set_flags": {"recovered_from_injury": True},
+                    "log": "Days pass in recovery. You return with fewer scars than rage.",
+                },
+                "next": "camp_shop",
+            },
+            {
+                "label": "Push through the pain and rejoin the assault route",
+                "effects": {
+                    "hp": 2,
+                    "trait_delta": {"reputation": 1},
+                    "log": "You grit your teeth, bind your wounds, and march back toward the ruin.",
+                },
+                "next": "ruin_gate",
+            },
+        ],
+    },
+    "failure_captured": {
+        "id": "failure_captured",
+        "title": "Setback — Captured Alive",
+        "text": (
+            "Raiders drag you into a holding pit beneath the ruin. A loose grate and distracted guard offer "
+            "dangerous chances to break free."
+        ),
+        "choices": [
+            {
+                "label": "Bribe a guard with hidden coin",
+                "requirements": {"min_gold": 3},
+                "effects": {
+                    "gold": -3,
+                    "set_flags": {"escaped_capture": True},
+                    "log": "A guard pockets your coin and leaves the latch unfastened.",
+                },
+                "next": "inner_hall",
+            },
+            {
+                "label": "Force the grate and climb out",
+                "requirements": {"min_strength": 3},
+                "effects": {
+                    "hp": -1,
+                    "set_flags": {"escaped_capture": True},
+                    "log": "You rip the rusted grate loose and climb out bloodied but free.",
+                },
+                "next": "forest_crossroad",
+            },
+            {
+                "label": "Feign loyalty to buy time",
+                "instant_death": True,
+                "effects": {
+                    "set_flags": {"marked_suspect": True},
+                    "trait_delta": {"alignment": -1},
+                    "log": "Your deception is exposed, and the pit execution is immediate.",
+                },
+                "next": "core_approach",
+            },
+        ],
+    },
+    "failure_traitor": {
+        "id": "failure_traitor",
+        "title": "Setback — Branded a Traitor",
+        "text": (
+            "Rumors paint you as a double-agent. Allies hesitate, gates close, and every decision now carries social risk."
+        ),
+        "choices": [
+            {
+                "label": "Seek Captain Serin and prove your intent",
+                "effects": {
+                    "trait_delta": {"trust": 2, "reputation": 1},
+                    "set_flags": {"traitor_brand_cleared": True, "mercy_reputation": True},
+                    "log": "You expose forged reports and Serin restores your standing.",
+                },
+                "next": "dawnwarden_outpost",
+            },
+            {
+                "label": "Work alone through hidden routes",
+                "effects": {
+                    "trait_delta": {"trust": -1, "reputation": 1},
+                    "set_flags": {"traitor_brand_hardened": True, "knows_hidden_route": True},
+                    "log": "You stop waiting for forgiveness and carve your own path forward.",
+                },
+                "next": "hidden_tunnel",
+            },
+        ],
+    },
+    "failure_resource_loss": {
+        "id": "failure_resource_loss",
+        "title": "Setback — Supplies Lost",
+        "text": (
+            "A failed push costs you supplies and support. You can regroup for stability or gamble on a faster return."
+        ),
+        "choices": [
+            {
+                "label": "Regroup at the roadside camp",
+                "effects": {
+                    "gold": -2,
+                    "hp": 2,
+                    "log": "You rebuild your kit from scraps and favors at the campfire.",
+                },
+                "next": "camp_shop",
+            },
+            {
+                "label": "Call in old favors from the Ashfang scouts",
+                "effects": {
+                    "trait_delta": {"trust": 1},
+                    "set_flags": {"met_ashfang": True},
+                    "log": "Ashfang outriders throw you a line and point you back to the hunt.",
+                },
+                "next": "ashfang_hunt",
+            },
+        ],
     },
     "death": {
         "id": "death",
