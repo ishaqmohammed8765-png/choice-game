@@ -35,7 +35,7 @@ STORY_NODES: Dict[str, Dict[str, Any]] = {
         "title": "Oakrest Village Square",
         "text": (
             "The bell of Oakrest tolls at dusk. Villagers whisper of raiders, a cursed ruin in the forest, "
-            "and a missing relic known as the Dawn Sigil. Elder Mara asks you to track the threat before nightfall."
+            "and a missing relic known as the Dawn Emblem. Elder Mara asks you to track the threat before nightfall."
         ),
         "choices": [
             {
@@ -121,7 +121,7 @@ STORY_NODES: Dict[str, Dict[str, Any]] = {
         "text": (
             "Pines crowd around a fork in the path. To the left: a narrow ravine crossing. "
             "To the right: a campfire glow where bandits argue over spoils. Ahead, war drums echo from "
-            "the Ashfang warband while silver lanterns of the Dawnwardens flicker between trees."
+            "the Ashfang warband while silver lanterns of the Rangers flicker between trees."
         ),
         "choices": [
             {
@@ -151,10 +151,10 @@ STORY_NODES: Dict[str, Dict[str, Any]] = {
                 "next": "bandit_camp",
             },
             {
-                "label": "Follow the Dawnwarden lanterns to their hidden outpost",
+                "label": "Follow the ranger lanterns to their hidden outpost",
                 "effects": {
                     "set_flags": {"met_dawnwardens": True},
-                    "log": "You leave the road and follow coded lantern flashes to a concealed Dawnwarden camp.",
+                    "log": "You leave the road and follow coded lantern flashes to a concealed ranger camp.",
                 },
                 "next": "dawnwarden_outpost",
             },
@@ -170,9 +170,9 @@ STORY_NODES: Dict[str, Dict[str, Any]] = {
     },
     "dawnwarden_outpost": {
         "id": "dawnwarden_outpost",
-        "title": "Dawnwarden Outpost",
+        "title": "Ranger Outpost",
         "text": (
-            "Captain Serin of the Dawnwardens studies maps pinned by dagger points. Archivist Pell and "
+            "Captain Serin of the Rangers studies maps pinned by dagger points. Archivist Pell and "
             "shield-bearer Nima argue about whether to assault the ruin now or save trapped villagers first."
         ),
         "choices": [
@@ -191,7 +191,7 @@ STORY_NODES: Dict[str, Dict[str, Any]] = {
                 "effects": {
                     "set_flags": {"knows_enemy_roster": True},
                     "seen_events": ["learned_enemy_roster"],
-                    "log": "Pell briefs you on cult ranks: Ember Acolytes, Bonecallers, and the Sigil Warden.",
+                    "log": "Pell briefs you on raider ranks: Ember Troopers, Bonebreakers, and the Emblem Warden.",
                 },
                 "next": "ruin_gate",
             },
@@ -211,7 +211,7 @@ STORY_NODES: Dict[str, Dict[str, Any]] = {
         "id": "ashfang_hunt",
         "title": "Ashfang Hunting Grounds",
         "text": (
-            "Warchief Drogath leads the Ashfangs with scout Yara and beast-handler Korr. They stalk a cult "
+            "Warchief Drogath leads the Ashfangs with scout Yara and beast-handler Korr. They stalk a raider "
             "convoy guarded by ember-hounds and masked zealots. The warband invites you to prove yourself."
         ),
         "choices": [
@@ -224,7 +224,7 @@ STORY_NODES: Dict[str, Dict[str, Any]] = {
                     "trait_delta": {"reputation": 2, "alignment": -1},
                     "set_flags": {"ashfang_allied": True, "cruel_reputation": True},
                     "seen_events": ["ashfang_convoy_slain"],
-                    "log": "You and Drogath tear through zealots and scatter ember-hounds into the dark.",
+                    "log": "You and Drogath tear through raiders and scatter ember-hounds into the dark.",
                 },
                 "next": "ruin_gate",
             },
@@ -235,7 +235,7 @@ STORY_NODES: Dict[str, Dict[str, Any]] = {
                     "trait_delta": {"trust": 1, "reputation": 1},
                     "set_flags": {"ashfang_respect": True},
                     "add_items": ["Ashfang Charm"],
-                    "log": "Yara yields and gifts you an Ashfang Charm that frightens lesser cult beasts.",
+                    "log": "Yara yields and gifts you an Ashfang Charm that frightens lesser convoy beasts.",
                 },
                 "next": "ruin_gate",
             },
@@ -320,7 +320,7 @@ STORY_NODES: Dict[str, Dict[str, Any]] = {
         "id": "scout_report",
         "title": "Scout's Warning",
         "text": (
-            "The rescued scout gasps that cultists have occupied the ancient ruin and prepare a blood ritual. "
+            "The rescued scout gasps that raiders have occupied the ancient ruin and are arming an incendiary device. "
             "He offers a bronze ruin seal that can open hidden doors."
         ),
         "requirements": {"flag_true": ["rescued_scout"]},
@@ -333,12 +333,12 @@ STORY_NODES: Dict[str, Dict[str, Any]] = {
                     "trait_delta": {"trust": 1},
                     "seen_events": ["accepted_seal"],
                     "set_flags": {"has_seal": True},
-                    "log": "You take the bronze seal; old runes glow faintly.",
+                    "log": "You take the bronze seal; old markings glow faintly.",
                 },
                 "next": "ruin_gate",
             },
             {
-                "label": "Ask the scout for a hidden approach to the cult",
+                "label": "Ask the scout for a hidden approach to the raiders",
                 "requirements": {"flag_true": ["rescued_scout"]},
                 "effects": {
                     "trait_delta": {"trust": 1, "reputation": 1},
@@ -360,12 +360,12 @@ STORY_NODES: Dict[str, Dict[str, Any]] = {
         "title": "Forgotten Service Tunnel",
         "text": (
             "The scout's map leads you into a collapsed maintenance tunnel beneath the ruin. "
-            "You can sabotage the ritual braziers now, but doing so will trap anyone still inside."
+            "You can sabotage the signal braziers now, but doing so will trap anyone still inside."
         ),
         "requirements": {"flag_true": ["knows_hidden_route"]},
         "choices": [
             {
-                "label": "Collapse the tunnel supports to deny cult reinforcements (irreversible)",
+                "label": "Collapse the tunnel supports to deny raider reinforcements (irreversible)",
                 "effects": {
                     "trait_delta": {"trust": -1, "reputation": 2, "alignment": -1},
                     "seen_events": ["tunnel_collapsed"],
@@ -391,7 +391,7 @@ STORY_NODES: Dict[str, Dict[str, Any]] = {
         "title": "Ancient Ruin Gate",
         "text": (
             "Cracked stone doors loom beneath ivy and carved suns. A collapsed side breach leads downward, "
-            "while the main gate bears a lock made for old sigils."
+            "while the main gate bears a lock made for old emblems."
         ),
         "choices": [
             {
@@ -423,20 +423,20 @@ STORY_NODES: Dict[str, Dict[str, Any]] = {
             {
                 "label": "Call for surrender and safe passage (merciful path)",
                 "requirements": {"flag_true": ["mercy_reputation"]},
-                "effects": {"log": "Your reputation for mercy persuades a frightened acolyte to unbar a side door."},
+                "effects": {"log": "Your reputation for mercy persuades a frightened lookout to unbar a side door."},
                 "next": "inner_hall",
             },
             {
-                "label": "Threaten the acolytes into opening a side gate (ruthless path)",
+                "label": "Threaten the lookouts into opening a side gate (ruthless path)",
                 "requirements": {"flag_true": ["cruel_reputation"]},
-                "effects": {"hp": -1, "log": "They obey, but one acolyte stabs you before fleeing."},
+                "effects": {"hp": -1, "log": "They obey, but one lookout stabs you before fleeing."},
                 "next": "inner_hall",
             },
             {
                 "label": "Present the Warden Token and demand lawful entry",
                 "requirements": {"items": ["Warden Token"]},
                 "effects": {
-                    "log": "Cult sentries mistake you for sanctioned enforcers and open the outer lock.",
+                    "log": "Ruin sentries mistake you for sanctioned enforcers and open the outer lock.",
                     "set_flags": {"opened_cleanly": True},
                 },
                 "next": "inner_hall",
@@ -447,7 +447,7 @@ STORY_NODES: Dict[str, Dict[str, Any]] = {
         "id": "inner_hall",
         "title": "Inner Hall of Echoes",
         "text": (
-            "Torchlight reveals two routes: a trapped gallery leading to the ritual chamber, "
+            "Torchlight reveals two routes: a trapped gallery leading to the core chamber, "
             "and an armory vault sealed behind rusted bars."
         ),
         "choices": [
@@ -458,12 +458,12 @@ STORY_NODES: Dict[str, Dict[str, Any]] = {
                     "set_flags": {"trap_disarmed": True},
                     "log": "You spot pressure plates and bypass every trigger.",
                 },
-                "next": "ritual_approach",
+                "next": "core_approach",
             },
             {
                 "label": "Charge through the trap gallery (-4 HP)",
                 "effects": {"hp": -4, "log": "Darts and blades rake you, but you push through."},
-                "next": "ritual_approach",
+                "next": "core_approach",
             },
             {
                 "label": "Pry open the armory bars (Strength 3)",
@@ -476,13 +476,13 @@ STORY_NODES: Dict[str, Dict[str, Any]] = {
                 "next": "inner_hall",
             },
             {
-                "label": "Use a torch to spot hidden runes and a safer route",
+                "label": "Use a torch to spot hidden markings and a safer route",
                 "requirements": {"items": ["Torch"], "flag_false": ["torch_route_found"]},
                 "effects": {
                     "set_flags": {"torch_route_found": True},
                     "log": "Torchlight reveals chalk marks pointing to a concealed side passage.",
                 },
-                "next": "ritual_approach",
+                "next": "core_approach",
             },
             {
                 "label": "Use the Ashfang Charm to scatter ember-hounds",
@@ -491,15 +491,15 @@ STORY_NODES: Dict[str, Dict[str, Any]] = {
                     "set_flags": {"hounds_scattered": True},
                     "log": "The charm's scent terrifies ember-hounds guarding the corridor, clearing your path.",
                 },
-                "next": "ritual_approach",
+                "next": "core_approach",
             },
         ],
     },
-    "ritual_approach": {
-        "id": "ritual_approach",
-        "title": "Antechamber of Judgement",
+    "core_approach": {
+        "id": "core_approach",
+        "title": "Antechamber of Conflict",
         "text": (
-            "At the chamber's threshold kneels Kest, wounded and desperate. He claims the cult betrayed everyone "
+            "At the chamber's threshold kneels Kest, wounded and desperate. He claims the raider crew betrayed everyone "
             "and begs for mercy. Your choice here may define your fate."
         ),
         "choices": [
@@ -537,8 +537,8 @@ STORY_NODES: Dict[str, Dict[str, Any]] = {
         "id": "final_confrontation",
         "title": "Final Confrontation: The Ruin Warden",
         "text": (
-            "In the heart of the ruin, the armored Warden channels power into the Dawn Sigil. "
-            "You must end the ritual before Oakrest burns."
+            "In the heart of the ruin, the armored Warden channels power into the Dawn Emblem. "
+            "You must stop the device before Oakrest burns."
         ),
         "choices": [
             {
@@ -556,7 +556,7 @@ STORY_NODES: Dict[str, Dict[str, Any]] = {
                 "requirements": {"flag_true": ["spared_bandit"]},
                 "effects": {
                     "set_flags": {"warden_defeated": True, "ending_quality": "good"},
-                    "log": "Using Kest's warning, you disable the ritual focus and win cleanly.",
+                    "log": "Using Kest's warning, you disable the device core and win cleanly.",
                 },
                 "next": "ending_good",
             },
@@ -566,7 +566,7 @@ STORY_NODES: Dict[str, Dict[str, Any]] = {
                 "effects": {
                     "hp": -2,
                     "set_flags": {"warden_defeated": True, "ending_quality": "mixed"},
-                    "log": "Your earlier demolition fractures the chamber floor, ending the ritual in chaos.",
+                    "log": "Your earlier demolition fractures the chamber floor, ending the device in chaos.",
                 },
                 "next": "ending_mixed",
             },
@@ -591,17 +591,17 @@ STORY_NODES: Dict[str, Dict[str, Any]] = {
                 "next": "ending_good",
             },
             {
-                "label": "Strike from shadows at the ritual focus (Dexterity 5)",
+                "label": "Strike from shadows at the device core (Dexterity 5)",
                 "requirements": {"min_dexterity": 5},
                 "effects": {
                     "hp": -1,
                     "set_flags": {"warden_defeated": True, "ending_quality": "mixed"},
-                    "log": "You collapse the ritual focus, but debris crushes part of the chamber.",
+                    "log": "You collapse the device core, but debris crushes part of the chamber.",
                 },
                 "next": "ending_mixed",
             },
             {
-                "label": "Raise the Ancient Shield and endure the ritual backlash",
+                "label": "Raise the Ancient Shield and endure the device backlash",
                 "requirements": {"items": ["Ancient Shield"]},
                 "effects": {
                     "hp": -3,
@@ -625,7 +625,7 @@ STORY_NODES: Dict[str, Dict[str, Any]] = {
         "id": "ending_good",
         "title": "Ending — Dawn Over Oakrest",
         "text": (
-            "The ritual is stopped before completion. The Dawn Sigil is returned to the village shrine. "
+            "The device is stopped before activation. The Dawn Emblem is returned to the village archive. "
             "If your path was merciful, Oakrest hails you as a guardian of both lives and honor; "
             "if ruthless, they praise your strength but fear what you may become."
         ),
@@ -642,9 +642,9 @@ STORY_NODES: Dict[str, Dict[str, Any]] = {
     },
     "ending_bad": {
         "id": "ending_bad",
-        "title": "Ending — Night Without Dawn",
+        "title": "Ending — Nightfall Over Oakrest",
         "text": (
-            "Your final gamble fails. The ritual surges to completion and the forest burns with unnatural fire. "
+            "Your final gamble fails. The device surges to full power and the forest burns with unnatural fire. "
             "Oakrest is abandoned by sunrise, and your tale becomes a warning."
         ),
         "choices": [],
