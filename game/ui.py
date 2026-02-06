@@ -1,11 +1,8 @@
 """Backward-compatible UI API composed from smaller UI components."""
 
 from game.ui_components import (
-    format_outcomes,
-    format_requirements,
     format_requirement_tooltip,
     get_epilogue_aftermath_lines,
-    render_choice_outcomes_tab,
     render_log,
     render_node,
     render_path_map,
@@ -14,11 +11,8 @@ from game.ui_components import (
 )
 
 __all__ = [
-    "format_outcomes",
-    "format_requirements",
     "format_requirement_tooltip",
     "get_epilogue_aftermath_lines",
-    "render_choice_outcomes_tab",
     "render_log",
     "render_node",
     "render_path_map",

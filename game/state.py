@@ -22,7 +22,6 @@ def reset_game_state() -> None:
     st.session_state.save_blob = ""
     st.session_state.pending_choice_confirmation = None
     st.session_state.show_locked_choices = False
-    st.session_state.spoiler_debug_mode = False
     st.session_state.visited_nodes = []
     st.session_state.visited_edges = []
 
@@ -48,7 +47,6 @@ def start_game(player_class: str) -> None:
     st.session_state.history = []
     st.session_state.pending_choice_confirmation = None
     st.session_state.show_locked_choices = False
-    st.session_state.spoiler_debug_mode = False
     st.session_state.visited_nodes = ["village_square"]
     st.session_state.visited_edges = []
 
@@ -115,8 +113,6 @@ def ensure_session_state() -> None:
         st.session_state.pending_choice_confirmation = None
     if "show_locked_choices" not in st.session_state:
         st.session_state.show_locked_choices = False
-    if "spoiler_debug_mode" not in st.session_state:
-        st.session_state.spoiler_debug_mode = False
     if "visited_nodes" not in st.session_state:
         st.session_state.visited_nodes = []
     if "visited_edges" not in st.session_state:

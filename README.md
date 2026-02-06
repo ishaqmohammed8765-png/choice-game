@@ -22,7 +22,6 @@ Priority recommendations to scale safely:
 1. Add a **test suite** around `logic.py` and save/load schema handling.
 2. Add a **strict content validator** (unknown flags/items, impossible requirements, class-lock audits).
 3. Split `game/data.py` into smaller content files or externalize to schema-validated JSON/YAML.
-4. Add an optional **spoiler guard** for the full outcomes/debug tab.
 5. Build a **balance dashboard** for per-class path viability and resource pressure.
 
 ## Narrative design principles
@@ -65,7 +64,7 @@ To prevent overloaded nodes, the story loader runs a simplification pass that:
 - Auto-applies marked, low-impact choices (ex: class intro beats, judgment barks).
 - Merges exact duplicates.
 - Prunes log-only choices that duplicate another option with the same destination.
-- Reports all changes in the debug panel and console report list.
+- Reports all changes in the console report list.
 
 Tune the cap with `MAX_CHOICES_PER_NODE` in `game/data.py`. The UI will fail fast if any node exceeds the cap at runtime.
 

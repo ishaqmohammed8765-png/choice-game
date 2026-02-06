@@ -132,7 +132,7 @@ def render_path_map() -> None:
     center_tooltip = f"<title>{_escape_tooltip(node_id)}</title>"
 
     svg = f"""
-        <svg viewBox="0 0 {width} {height}" width="100%" height="100%" style="max-width:{width}px;">
+        <svg viewBox="0 0 {width} {height}" width="100%" height="{height}px" style="max-width:{width}px; display:block; margin:0 auto;">
             <style>
                 .path-line {{
                     stroke: #94a3b8;

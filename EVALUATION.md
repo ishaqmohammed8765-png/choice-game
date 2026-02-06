@@ -24,7 +24,6 @@ This review evaluates both:
 
 2. **Good deterministic mechanics**
    - Requirements and effects are explicit dictionaries.
-   - Undo/snapshot support and import/export are practical for balancing/debugging.
 
 3. **Resilience choices are thoughtful**
    - Missing links and invalid access can route into fallback failure arcs instead of hard crashes.
@@ -47,9 +46,6 @@ This review evaluates both:
      - transition fallback behavior,
      - import/save schema handling.
 
-4. **Potentially noisy UX from full choice outcome tab**
-   - The “All Choices & Outcomes” tab is great for debugging but can reduce mystery/spoiler friction for players.
-   - Consider a debug toggle or spoiler mode setting.
 
 ### Game design
 **Rating: 7.5/10 (strong deterministic branching base, room for pacing polish)**
@@ -86,7 +82,6 @@ Notes:
 1. Add **test suite** for `logic.py` + save/load schema handling.
 2. Add **strict content validator** (unknown keys/flags/items, impossible requirements, class-lock audits).
 3. Split `game/data.py` into smaller domain files (or schema-backed content files).
-4. Add optional **spoiler guard** for full outcomes tab.
 5. Add a basic **balance dashboard script** (per-class path viability, resource pressure by route).
 
 ## Verdict
