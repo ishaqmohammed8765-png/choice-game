@@ -240,7 +240,7 @@ def _render_svg_text(lines: List[str], *, x: float, y: float, class_name: str) -
         return ""
     line_height = 13
     start_y = y - (len(lines) - 1) * line_height / 2
-    tspan_lines = "\n".join(
+    tspan_lines = "".join(
         f'<tspan x="{x}" y="{start_y + index * line_height}">{_escape_tooltip(line)}</tspan>'
         for index, line in enumerate(lines)
     )
