@@ -1,4 +1,5 @@
 import copy
+import json
 from typing import Any, Dict, List
 
 import streamlit as st
@@ -57,8 +58,56 @@ STORY_NODES: Dict[str, Dict[str, Any]] = {
                 "next": "village_square",
             },
             {
+                "label": "Visit the roadside trader and rest stop",
+                "effects": {"log": "You head to a lantern-lit camp where a trader tends supplies."},
+                "next": "camp_shop",
+            },
+            {
                 "label": "Take the forest road toward the old watchtower",
                 "effects": {"log": "You leave Oakrest and follow the shadowed road into the forest."},
+                "next": "forest_crossroad",
+            },
+        ],
+    },
+    "camp_shop": {
+        "id": "camp_shop",
+        "title": "Roadside Trader & Rest Fire",
+        "text": (
+            "A retired scout sells practical tools near a safe firepit. You can buy gear or patch your wounds "
+            "before entering deeper wilderness."
+        ),
+        "choices": [
+            {
+                "label": "Buy rope (3 gold)",
+                "requirements": {"min_gold": 3, "missing_items": ["Rope"]},
+                "effects": {"gold": -3, "add_items": ["Rope"], "log": "You purchase a sturdy climbing rope."},
+                "next": "camp_shop",
+            },
+            {
+                "label": "Buy lockpicks (4 gold)",
+                "requirements": {"min_gold": 4, "missing_items": ["Lockpicks"]},
+                "effects": {
+                    "gold": -4,
+                    "add_items": ["Lockpicks"],
+                    "log": "You buy a finely balanced lockpick set.",
+                },
+                "next": "camp_shop",
+            },
+            {
+                "label": "Buy torch (2 gold)",
+                "requirements": {"min_gold": 2, "missing_items": ["Torch"]},
+                "effects": {"gold": -2, "add_items": ["Torch"], "log": "You light a resin torch for dark passages."},
+                "next": "camp_shop",
+            },
+            {
+                "label": "Rest by the fire (+4 HP, 3 gold)",
+                "requirements": {"min_gold": 3},
+                "effects": {"gold": -3, "hp": 4, "log": "Warm stew and rest restore your strength."},
+                "next": "camp_shop",
+            },
+            {
+                "label": "Leave the camp for the forest crossroad",
+                "effects": {"log": "You shoulder your gear and continue toward the ruin."},
                 "next": "forest_crossroad",
             },
         ],
@@ -134,7 +183,7 @@ STORY_NODES: Dict[str, Dict[str, Any]] = {
                 "effects": {
                     "hp": -2,
                     "gold": 4,
-                    "set_flags": {"rescued_scout": True, "spared_bandit": False, "cruel_reputation": True},
+                    "set_flags": {"rescued_scout": True, "spared_bandit": False, "cruel_reputation": True, "morality": "ruthless"},
                     "log": "You defeat the bandits brutally and free the scout.",
                 },
                 "next": "scout_report",
@@ -143,7 +192,7 @@ STORY_NODES: Dict[str, Dict[str, Any]] = {
                 "label": "Cut the scout free while hidden (Dexterity 4)",
                 "requirements": {"min_dexterity": 4},
                 "effects": {
-                    "set_flags": {"rescued_scout": True, "spared_bandit": True, "mercy_reputation": True},
+                    "set_flags": {"rescued_scout": True, "spared_bandit": True, "mercy_reputation": True, "morality": "merciful"},
                     "log": "You free the scout without a fight; the bandits flee into darkness.",
                 },
                 "next": "scout_report",
@@ -152,7 +201,7 @@ STORY_NODES: Dict[str, Dict[str, Any]] = {
                 "label": "Accept Kest's bribe and walk away (+6 gold)",
                 "effects": {
                     "gold": 6,
-                    "set_flags": {"abandoned_scout": True, "cruel_reputation": True},
+                    "set_flags": {"abandoned_scout": True, "cruel_reputation": True, "morality": "ruthless"},
                     "log": "You pocket the bribe and leave the scout to fate.",
                 },
                 "next": "ruin_gate",
@@ -201,7 +250,7 @@ STORY_NODES: Dict[str, Dict[str, Any]] = {
             },
             {
                 "label": "Pick the ancient lock (Rogue only)",
-                "requirements": {"class": ["Rogue"]},
+                "requirements": {"items": ["Lockpicks"]},
                 "effects": {
                     "log": "Your lockpicks whisper through tumblers untouched for centuries.",
                     "set_flags": {"opened_cleanly": True},
@@ -217,6 +266,18 @@ STORY_NODES: Dict[str, Dict[str, Any]] = {
             {
                 "label": "Crawl through the collapsed breach (-2 HP)",
                 "effects": {"hp": -2, "log": "Jagged stones tear at you as you squeeze through."},
+                "next": "inner_hall",
+            },
+            {
+                "label": "Call for surrender and safe passage (merciful path)",
+                "requirements": {"flag_true": ["mercy_reputation"]},
+                "effects": {"log": "Your reputation for mercy persuades a frightened acolyte to unbar a side door."},
+                "next": "inner_hall",
+            },
+            {
+                "label": "Threaten the acolytes into opening a side gate (ruthless path)",
+                "requirements": {"flag_true": ["cruel_reputation"]},
+                "effects": {"hp": -1, "log": "They obey, but one acolyte stabs you before fleeing."},
                 "next": "inner_hall",
             },
         ],
@@ -253,6 +314,15 @@ STORY_NODES: Dict[str, Dict[str, Any]] = {
                 },
                 "next": "inner_hall",
             },
+            {
+                "label": "Use a torch to spot hidden runes and a safer route",
+                "requirements": {"items": ["Torch"], "flag_false": ["torch_route_found"]},
+                "effects": {
+                    "set_flags": {"torch_route_found": True},
+                    "log": "Torchlight reveals chalk marks pointing to a concealed side passage.",
+                },
+                "next": "ritual_approach",
+            },
         ],
     },
     "ritual_approach": {
@@ -266,7 +336,7 @@ STORY_NODES: Dict[str, Dict[str, Any]] = {
             {
                 "label": "Spare Kest and take his warning",
                 "effects": {
-                    "set_flags": {"spared_bandit": True, "mercy_reputation": True},
+                    "set_flags": {"spared_bandit": True, "morality": "merciful"},
                     "log": "You spare Kest. He reveals a weakness in the Warden's guard.",
                 },
                 "next": "final_confrontation",
@@ -274,7 +344,7 @@ STORY_NODES: Dict[str, Dict[str, Any]] = {
             {
                 "label": "Execute Kest",
                 "effects": {
-                    "set_flags": {"spared_bandit": False, "cruel_reputation": True},
+                    "set_flags": {"spared_bandit": False, "morality": "ruthless"},
                     "log": "You execute Kest and step over his body into the chamber.",
                 },
                 "next": "final_confrontation",
@@ -283,7 +353,7 @@ STORY_NODES: Dict[str, Dict[str, Any]] = {
                 "label": "Bind Kest with rope and move on",
                 "requirements": {"items": ["Rope"]},
                 "effects": {
-                    "set_flags": {"bound_kest": True},
+                    "set_flags": {"bound_kest": True, "morality": "merciful"},
                     "log": "You bind Kest securely, leaving him alive but helpless.",
                 },
                 "next": "final_confrontation",
@@ -314,6 +384,26 @@ STORY_NODES: Dict[str, Dict[str, Any]] = {
                 "effects": {
                     "set_flags": {"warden_defeated": True, "ending_quality": "good"},
                     "log": "Using Kest's warning, you disable the ritual focus and win cleanly.",
+                },
+                "next": "ending_good",
+            },
+            {
+                "label": "Interrogate Kest's old crew code (Lockpicks + ruthless)",
+                "requirements": {"items": ["Lockpicks"], "flag_true": ["cruel_reputation"]},
+                "effects": {
+                    "hp": -1,
+                    "set_flags": {"warden_defeated": True, "ending_quality": "mixed"},
+                    "log": "Your ruthless reputation lets you force a confession and break the warding code.",
+                },
+                "next": "ending_mixed",
+            },
+            {
+                "label": "Protect trapped villagers first (requires merciful outlook)",
+                "requirements": {"flag_true": ["mercy_reputation"]},
+                "effects": {
+                    "hp": -3,
+                    "set_flags": {"warden_defeated": True, "ending_quality": "good"},
+                    "log": "You shield the captives, then turn their gratitude into momentum against the Warden.",
                 },
                 "next": "ending_good",
             },
@@ -352,8 +442,9 @@ STORY_NODES: Dict[str, Dict[str, Any]] = {
         "id": "ending_good",
         "title": "Ending — Dawn Over Oakrest",
         "text": (
-            "The ritual is stopped before completion. The Dawn Sigil is returned to the village shrine, "
-            "and Oakrest celebrates you as a measured hero whose choices spared lives and saved the realm."
+            "The ritual is stopped before completion. The Dawn Sigil is returned to the village shrine. "
+            "If your path was merciful, Oakrest hails you as a guardian of both lives and honor; "
+            "if ruthless, they praise your strength but fear what you may become."
         ),
         "choices": [],
     },
@@ -397,6 +488,8 @@ def reset_game_state() -> None:
     st.session_state.inventory = []
     st.session_state.flags = {}
     st.session_state.event_log = []
+    st.session_state.history = []
+    st.session_state.save_blob = ""
 
 
 def start_game(player_class: str) -> None:
@@ -413,12 +506,46 @@ def start_game(player_class: str) -> None:
     st.session_state.inventory = copy.deepcopy(template["inventory"])
     st.session_state.flags = {"class": player_class}
     st.session_state.event_log = [f"You begin your journey as a {player_class}."]
+    st.session_state.history = []
 
 
 def add_log(message: str) -> None:
     """Append a narrative event to the player log."""
     if message:
         st.session_state.event_log.append(message)
+
+
+def snapshot_state() -> Dict[str, Any]:
+    """Capture game state for backtracking and save export."""
+    return {
+        "player_class": st.session_state.player_class,
+        "current_node": st.session_state.current_node,
+        "stats": copy.deepcopy(st.session_state.stats),
+        "inventory": copy.deepcopy(st.session_state.inventory),
+        "flags": copy.deepcopy(st.session_state.flags),
+        "event_log": copy.deepcopy(st.session_state.event_log),
+    }
+
+
+def load_snapshot(snapshot: Dict[str, Any]) -> None:
+    """Restore game state from a validated snapshot."""
+    st.session_state.player_class = snapshot["player_class"]
+    st.session_state.current_node = snapshot["current_node"]
+    st.session_state.stats = snapshot["stats"]
+    st.session_state.inventory = snapshot["inventory"]
+    st.session_state.flags = snapshot["flags"]
+    st.session_state.event_log = snapshot["event_log"]
+
+
+def apply_morality_flags(flags: Dict[str, Any]) -> None:
+    """Keep legacy reputation flags in sync with canonical morality value."""
+    morality = flags.get("morality")
+    if morality == "merciful":
+        flags["mercy_reputation"] = True
+        flags["cruel_reputation"] = False
+    elif morality == "ruthless":
+        flags["mercy_reputation"] = False
+        flags["cruel_reputation"] = True
 
 
 def check_requirements(requirements: Dict[str, Any] | None) -> tuple[bool, str]:
@@ -486,6 +613,8 @@ def apply_effects(effects: Dict[str, Any] | None) -> None:
     for key, value in effects.get("set_flags", {}).items():
         flags[key] = value
 
+    apply_morality_flags(flags)
+
     if effects.get("log"):
         add_log(effects["log"])
 
@@ -503,6 +632,22 @@ def transition_to(next_node_id: str) -> None:
         return
 
     st.session_state.current_node = next_node_id
+
+
+def validate_story_nodes() -> List[str]:
+    """Run lightweight static validation over story graph links."""
+    warnings: List[str] = []
+    for node_id, node in STORY_NODES.items():
+        if node.get("id") != node_id:
+            warnings.append(f"Node key '{node_id}' does not match its id field '{node.get('id')}'.")
+
+        for choice in node.get("choices", []):
+            next_id = choice.get("next")
+            if next_id not in STORY_NODES:
+                warnings.append(
+                    f"Choice '{choice.get('label', 'unnamed')}' in node '{node_id}' points to missing node '{next_id}'."
+                )
+    return warnings
 
 
 def get_available_choices(node: Dict[str, Any]) -> List[Dict[str, Any]]:
@@ -542,6 +687,39 @@ def render_sidebar() -> None:
             st.write("(none)")
 
         st.divider()
+        if st.button("⬅️ Back (undo last choice)", use_container_width=True, disabled=not st.session_state.history):
+            previous = st.session_state.history.pop()
+            load_snapshot(previous)
+            add_log("You retrace your steps and reconsider your decision.")
+            st.rerun()
+
+        with st.expander("Save / Load", expanded=False):
+            if st.button("Export current state", use_container_width=True):
+                st.session_state.save_blob = json.dumps(snapshot_state(), indent=2)
+
+            save_text = st.text_area(
+                "State JSON",
+                value=st.session_state.save_blob,
+                height=180,
+                key="save_load_text",
+            )
+            if st.button("Import state", use_container_width=True):
+                try:
+                    payload = json.loads(save_text)
+                    required_keys = {"player_class", "current_node", "stats", "inventory", "flags", "event_log"}
+                    if not required_keys.issubset(payload.keys()):
+                        st.error("Invalid save: missing required keys.")
+                    elif payload["current_node"] not in STORY_NODES:
+                        st.error("Invalid save: current node does not exist.")
+                    else:
+                        load_snapshot(payload)
+                        apply_morality_flags(st.session_state.flags)
+                        st.success("State imported successfully.")
+                        st.rerun()
+                except json.JSONDecodeError:
+                    st.error("Invalid JSON. Please paste a valid exported state.")
+
+        st.divider()
         if st.button("Restart Game", use_container_width=True):
             reset_game_state()
             st.rerun()
@@ -576,25 +754,30 @@ def render_node() -> None:
         return
 
     choices = node.get("choices", [])
-    available = get_available_choices(node)
 
     if not choices:
         st.success("The story has reached an ending. Restart to explore another path.")
         return
 
-    if not available:
+    st.subheader("What do you do?")
+    any_enabled = False
+    for idx, choice in enumerate(choices):
+        label = choice["label"]
+        is_valid, reason = check_requirements(choice.get("requirements"))
+        if st.button(label, key=f"choice_{node_id}_{idx}", use_container_width=True, disabled=not is_valid):
+            st.session_state.history.append(snapshot_state())
+            apply_effects(choice.get("effects"))
+            transition_to(choice["next"])
+            st.rerun()
+        if not is_valid:
+            st.caption(f"🔒 {reason}")
+        else:
+            any_enabled = True
+
+    if not any_enabled:
         st.warning("No valid choices remain based on your current stats, items, and flags.")
         if st.button("Accept your fate", type="primary"):
             transition_to("death")
-            st.rerun()
-        return
-
-    st.subheader("What do you do?")
-    for idx, choice in enumerate(available):
-        label = choice["label"]
-        if st.button(label, key=f"choice_{node_id}_{idx}", use_container_width=True):
-            apply_effects(choice.get("effects"))
-            transition_to(choice["next"])
             st.rerun()
 
 
@@ -685,6 +868,10 @@ def ensure_session_state() -> None:
     """Initialize session state keys on first load."""
     if "player_class" not in st.session_state:
         reset_game_state()
+    if "history" not in st.session_state:
+        st.session_state.history = []
+    if "save_blob" not in st.session_state:
+        st.session_state.save_blob = ""
 
 
 # -----------------------------
@@ -693,6 +880,8 @@ def ensure_session_state() -> None:
 def main() -> None:
     st.set_page_config(page_title="Oakrest: Deterministic Adventure", page_icon="🛡️", layout="centered")
     ensure_session_state()
+    for warning in validate_story_nodes():
+        st.warning(f"Story validator: {warning}")
 
     st.caption("A deterministic D&D-style choice adventure. No dice, only decisions.")
 
