@@ -5,6 +5,9 @@ from typing import Any, Dict, List
 import streamlit as st
 
 
+TRAIT_KEYS = ["trust", "reputation", "alignment"]
+
+
 # -----------------------------
 # Data model: classes and story
 # -----------------------------
@@ -183,6 +186,8 @@ STORY_NODES: Dict[str, Dict[str, Any]] = {
                 "effects": {
                     "hp": -2,
                     "gold": 4,
+                    "trait_delta": {"trust": 1, "reputation": -1, "alignment": -2},
+                    "seen_events": ["bandits_slain"],
                     "set_flags": {"rescued_scout": True, "spared_bandit": False, "cruel_reputation": True, "morality": "ruthless"},
                     "log": "You defeat the bandits brutally and free the scout.",
                 },
@@ -192,6 +197,8 @@ STORY_NODES: Dict[str, Dict[str, Any]] = {
                 "label": "Cut the scout free while hidden (Dexterity 4)",
                 "requirements": {"min_dexterity": 4},
                 "effects": {
+                    "trait_delta": {"trust": 2, "reputation": 2, "alignment": 2},
+                    "seen_events": ["scout_saved_silently"],
                     "set_flags": {"rescued_scout": True, "spared_bandit": True, "mercy_reputation": True, "morality": "merciful"},
                     "log": "You free the scout without a fight; the bandits flee into darkness.",
                 },
@@ -201,6 +208,8 @@ STORY_NODES: Dict[str, Dict[str, Any]] = {
                 "label": "Accept Kest's bribe and walk away (+6 gold)",
                 "effects": {
                     "gold": 6,
+                    "trait_delta": {"trust": -3, "reputation": -2, "alignment": -3},
+                    "seen_events": ["scout_abandoned"],
                     "set_flags": {"abandoned_scout": True, "cruel_reputation": True, "morality": "ruthless"},
                     "log": "You pocket the bribe and leave the scout to fate.",
                 },
@@ -222,14 +231,58 @@ STORY_NODES: Dict[str, Dict[str, Any]] = {
                 "requirements": {"missing_items": ["Bronze Seal"]},
                 "effects": {
                     "add_items": ["Bronze Seal"],
+                    "trait_delta": {"trust": 1},
+                    "seen_events": ["accepted_seal"],
                     "set_flags": {"has_seal": True},
                     "log": "You take the bronze seal; old runes glow faintly.",
                 },
                 "next": "ruin_gate",
             },
             {
+                "label": "Ask the scout for a hidden approach to the cult",
+                "requirements": {"flag_true": ["rescued_scout"]},
+                "effects": {
+                    "trait_delta": {"trust": 1, "reputation": 1},
+                    "seen_events": ["learned_hidden_route"],
+                    "set_flags": {"knows_hidden_route": True},
+                    "log": "The scout marks an old service tunnel only Oakrest wardens remember.",
+                },
+                "next": "hidden_tunnel",
+            },
+            {
                 "label": "Refuse and hurry to the ruin",
                 "effects": {"log": "You refuse the token and press onward."},
+                "next": "ruin_gate",
+            },
+        ],
+    },
+    "hidden_tunnel": {
+        "id": "hidden_tunnel",
+        "title": "Forgotten Service Tunnel",
+        "text": (
+            "The scout's map leads you into a collapsed maintenance tunnel beneath the ruin. "
+            "You can sabotage the ritual braziers now, but doing so will trap anyone still inside."
+        ),
+        "requirements": {"flag_true": ["knows_hidden_route"]},
+        "choices": [
+            {
+                "label": "Collapse the tunnel supports to deny cult reinforcements (irreversible)",
+                "effects": {
+                    "trait_delta": {"trust": -1, "reputation": 2, "alignment": -1},
+                    "seen_events": ["tunnel_collapsed"],
+                    "set_flags": {"tunnel_collapsed": True, "irreversible_choice_made": True},
+                    "log": "Stone crashes behind you. The route is sealed forever, along with anyone still below.",
+                },
+                "irreversible": True,
+                "next": "ruin_gate",
+            },
+            {
+                "label": "Leave the supports intact and continue quietly",
+                "effects": {
+                    "trait_delta": {"trust": 1, "alignment": 1},
+                    "seen_events": ["tunnel_spared"],
+                    "log": "You preserve the passage, choosing caution over collateral damage.",
+                },
                 "next": "ruin_gate",
             },
         ],
@@ -344,9 +397,12 @@ STORY_NODES: Dict[str, Dict[str, Any]] = {
             {
                 "label": "Execute Kest",
                 "effects": {
+                    "trait_delta": {"trust": -2, "alignment": -2},
+                    "seen_events": ["kest_executed"],
                     "set_flags": {"spared_bandit": False, "morality": "ruthless"},
                     "log": "You execute Kest and step over his body into the chamber.",
                 },
+                "irreversible": True,
                 "next": "final_confrontation",
             },
             {
@@ -386,6 +442,16 @@ STORY_NODES: Dict[str, Dict[str, Any]] = {
                     "log": "Using Kest's warning, you disable the ritual focus and win cleanly.",
                 },
                 "next": "ending_good",
+            },
+            {
+                "label": "Use the hidden-route sabotage to destabilize the chamber",
+                "requirements": {"flag_true": ["tunnel_collapsed"]},
+                "effects": {
+                    "hp": -2,
+                    "set_flags": {"warden_defeated": True, "ending_quality": "mixed"},
+                    "log": "Your earlier demolition fractures the chamber floor, ending the ritual in chaos.",
+                },
+                "next": "ending_mixed",
             },
             {
                 "label": "Interrogate Kest's old crew code (Lockpicks + ruthless)",
@@ -487,6 +553,10 @@ def reset_game_state() -> None:
     st.session_state.stats = {"hp": 0, "gold": 0, "strength": 0, "dexterity": 0}
     st.session_state.inventory = []
     st.session_state.flags = {}
+    st.session_state.traits = {"trust": 0, "reputation": 0, "alignment": 0}
+    st.session_state.seen_events = []
+    st.session_state.decision_history = []
+    st.session_state.last_choice_feedback = []
     st.session_state.event_log = []
     st.session_state.history = []
     st.session_state.save_blob = ""
@@ -505,6 +575,10 @@ def start_game(player_class: str) -> None:
     }
     st.session_state.inventory = copy.deepcopy(template["inventory"])
     st.session_state.flags = {"class": player_class}
+    st.session_state.traits = {"trust": 0, "reputation": 0, "alignment": 0}
+    st.session_state.seen_events = []
+    st.session_state.decision_history = []
+    st.session_state.last_choice_feedback = []
     st.session_state.event_log = [f"You begin your journey as a {player_class}."]
     st.session_state.history = []
 
@@ -523,6 +597,10 @@ def snapshot_state() -> Dict[str, Any]:
         "stats": copy.deepcopy(st.session_state.stats),
         "inventory": copy.deepcopy(st.session_state.inventory),
         "flags": copy.deepcopy(st.session_state.flags),
+        "traits": copy.deepcopy(st.session_state.traits),
+        "seen_events": copy.deepcopy(st.session_state.seen_events),
+        "decision_history": copy.deepcopy(st.session_state.decision_history),
+        "last_choice_feedback": copy.deepcopy(st.session_state.last_choice_feedback),
         "event_log": copy.deepcopy(st.session_state.event_log),
     }
 
@@ -534,6 +612,10 @@ def load_snapshot(snapshot: Dict[str, Any]) -> None:
     st.session_state.stats = snapshot["stats"]
     st.session_state.inventory = snapshot["inventory"]
     st.session_state.flags = snapshot["flags"]
+    st.session_state.traits = snapshot.get("traits", {"trust": 0, "reputation": 0, "alignment": 0})
+    st.session_state.seen_events = snapshot.get("seen_events", [])
+    st.session_state.decision_history = snapshot.get("decision_history", [])
+    st.session_state.last_choice_feedback = snapshot.get("last_choice_feedback", [])
     st.session_state.event_log = snapshot["event_log"]
 
 
@@ -597,6 +679,8 @@ def apply_effects(effects: Dict[str, Any] | None) -> None:
     stats = st.session_state.stats
     inventory = st.session_state.inventory
     flags = st.session_state.flags
+    traits = st.session_state.traits
+    feedback: List[str] = []
 
     for stat in ["hp", "gold", "strength", "dexterity"]:
         if stat in effects:
@@ -612,11 +696,25 @@ def apply_effects(effects: Dict[str, Any] | None) -> None:
 
     for key, value in effects.get("set_flags", {}).items():
         flags[key] = value
+        feedback.append(f"World state changed: {key} → {value}")
+
+    for trait, delta in effects.get("trait_delta", {}).items():
+        if trait in traits:
+            traits[trait] += delta
+            sign = "+" if delta >= 0 else ""
+            feedback.append(f"Trait shift: {trait} {sign}{delta}")
+
+    for event in effects.get("seen_events", []):
+        if event not in st.session_state.seen_events:
+            st.session_state.seen_events.append(event)
+            feedback.append(f"Key event recorded: {event}")
 
     apply_morality_flags(flags)
 
     if effects.get("log"):
         add_log(effects["log"])
+
+    st.session_state.last_choice_feedback = feedback
 
 
 def transition_to(next_node_id: str) -> None:
@@ -686,6 +784,17 @@ def render_sidebar() -> None:
         else:
             st.write("(none)")
 
+        st.subheader("Traits")
+        for trait in TRAIT_KEYS:
+            st.write(f"{trait.title()}: {st.session_state.traits[trait]}")
+
+        st.subheader("Key Events Seen")
+        if st.session_state.seen_events:
+            for event in st.session_state.seen_events[-6:]:
+                st.write(f"- {event}")
+        else:
+            st.write("(none)")
+
         st.divider()
         if st.button("⬅️ Back (undo last choice)", use_container_width=True, disabled=not st.session_state.history):
             previous = st.session_state.history.pop()
@@ -706,7 +815,18 @@ def render_sidebar() -> None:
             if st.button("Import state", use_container_width=True):
                 try:
                     payload = json.loads(save_text)
-                    required_keys = {"player_class", "current_node", "stats", "inventory", "flags", "event_log"}
+                    required_keys = {
+                        "player_class",
+                        "current_node",
+                        "stats",
+                        "inventory",
+                        "flags",
+                        "event_log",
+                        "traits",
+                        "seen_events",
+                        "decision_history",
+                        "last_choice_feedback",
+                    }
                     if not required_keys.issubset(payload.keys()):
                         st.error("Invalid save: missing required keys.")
                     elif payload["current_node"] not in STORY_NODES:
@@ -747,6 +867,12 @@ def render_node() -> None:
     st.title(node["title"])
     st.write(node["text"])
 
+    if st.session_state.last_choice_feedback:
+        with st.container(border=True):
+            st.caption("Consequence feedback")
+            for line in st.session_state.last_choice_feedback:
+                st.write(f"• {line}")
+
     # Death can happen from previous choice effects.
     if st.session_state.stats["hp"] <= 0:
         transition_to("death")
@@ -766,7 +892,11 @@ def render_node() -> None:
         is_valid, reason = check_requirements(choice.get("requirements"))
         if st.button(label, key=f"choice_{node_id}_{idx}", use_container_width=True, disabled=not is_valid):
             st.session_state.history.append(snapshot_state())
+            st.session_state.decision_history.append({"node": node_id, "choice": label})
             apply_effects(choice.get("effects"))
+            if choice.get("irreversible"):
+                st.session_state.history = []
+                add_log("This decision is irreversible. You cannot undo beyond this point.")
             transition_to(choice["next"])
             st.rerun()
         if not is_valid:
@@ -872,6 +1002,14 @@ def ensure_session_state() -> None:
         st.session_state.history = []
     if "save_blob" not in st.session_state:
         st.session_state.save_blob = ""
+    if "traits" not in st.session_state:
+        st.session_state.traits = {"trust": 0, "reputation": 0, "alignment": 0}
+    if "seen_events" not in st.session_state:
+        st.session_state.seen_events = []
+    if "decision_history" not in st.session_state:
+        st.session_state.decision_history = []
+    if "last_choice_feedback" not in st.session_state:
+        st.session_state.last_choice_feedback = []
 
 
 # -----------------------------
