@@ -164,6 +164,14 @@ def apply_effects(effects: Dict[str, Any] | None) -> None:
         flags[key] = value
         feedback.append(f"World state changed: {key} → {value}")
 
+    completed_branches = [
+        flag_name
+        for flag_name, is_done in flags.items()
+        if flag_name.startswith("branch_") and flag_name.endswith("_completed") and is_done
+    ]
+    if completed_branches:
+        flags["any_branch_completed"] = True
+
     for trait, delta in effects.get("trait_delta", {}).items():
         if trait in traits:
             traits[trait] += delta

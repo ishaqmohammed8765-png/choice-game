@@ -172,7 +172,8 @@ STORY_NODES: Dict[str, Dict[str, Any]] = {
             "Ahead, war drums echo from the Ashfang warband while silver lanterns of the Rangers flicker between trees."
         ),
         "dialogue": [
-            {"speaker": "Unknown Voice", "line": "Pick wrong, and the forest picks your grave."},
+            {"speaker": "Scout Iven", "line": "Every trail here writes a different ending. Choose what you're willing to own."},
+            {"speaker": "Drum-Echo", "line": "Ignore a threat now, and it will remember your name later."},
         ],
         "choices": [
             {
@@ -280,6 +281,15 @@ STORY_NODES: Dict[str, Dict[str, Any]] = {
                 },
                 "next": "charred_mill_approach",
             },
+            {
+                "label": "Leave the crossroads and commit your gathered allies to Ember Ridge",
+                "requirements": {"flag_true": ["any_branch_completed"]},
+                "effects": {
+                    "set_flags": {"midgame_commitment_made": True},
+                    "log": "After scouting multiple fronts, you call your banners and move to Ember Ridge.",
+                },
+                "next": "war_council_hub",
+            },
         ],
     },
     "dawnwarden_outpost": {
@@ -291,8 +301,9 @@ STORY_NODES: Dict[str, Dict[str, Any]] = {
             "Every minute of debate is measured against distant screams from the valley road."
         ),
         "dialogue": [
-            {"speaker": "Captain Serin", "line": "Choose quickly. We either save the living or stop the fire at its source."},
-            {"speaker": "Archivist Pell", "line": "The Emblem is not a relic now; it is a lit fuse."},
+            {"speaker": "Captain Serin", "line": "My first patrol died buying this map. Don't waste what they paid for."},
+            {"speaker": "Archivist Pell", "line": "The Emblem is not a relic now; it is a lit fuse, and I know who lit it."},
+            {"speaker": "Shield-Bearer Nima", "line": "Give me a plan with spine, not poetry."},
         ],
         "choices": [
             {
@@ -336,7 +347,8 @@ STORY_NODES: Dict[str, Dict[str, Any]] = {
         ),
         "dialogue": [
             {"speaker": "Warchief Drogath", "line": "In our lands, words are wind. Deeds are law."},
-            {"speaker": "Scout Yara", "line": "Show me clean hands in a dirty war, outsider."},
+            {"speaker": "Scout Yara", "line": "Show me clean hands in a dirty war, outsider. Mine stopped being clean years ago."},
+            {"speaker": "Beast-Handler Korr", "line": "My hounds remember fear. Feed them confidence or feed them meat."},
         ],
         "choices": [
             {
@@ -777,10 +789,19 @@ STORY_NODES: Dict[str, Dict[str, Any]] = {
             "Your next move decides who stands with you at the ruin gate."
         ),
         "dialogue": [
-            {"speaker": "Signal Runner", "line": "Everyone's waiting on your call. Pick a plan and own the cost."},
-            {"speaker": "Your Instinct", "line": "This is the hinge point. Past choices are now present weapons."},
+            {"speaker": "Signal Runner Tams", "line": "Reports keep stacking, commander. Say the word and I move people now."},
+            {"speaker": "Your Instinct", "line": "This ridge is a ledger. Every spared enemy and ignored threat gets collected tonight."},
         ],
         "choices": [
+            {
+                "label": "Return to the forest crossroads and resolve more unfinished threats",
+                "effects": {
+                    "trait_delta": {"trust": 1},
+                    "set_flags": {"returned_for_more_branches": True},
+                    "log": "You delay the siege and head back out, determined to settle more fronts before the final push.",
+                },
+                "next": "forest_crossroad",
+            },
             {
                 "label": "Coordinate a lawful breach with Dawnwarden support",
                 "requirements": {"flag_true": ["dawnwarden_allied"]},
@@ -1161,6 +1182,7 @@ STORY_NODES: Dict[str, Dict[str, Any]] = {
         "dialogue": [
             {"speaker": "Ruin Warden", "line": "Witness the old kingdom's dawn reborn in fire."},
             {"speaker": "You", "line": "No more villages burn because of you. It ends here."},
+            {"speaker": "Captain Serin", "line": "If any old enemies still breathe, they'll throw in with the Warden now."},
         ],
         "choices": [
             {
@@ -1253,12 +1275,32 @@ STORY_NODES: Dict[str, Dict[str, Any]] = {
                 "next": "ending_good",
             },
             {
+                "label": "The Tidebound Knight you left alive crashes into the chamber",
+                "requirements": {"flag_true": ["branch_causeway_completed"], "flag_false": ["tidebound_knight_defeated"]},
+                "effects": {
+                    "hp": -3,
+                    "set_flags": {"warden_defeated": True, "ending_quality": "mixed", "skipped_causeway_boss_returned": True},
+                    "log": "The drowned guardian answers the Warden's bell call. You survive a two-front duel, but the chamber collapses around you.",
+                },
+                "next": "ending_mixed",
+            },
+            {
                 "label": "Turn Vorga's seized firebombs against the Emblem pylons",
                 "requirements": {"flag_true": ["pyre_alchemist_defeated"]},
                 "effects": {
                     "hp": -2,
                     "set_flags": {"warden_defeated": True, "ending_quality": "mixed"},
                     "log": "Your captured firebombs collapse two pylons, ending the channeling rite in violent ruin.",
+                },
+                "next": "ending_mixed",
+            },
+            {
+                "label": "Vorga returns with fresh firebombs after you left the mill unfinished",
+                "requirements": {"flag_true": ["branch_mill_completed"], "flag_false": ["pyre_alchemist_defeated"]},
+                "effects": {
+                    "hp": -3,
+                    "set_flags": {"warden_defeated": True, "ending_quality": "mixed", "skipped_mill_boss_returned": True},
+                    "log": "Pyre-Alchemist Vorga storms in with replacement bombs and forces a brutal running fight before you can reach the Emblem.",
                 },
                 "next": "ending_mixed",
             },
