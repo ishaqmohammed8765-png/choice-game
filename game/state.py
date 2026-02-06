@@ -3,7 +3,13 @@ from typing import Any, Dict
 
 from game.streamlit_compat import st
 
-from game.data import CLASS_TEMPLATES, FACTION_KEYS
+from game.data import CLASS_TEMPLATES, FACTION_KEYS, STAT_KEYS, STORY_NODES, TRAIT_KEYS
+
+INTRO_NODE_BY_CLASS = {
+    "Warrior": "intro_warrior",
+    "Rogue": "intro_rogue",
+    "Archer": "intro_archer",
+}
 
 def reset_game_state() -> None:
     """Reset all session state values to begin a fresh run."""
@@ -29,7 +35,7 @@ def start_game(player_class: str) -> None:
     """Initialize game state from class template and enter first node."""
     template = CLASS_TEMPLATES[player_class]
     st.session_state.player_class = player_class
-    st.session_state.current_node = "village_square"
+    st.session_state.current_node = INTRO_NODE_BY_CLASS.get(player_class, "village_square")
     st.session_state.stats = {
         "hp": template["hp"],
         "gold": template["gold"],
@@ -47,8 +53,62 @@ def start_game(player_class: str) -> None:
     st.session_state.history = []
     st.session_state.pending_choice_confirmation = None
     st.session_state.show_locked_choices = False
-    st.session_state.visited_nodes = ["village_square"]
+    st.session_state.visited_nodes = [st.session_state.current_node]
     st.session_state.visited_edges = []
+
+
+def validate_snapshot(snapshot: Dict[str, Any]) -> tuple[bool, list[str]]:
+    """Validate a snapshot payload for save/load safety."""
+    errors: list[str] = []
+    required_keys = {
+        "player_class",
+        "current_node",
+        "stats",
+        "inventory",
+        "flags",
+        "event_log",
+        "traits",
+        "seen_events",
+        "factions",
+        "decision_history",
+        "last_choice_feedback",
+    }
+    missing = required_keys - set(snapshot)
+    if missing:
+        errors.append(f"Missing required keys: {', '.join(sorted(missing))}.")
+        return False, errors
+
+    if snapshot["player_class"] not in CLASS_TEMPLATES:
+        errors.append("Unknown player_class in save payload.")
+    if snapshot["current_node"] not in STORY_NODES:
+        errors.append("Current node does not exist in story.")
+
+    stats = snapshot.get("stats", {})
+    if not isinstance(stats, dict) or any(stat not in stats for stat in STAT_KEYS):
+        errors.append("Stats payload is missing required stat keys.")
+
+    traits = snapshot.get("traits", {})
+    if not isinstance(traits, dict) or any(trait not in traits for trait in TRAIT_KEYS):
+        errors.append("Traits payload is missing required trait keys.")
+
+    factions = snapshot.get("factions", {})
+    if not isinstance(factions, dict) or any(faction not in factions for faction in FACTION_KEYS):
+        errors.append("Factions payload is missing required faction keys.")
+
+    if not isinstance(snapshot.get("inventory"), list):
+        errors.append("Inventory payload must be a list.")
+    if not isinstance(snapshot.get("flags"), dict):
+        errors.append("Flags payload must be an object.")
+    if not isinstance(snapshot.get("seen_events"), list):
+        errors.append("Seen events payload must be a list.")
+    if not isinstance(snapshot.get("decision_history"), list):
+        errors.append("Decision history payload must be a list.")
+    if not isinstance(snapshot.get("last_choice_feedback"), list):
+        errors.append("Choice feedback payload must be a list.")
+    if not isinstance(snapshot.get("event_log"), list):
+        errors.append("Event log payload must be a list.")
+
+    return not errors, errors
 
 def add_log(message: str) -> None:
     """Append a narrative event to the player log."""
