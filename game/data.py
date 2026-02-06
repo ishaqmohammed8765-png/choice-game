@@ -42,11 +42,14 @@ STORY_NODES: Dict[str, Dict[str, Any]] = {
         "text": (
             "The bell of Oakrest tolls at dusk. Smoke from the outer farms hangs over the square while frightened "
             "families gather beneath boarded windows. Villagers whisper of raiders, a cursed ruin in the forest, "
-            "and a missing relic known as the Dawn Emblem. Elder Mara asks you to track the threat before nightfall."
+            "and a missing relic known as the Dawn Emblem. A bloodstained order nailed to the chapel door bears one "
+            "signature: Warden Caldus, sworn to 'rekindle dawn through fire.' Elder Mara asks you to track the threat "
+            "before nightfall."
         ),
         "dialogue": [
             {"speaker": "Elder Mara", "line": "Oakrest has one night left before panic turns to bloodshed."},
             {"speaker": "Blacksmith Tor", "line": "If the roads fall, we fall with them. Bring us sunrise."},
+            {"speaker": "Signal Runner Tams", "line": "Every patrol report carries that same Warden seal now."},
         ],
         "choices": [
             {
@@ -219,6 +222,7 @@ STORY_NODES: Dict[str, Dict[str, Any]] = {
         "dialogue": [
             {"speaker": "Scout Iven", "line": "Every trail here writes a different ending. Choose what you're willing to own."},
             {"speaker": "Drum-Echo", "line": "Ignore a threat now, and it will remember your name later."},
+            {"speaker": "Signal Runner Tams", "line": "Caldus isn't raiding for gold. He's gathering fuel for something bigger at Ember Ridge."},
         ],
         "choices": [
             {
@@ -1000,16 +1004,50 @@ STORY_NODES: Dict[str, Dict[str, Any]] = {
         "dialogue": [
             {"speaker": "Signal Runner Tams", "line": "Reports keep stacking, commander. Say the word and I move people now."},
             {"speaker": "Your Instinct", "line": "This ridge is a ledger. Every spared enemy and ignored threat gets collected tonight."},
+            {"speaker": "Elder Mara", "line": "How you fought matters as much as whether you win. Oakrest will remember both."},
         ],
         "choices": [
             {
                 "label": "Return to the forest crossroads and resolve more unfinished threats",
+                "requirements": {"flag_false": ["returned_for_more_branches"]},
                 "effects": {
+                    "hp": -1,
                     "trait_delta": {"trust": 1},
                     "set_flags": {"returned_for_more_branches": True},
-                    "log": "You delay the siege and head back out, determined to settle more fronts before the final push.",
+                    "log": "You delay the siege and head back out, but every hour costs blood along Oakrest's outer farms.",
                 },
                 "next": "forest_crossroad",
+            },
+            {
+                "label": "Delay again despite mounting losses",
+                "requirements": {"flag_true": ["returned_for_more_branches"]},
+                "effects": {
+                    "hp": -2,
+                    "trait_delta": {"trust": -1, "reputation": -1},
+                    "set_flags": {"repeated_delay": True},
+                    "log": "Tams reports burned wagons and missing scouts as you postpone the assault a second time.",
+                },
+                "next": "forest_crossroad",
+            },
+            {
+                "label": "Hear Serin's judgment of your command",
+                "requirements": {"flag_true": ["mercy_reputation"]},
+                "effects": {
+                    "trait_delta": {"trust": 1},
+                    "set_flags": {"serin_endorsement": True},
+                    "log": "Serin says your mercy bought real allies; Rangers volunteer for the hardest breach lanes.",
+                },
+                "next": "war_council_hub",
+            },
+            {
+                "label": "Hear Drogath's judgment of your command",
+                "requirements": {"flag_true": ["cruel_reputation"]},
+                "effects": {
+                    "trait_delta": {"reputation": 1, "trust": -1},
+                    "set_flags": {"drogath_endorsement": True},
+                    "log": "Drogath respects your fear tactics, but even allies step back when you enter the firelight.",
+                },
+                "next": "war_council_hub",
             },
             {
                 "label": "Coordinate a lawful breach with Dawnwarden support",
@@ -1418,6 +1456,16 @@ STORY_NODES: Dict[str, Dict[str, Any]] = {
                 "next": "ending_best_rogue",
             },
             {
+                "label": "Archer finale: thread a signal arrow through the overload vents",
+                "requirements": {"class": ["Archer"], "min_dexterity": 5, "items": ["Signal Arrows"]},
+                "effects": {
+                    "hp": -1,
+                    "set_flags": {"warden_defeated": True, "ending_quality": "best", "archer_best_ending": True},
+                    "log": "Your impossible shot severs the vent lattice and collapses the Emblem surge before detonation.",
+                },
+                "next": "ending_best_archer",
+            },
+            {
                 "label": "Overpower the Warden in direct combat (Strength 6)",
                 "requirements": {"min_strength": 6},
                 "effects": {
@@ -1586,10 +1634,12 @@ STORY_NODES: Dict[str, Dict[str, Any]] = {
         "text": (
             "The device is stopped before activation. The Dawn Emblem is returned to the village archive. "
             "If your path was merciful, Oakrest hails you as a guardian of both lives and honor; "
-            "if ruthless, they praise your strength but fear what you may become."
+            "if ruthless, they praise your strength but fear what you may become. Dawnwarden scouts reopen trade roads "
+            "by week's end while Ashfang envoys test whether your new peace is durable."
         ),
         "dialogue": [
             {"speaker": "Elder Mara", "line": "Oakrest sees the sunrise because you stood when others broke."},
+            {"speaker": "Signal Runner Tams", "line": "For once I'm carrying harvest counts instead of casualty lists."},
         ],
         "choices": [],
     },
@@ -1617,15 +1667,30 @@ STORY_NODES: Dict[str, Dict[str, Any]] = {
         ],
         "choices": [],
     },
+    "ending_best_archer": {
+        "id": "ending_best_archer",
+        "title": "Best Ending — Skyfire Dawn of Oakrest",
+        "text": (
+            "Your final arrow strikes true through storming heat and falling stone, collapsing the Emblem surge without "
+            "shattering the chamber. Oakrest's watchtowers adopt your signal code, and every border village sleeps easier "
+            "under your marked sky-lanterns."
+        ),
+        "dialogue": [
+            {"speaker": "Signal Runner Tams", "line": "I watched that shot arc through fire. We'll be telling it for generations."},
+        ],
+        "choices": [],
+    },
     "ending_mixed": {
         "id": "ending_mixed",
         "title": "Ending — Victory at a Cost",
         "text": (
             "The Warden falls, but the ruin partially collapses and nearby farms are lost in the aftermath. "
-            "Oakrest survives, though your name is spoken with equal gratitude and regret."
+            "Oakrest survives, though your name is spoken with equal gratitude and regret. Dawnwarden medics and Ashfang "
+            "labor crews rebuild side by side, but every repaired wall carries the memory of what was sacrificed."
         ),
         "dialogue": [
             {"speaker": "Villager", "line": "We lived... but the valley won't forget the price."},
+            {"speaker": "Signal Runner Tams", "line": "Half my reports are aid requests now. At least there are people left to ask."},
         ],
         "choices": [],
     },
@@ -1634,10 +1699,12 @@ STORY_NODES: Dict[str, Dict[str, Any]] = {
         "title": "Ending — Nightfall Over Oakrest",
         "text": (
             "Your final gamble fails. The device surges to full power and the forest burns with unnatural fire. "
-            "Oakrest is abandoned by sunrise, and your tale becomes a warning."
+            "Oakrest is abandoned by sunrise, and your tale becomes a warning. Fractured factions scatter into exile, "
+            "arguing whether mercy or brutality doomed the valley first."
         ),
         "dialogue": [
             {"speaker": "Elder Mara", "line": "Remember this night, so we never choose it again."},
+            {"speaker": "Signal Runner Tams", "line": "No routes left to run, commander. Just ash and refugees."},
         ],
         "choices": [],
     },
