@@ -1174,8 +1174,15 @@ def format_outcomes(effects: Dict[str, Any] | None) -> str:
     if effects.get("remove_items"):
         details.append(f"Remove items: {', '.join(effects['remove_items'])}")
     if effects.get("set_flags"):
-        flag_updates = ", ".join([f"{k}={v}" for k, v in effects["set_flags"].items()])
-        details.append(f"Set flags: {flag_updates}")
+        spoiler_flags = {"ending_quality", "warrior_best_ending", "rogue_best_ending"}
+        visible_flags = {k: v for k, v in effects["set_flags"].items() if k not in spoiler_flags}
+        hidden_flag_count = len(effects["set_flags"]) - len(visible_flags)
+
+        if visible_flags:
+            flag_updates = ", ".join([f"{k}={v}" for k, v in visible_flags.items()])
+            details.append(f"Set flags: {flag_updates}")
+        if hidden_flag_count:
+            details.append("Ending impact: hidden to avoid spoilers")
     if effects.get("log"):
         details.append(f"Narrative: {effects['log']}")
 
@@ -1185,7 +1192,7 @@ def format_outcomes(effects: Dict[str, Any] | None) -> str:
 def render_choice_outcomes_tab() -> None:
     """Render a separate tab that lists every node choice and its outcomes."""
     st.subheader("All Choices & Outcomes")
-    st.caption("A full reference of every choice path, requirements, and deterministic outcomes.")
+    st.caption("A full reference of every choice path and requirements. Ending-impact spoilers are hidden.")
 
     for node_id, node in STORY_NODES.items():
         choices = node.get("choices", [])
