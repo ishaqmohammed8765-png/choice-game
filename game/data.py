@@ -143,56 +143,72 @@ STORY_NODES: Dict[str, Dict[str, Any]] = {
         "choices": [
             {
                 "label": "Cross the ravine by hauling yourself on old beams (Strength 3)",
-                "requirements": {"min_strength": 3},
-                "effects": {"log": "Your raw force carries you across the groaning beams."},
+                "requirements": {"min_strength": 3, "flag_false": ["branch_ravine_completed"]},
+                "effects": {
+                    "log": "Your raw force carries you across the groaning beams.",
+                    "set_flags": {"branch_ravine_completed": True},
+                },
                 "next": "ravine_crossing",
             },
             {
                 "label": "Cross the ravine using your rope",
-                "requirements": {"items": ["Rope"]},
+                "requirements": {"items": ["Rope"], "flag_false": ["branch_ravine_completed"]},
                 "effects": {
                     "log": "You anchor your rope and swing across the ravine safely.",
-                    "set_flags": {"used_rope_crossing": True},
+                    "set_flags": {"used_rope_crossing": True, "branch_ravine_completed": True},
                 },
                 "next": "ravine_crossing",
             },
             {
                 "label": "Sneak toward the bandit camp (Dexterity 3)",
-                "requirements": {"min_dexterity": 3},
-                "effects": {"log": "You melt into the brush and approach unheard."},
+                "requirements": {"min_dexterity": 3, "flag_false": ["branch_bandit_completed"]},
+                "effects": {
+                    "log": "You melt into the brush and approach unheard.",
+                    "set_flags": {"branch_bandit_completed": True},
+                },
                 "next": "bandit_camp",
             },
             {
                 "label": "March openly to the bandit camp",
-                "effects": {"log": "Branches crack under your boots as you confront the raiders openly."},
+                "requirements": {"flag_false": ["branch_bandit_completed"]},
+                "effects": {
+                    "log": "Branches crack under your boots as you confront the raiders openly.",
+                    "set_flags": {"branch_bandit_completed": True},
+                },
                 "next": "bandit_camp",
             },
             {
                 "label": "Follow the ranger lanterns to their hidden outpost",
+                "requirements": {"flag_false": ["branch_dawnwarden_completed"]},
                 "effects": {
-                    "set_flags": {"met_dawnwardens": True},
+                    "set_flags": {"met_dawnwardens": True, "branch_dawnwarden_completed": True},
                     "log": "You leave the road and follow coded lantern flashes to a concealed ranger camp.",
                 },
                 "next": "dawnwarden_outpost",
             },
             {
                 "label": "Track the Ashfang war drums into the bramble valley",
+                "requirements": {"flag_false": ["branch_ashfang_completed"]},
                 "effects": {
-                    "set_flags": {"met_ashfang": True},
+                    "set_flags": {"met_ashfang": True, "branch_ashfang_completed": True},
                     "log": "You shadow the drumming trail toward an Ashfang hunting column.",
                 },
                 "next": "ashfang_hunt",
             },
             {
                 "label": "Investigate the flooded causeway road",
+                "requirements": {"flag_false": ["branch_causeway_completed"]},
                 "effects": {
+                    "set_flags": {"branch_causeway_completed": True},
                     "log": "You cut through marsh fog toward a drowned causeway where bells still toll underwater.",
                 },
                 "next": "flooded_causeway_approach",
             },
             {
                 "label": "Take the ash-choked mill trail",
+                "requirements": {"flag_false": ["branch_mill_completed"]},
                 "effects": {
+                    "set_flags": {"branch_mill_completed": True},
                     "log": "You follow scorched wheel ruts toward an abandoned mill wrapped in ember smoke.",
                 },
                 "next": "charred_mill_approach",
@@ -487,7 +503,7 @@ STORY_NODES: Dict[str, Dict[str, Any]] = {
                 "next": "causeway_depths",
             },
             {
-                "label": "Backtrack and rejoin the war council",
+                "label": "Backtrack and report to the war council",
                 "effects": {"log": "You retreat from the floodline and return to Ember Ridge."},
                 "next": "war_council_hub",
             },
@@ -679,7 +695,7 @@ STORY_NODES: Dict[str, Dict[str, Any]] = {
                 "label": "Escape the foundry before it erupts",
                 "effects": {
                     "hp": -2,
-                    "log": "You dive through burning beams and escape, but Vorga survives to arm more raiders.",
+                    "log": "You surge through burning beams and escape, but Vorga survives to arm more raiders.",
                 },
                 "next": "war_council_hub",
             },
@@ -1132,7 +1148,7 @@ STORY_NODES: Dict[str, Dict[str, Any]] = {
                 "effects": {
                     "hp": -2,
                     "set_flags": {"warden_defeated": True, "ending_quality": "mixed"},
-                    "log": "Your captured firebombs collapse two pylons, ending the ritual in violent ruin.",
+                    "log": "Your captured firebombs collapse two pylons, ending the channeling rite in violent ruin.",
                 },
                 "next": "ending_mixed",
             },
@@ -1240,7 +1256,7 @@ STORY_NODES: Dict[str, Dict[str, Any]] = {
                 "next": "camp_shop",
             },
             {
-                "label": "Push through the pain and rejoin the assault route",
+                "label": "Push through the pain and return to the assault route",
                 "effects": {
                     "hp": 2,
                     "trait_delta": {"reputation": 1},
