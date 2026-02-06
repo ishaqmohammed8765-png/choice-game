@@ -267,6 +267,13 @@ STORY_NODES: Dict[str, Dict[str, Any]] = {
                 "next": "ashfang_hunt",
             },
             {
+                "label": "Open your field map for side operations and support missions",
+                "effects": {
+                    "log": "You kneel at a stump, spread your map, and review side operations before the final push.",
+                },
+                "next": "forest_crossroad_operations",
+            },
+            {
                 "label": "Investigate the flooded causeway road",
                 "requirements": {"flag_false": ["branch_causeway_completed"]},
                 "effects": {
@@ -331,6 +338,82 @@ STORY_NODES: Dict[str, Dict[str, Any]] = {
                     "log": "After scouting multiple fronts, you call your banners and move to Ember Ridge.",
                 },
                 "next": "war_council_hub",
+            },
+        ],
+    },
+    "forest_crossroad_operations": {
+        "id": "forest_crossroad_operations",
+        "title": "Forest Crossroad - Operations Map",
+        "text": (
+            "You unfold a rain-stained field map marked with ranger shorthand. Secondary fronts and tactical errands "
+            "branch from the crossroads, each promising leverage before Ember Ridge."
+        ),
+        "dialogue": [
+            {"speaker": "Scout Iven", "line": "These side routes look optional, until the final battle proves they weren't."},
+            {"speaker": "Quartermaster Note", "line": "Supplies, routes, and local favors decide sieges before steel does."},
+        ],
+        "choices": [
+            {
+                "label": "Investigate the flooded causeway road",
+                "requirements": {"flag_false": ["branch_causeway_completed"]},
+                "effects": {
+                    "set_flags": {"branch_causeway_completed": True},
+                    "log": "You cut through marsh fog toward a drowned causeway where bells still toll underwater.",
+                },
+                "next": "flooded_causeway_approach",
+            },
+            {
+                "label": "Take the ash-choked mill trail",
+                "requirements": {"flag_false": ["branch_mill_completed"]},
+                "effects": {
+                    "set_flags": {"branch_mill_completed": True},
+                    "log": "You follow scorched wheel ruts toward an abandoned mill wrapped in ember smoke.",
+                },
+                "next": "charred_mill_approach",
+            },
+            {
+                "label": "Scavenge the collapsed scout cache with Rope and Torch",
+                "requirements": {"items": ["Rope", "Torch"], "flag_false": ["cache_salvaged"]},
+                "effects": {
+                    "gold": 4,
+                    "trait_delta": {"reputation": 1},
+                    "set_flags": {"cache_salvaged": True},
+                    "seen_events": ["cache_salvaged_combo"],
+                    "log": "Using rope and torch together, you recover a hidden cache that others missed.",
+                },
+                "next": "forest_crossroad_operations",
+            },
+            {
+                "label": "Warrior duty: fortify a ranger barricade line",
+                "requirements": {"class": ["Warrior"], "flag_false": ["warrior_mid_arc_done"]},
+                "effects": {
+                    "set_flags": {"warrior_mid_arc_done": True},
+                    "log": "You step off-road to harden a weak barricade before nightfall.",
+                },
+                "next": "warrior_barricade",
+            },
+            {
+                "label": "Rogue duty: investigate a smuggler safehouse",
+                "requirements": {"class": ["Rogue"], "flag_false": ["rogue_mid_arc_done"]},
+                "effects": {
+                    "set_flags": {"rogue_mid_arc_done": True},
+                    "log": "You follow coded marks toward a hidden safehouse.",
+                },
+                "next": "rogue_safehouse",
+            },
+            {
+                "label": "Archer duty: secure a ridgewatch sniper nest",
+                "requirements": {"class": ["Archer"], "flag_false": ["archer_mid_arc_done"]},
+                "effects": {
+                    "set_flags": {"archer_mid_arc_done": True},
+                    "log": "You climb toward a windswept ridge to claim a tactical overlook.",
+                },
+                "next": "archer_ridgewatch",
+            },
+            {
+                "label": "Return to the main crossroads routes",
+                "effects": {"log": "You roll up the operations map and step back to the central trails."},
+                "next": "forest_crossroad",
             },
         ],
     },
