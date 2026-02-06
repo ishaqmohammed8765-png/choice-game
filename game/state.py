@@ -23,6 +23,8 @@ def reset_game_state() -> None:
     st.session_state.pending_choice_confirmation = None
     st.session_state.show_locked_choices = False
     st.session_state.spoiler_debug_mode = False
+    st.session_state.visited_nodes = []
+    st.session_state.visited_edges = []
 
 def start_game(player_class: str) -> None:
     """Initialize game state from class template and enter first node."""
@@ -47,6 +49,8 @@ def start_game(player_class: str) -> None:
     st.session_state.pending_choice_confirmation = None
     st.session_state.show_locked_choices = False
     st.session_state.spoiler_debug_mode = False
+    st.session_state.visited_nodes = ["village_square"]
+    st.session_state.visited_edges = []
 
 def add_log(message: str) -> None:
     """Append a narrative event to the player log."""
@@ -68,6 +72,8 @@ def snapshot_state() -> Dict[str, Any]:
         "last_choice_feedback": copy.deepcopy(st.session_state.last_choice_feedback),
         "event_log": copy.deepcopy(st.session_state.event_log),
         "pending_choice_confirmation": copy.deepcopy(st.session_state.pending_choice_confirmation),
+        "visited_nodes": copy.deepcopy(st.session_state.visited_nodes),
+        "visited_edges": copy.deepcopy(st.session_state.visited_edges),
     }
 
 def load_snapshot(snapshot: Dict[str, Any]) -> None:
@@ -84,6 +90,8 @@ def load_snapshot(snapshot: Dict[str, Any]) -> None:
     st.session_state.last_choice_feedback = snapshot.get("last_choice_feedback", [])
     st.session_state.event_log = snapshot["event_log"]
     st.session_state.pending_choice_confirmation = snapshot.get("pending_choice_confirmation")
+    st.session_state.visited_nodes = snapshot.get("visited_nodes", [snapshot["current_node"]])
+    st.session_state.visited_edges = snapshot.get("visited_edges", [])
 
 def ensure_session_state() -> None:
     """Initialize session state keys on first load."""
@@ -109,3 +117,7 @@ def ensure_session_state() -> None:
         st.session_state.show_locked_choices = False
     if "spoiler_debug_mode" not in st.session_state:
         st.session_state.spoiler_debug_mode = False
+    if "visited_nodes" not in st.session_state:
+        st.session_state.visited_nodes = []
+    if "visited_edges" not in st.session_state:
+        st.session_state.visited_edges = []

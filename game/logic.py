@@ -99,6 +99,8 @@ def execute_choice(node_id: str, label: str, choice: Dict[str, Any]) -> None:
     st.session_state.decision_history.append({"node": node_id, "choice": label})
     resolved_effects, resolved_next = resolve_choice_outcome(choice)
     apply_effects(resolved_effects)
+    actual_next = _resolve_transition_node(resolved_next, choice.get("instant_death", False))
+    _record_visit(node_id, actual_next)
     if choice.get("irreversible"):
         st.session_state.history = []
         add_log("This decision is irreversible. You cannot undo beyond this point.")
@@ -317,6 +319,28 @@ def transition_to(next_node_id: str) -> None:
         return
 
     st.session_state.current_node = next_node_id
+
+
+def _resolve_transition_node(next_node_id: str, instant_death: bool) -> str:
+    if instant_death:
+        return "death"
+    if st.session_state.stats["hp"] <= 0:
+        return "death"
+    if next_node_id not in STORY_NODES:
+        return "failure_captured" if "failure_captured" in STORY_NODES else "death"
+    return next_node_id
+
+
+def _record_visit(from_node: str, to_node: str) -> None:
+    visited_nodes = st.session_state.visited_nodes
+    visited_edges = st.session_state.visited_edges
+    if from_node not in visited_nodes:
+        visited_nodes.append(from_node)
+    if to_node not in visited_nodes:
+        visited_nodes.append(to_node)
+    edge = {"from": from_node, "to": to_node}
+    if edge not in visited_edges:
+        visited_edges.append(edge)
 
 
 def validate_story_nodes() -> List[str]:
