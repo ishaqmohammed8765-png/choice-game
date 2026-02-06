@@ -24,6 +24,13 @@ CLASS_TEMPLATES: Dict[str, Dict[str, Any]] = {
         "dexterity": 4,
         "inventory": ["Dagger", "Lockpicks"],
     },
+    "Archer": {
+        "hp": 12,
+        "gold": 9,
+        "strength": 3,
+        "dexterity": 3,
+        "inventory": ["Shortbow", "Quiver of Arrows"],
+    },
 }
 
 

@@ -17,7 +17,7 @@ def main() -> None:
         st.write(
             "Oakrest needs a hero. Your class changes available paths and solutions throughout the story."
         )
-        col1, col2 = st.columns(2)
+        col1, col2, col3 = st.columns(3)
         with col1:
             if st.button("Warrior", use_container_width=True, type="primary"):
                 start_game("Warrior")
@@ -26,9 +26,14 @@ def main() -> None:
             if st.button("Rogue", use_container_width=True, type="primary"):
                 start_game("Rogue")
                 st.rerun()
+        with col3:
+            if st.button("Archer", use_container_width=True, type="primary"):
+                start_game("Archer")
+                st.rerun()
 
         st.markdown("**Warrior:** higher HP and Strength, excels at brute-force paths.")
         st.markdown("**Rogue:** higher Dexterity and stealth options, excels at subtle paths.")
+        st.markdown("**Archer:** balanced HP with adaptable Strength and Dexterity, excels at flexible tactics.")
         return
 
     render_sidebar()
