@@ -7,6 +7,24 @@ A deterministic, choice-driven fantasy adventure built with Streamlit.
 1. `pip install streamlit`
 2. `streamlit run app.py`
 
+## Opportunities
+
+Game design opportunities to consider as you expand content:
+
+- Emphasize **early class differentiation** so each class feels distinct in the opening beats.
+- Add a **pacing contrast** in the midgame (one or two quieter beats before major confrontations).
+- Expand **ending clarity/epilogues** with aftermath details tied to key flags and traits.
+
+## Recommendations
+
+Priority recommendations to scale safely:
+
+1. Add a **test suite** around `logic.py` and save/load schema handling.
+2. Add a **strict content validator** (unknown flags/items, impossible requirements, class-lock audits).
+3. Split `game/data.py` into smaller content files or externalize to schema-validated JSON/YAML.
+4. Add an optional **spoiler guard** for the full outcomes/debug tab.
+5. Build a **balance dashboard** for per-class path viability and resource pressure.
+
 ## Narrative design principles
 
 ### Delayed consequences

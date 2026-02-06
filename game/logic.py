@@ -2,7 +2,15 @@ from typing import Any, Dict, List
 
 from game.streamlit_compat import st
 
-from game.data import FACTION_KEYS, HIGH_COST_GOLD_LOSS, HIGH_COST_HP_LOSS, STAT_KEYS, STORY_NODES, TRAIT_KEYS
+from game.data import (
+    CLASS_TEMPLATES,
+    FACTION_KEYS,
+    HIGH_COST_GOLD_LOSS,
+    HIGH_COST_HP_LOSS,
+    STAT_KEYS,
+    STORY_NODES,
+    TRAIT_KEYS,
+)
 from game.state import add_log, snapshot_state
 
 ALLOWED_REQUIREMENT_KEYS = {
@@ -28,6 +36,38 @@ ALLOWED_EFFECT_KEYS = {
     "faction_delta",
     "log",
 }
+
+SYSTEM_FLAG_KEYS = {"class", "any_branch_completed"}
+
+
+def _iter_all_choices(node: Dict[str, Any]) -> List[Dict[str, Any]]:
+    return list(node.get("choices", [])) + list(node.get("auto_choices", []))
+
+
+def _collect_story_metadata() -> tuple[set[str], set[str]]:
+    """Collect known flags and obtainable items."""
+    known_flags = set(SYSTEM_FLAG_KEYS)
+    obtainable_items: set[str] = set()
+
+    for template in CLASS_TEMPLATES.values():
+        for item in template.get("inventory", []):
+            obtainable_items.add(item)
+
+    for node in STORY_NODES.values():
+        for choice in _iter_all_choices(node):
+            requirements = choice.get("requirements", {})
+            effects = choice.get("effects", {})
+            obtainable_items.update(effects.get("add_items", []))
+            if effects.get("set_flags"):
+                known_flags.update(effects["set_flags"].keys())
+
+            for variant in choice.get("conditional_effects", []):
+                variant_effects = variant.get("effects", {})
+                obtainable_items.update(variant_effects.get("add_items", []))
+                if variant_effects.get("set_flags"):
+                    known_flags.update(variant_effects["set_flags"].keys())
+
+    return known_flags, obtainable_items
 
 def transition_to_failure(failure_type: str) -> None:
     """Send the player to a recoverable failure node instead of ending the run."""
@@ -282,17 +322,25 @@ def transition_to(next_node_id: str) -> None:
 def validate_story_nodes() -> List[str]:
     """Run static validation over story structure, links, and choice schemas."""
     warnings: List[str] = []
+    known_flags, obtainable_items = _collect_story_metadata()
+    known_classes = set(CLASS_TEMPLATES.keys())
     for node_id, node in STORY_NODES.items():
         if node.get("id") != node_id:
             warnings.append(f"Node key '{node_id}' does not match its id field '{node.get('id')}'.")
 
-        for idx, choice in enumerate(node.get("choices", []), start=1):
+        for idx, choice in enumerate(_iter_all_choices(node), start=1):
             label = choice.get("label", f"unnamed-{idx}")
             next_id = choice.get("next")
             if next_id not in STORY_NODES:
                 warnings.append(f"Choice '{label}' in node '{node_id}' points to missing node '{next_id}'.")
 
             requirements = choice.get("requirements", {})
+            if "class" in requirements:
+                unknown_classes = sorted(set(requirements["class"]) - known_classes)
+                if unknown_classes:
+                    warnings.append(
+                        f"Choice '{label}' in node '{node_id}' has unknown classes: {', '.join(unknown_classes)}."
+                    )
             if "any_of" in requirements:
                 for option in requirements["any_of"]:
                     unknown_any_of = sorted(set(option) - ALLOWED_REQUIREMENT_KEYS)
@@ -313,6 +361,22 @@ def validate_story_nodes() -> List[str]:
                     f"Choice '{label}' in node '{node_id}' has unknown effect keys: {', '.join(unknown_effect_keys)}."
                 )
 
+            for item in requirements.get("items", []):
+                if item not in obtainable_items:
+                    warnings.append(
+                        f"Choice '{label}' in node '{node_id}' requires item '{item}' that is never granted."
+                    )
+            for item in effects.get("remove_items", []):
+                if item not in obtainable_items:
+                    warnings.append(
+                        f"Choice '{label}' in node '{node_id}' removes item '{item}' that is never granted."
+                    )
+            for item in requirements.get("missing_items", []):
+                if item not in obtainable_items:
+                    warnings.append(
+                        f"Choice '{label}' in node '{node_id}' checks missing item '{item}' that is never granted."
+                    )
+
             if "trait_delta" in effects:
                 unknown_traits = sorted(set(effects["trait_delta"]) - set(TRAIT_KEYS))
                 if unknown_traits:
@@ -325,6 +389,17 @@ def validate_story_nodes() -> List[str]:
                 if unknown_factions:
                     warnings.append(
                         f"Choice '{label}' in node '{node_id}' uses unknown factions in faction_delta: {', '.join(unknown_factions)}."
+                    )
+
+            for flag in requirements.get("flag_true", []):
+                if flag not in known_flags:
+                    warnings.append(
+                        f"Choice '{label}' in node '{node_id}' requires flag '{flag}' that is never set."
+                    )
+            for flag in requirements.get("flag_false", []):
+                if flag not in known_flags:
+                    warnings.append(
+                        f"Choice '{label}' in node '{node_id}' checks flag '{flag}' that is never set."
                     )
 
             for variant in choice.get("conditional_effects", []):
