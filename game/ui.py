@@ -1,7 +1,7 @@
 import json
 from typing import Any, Dict, List
 
-import streamlit as st
+from game.streamlit_compat import st
 
 from game.data import STAT_KEYS, STORY_NODES, TRAIT_KEYS
 from game.logic import (
@@ -264,7 +264,11 @@ def format_outcomes(effects: Dict[str, Any] | None) -> str:
 def render_choice_outcomes_tab() -> None:
     """Render a separate tab that lists every node choice and its outcomes."""
     st.subheader("All Choices & Outcomes")
-    st.caption("A full reference of every choice path and requirements. Ending-impact spoilers are hidden.")
+    show_full_spoilers = st.toggle("Show spoiler-heavy routing details", value=False)
+    if show_full_spoilers:
+        st.caption("Spoilers enabled: next-node IDs are visible for every choice.")
+    else:
+        st.caption("Spoilers reduced: requirements and outcomes are shown, but routing IDs are hidden.")
 
     for node_id, node in STORY_NODES.items():
         choices = node.get("choices", [])
@@ -276,5 +280,6 @@ def render_choice_outcomes_tab() -> None:
                 st.markdown(f"**{idx}. {choice['label']}**")
                 st.write(f"- **Requirements:** {format_requirements(choice.get('requirements'))}")
                 st.write(f"- **Outcome:** {format_outcomes(choice.get('effects'))}")
-                st.write(f"- **Next node:** `{choice['next']}`")
+                if show_full_spoilers:
+                    st.write(f"- **Next node:** `{choice['next']}`")
                 st.write("---")

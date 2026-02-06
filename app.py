@@ -1,4 +1,4 @@
-import streamlit as st
+from game.streamlit_compat import st
 
 from game.logic import validate_story_nodes
 from game.state import ensure_session_state, start_game

@@ -1,10 +1,31 @@
 from typing import Any, Dict, List
 
-import streamlit as st
+from game.streamlit_compat import st
 
-from game.data import HIGH_COST_GOLD_LOSS, HIGH_COST_HP_LOSS, STAT_KEYS, STORY_NODES
+from game.data import HIGH_COST_GOLD_LOSS, HIGH_COST_HP_LOSS, STAT_KEYS, STORY_NODES, TRAIT_KEYS
 from game.state import add_log, snapshot_state
 
+ALLOWED_REQUIREMENT_KEYS = {
+    "class",
+    "min_hp",
+    "min_gold",
+    "min_strength",
+    "min_dexterity",
+    "items",
+    "missing_items",
+    "flag_true",
+    "flag_false",
+}
+
+ALLOWED_EFFECT_KEYS = {
+    *STAT_KEYS,
+    "add_items",
+    "remove_items",
+    "set_flags",
+    "trait_delta",
+    "seen_events",
+    "log",
+}
 
 def transition_to_failure(failure_type: str) -> None:
     """Send the player to a recoverable failure node instead of ending the run."""
@@ -178,18 +199,42 @@ def transition_to(next_node_id: str) -> None:
 
 
 def validate_story_nodes() -> List[str]:
-    """Run lightweight static validation over story graph links."""
+    """Run static validation over story structure, links, and choice schemas."""
     warnings: List[str] = []
     for node_id, node in STORY_NODES.items():
         if node.get("id") != node_id:
             warnings.append(f"Node key '{node_id}' does not match its id field '{node.get('id')}'.")
 
-        for choice in node.get("choices", []):
+        for idx, choice in enumerate(node.get("choices", []), start=1):
+            label = choice.get("label", f"unnamed-{idx}")
             next_id = choice.get("next")
             if next_id not in STORY_NODES:
+                warnings.append(f"Choice '{label}' in node '{node_id}' points to missing node '{next_id}'.")
+
+            requirements = choice.get("requirements", {})
+            unknown_req_keys = sorted(set(requirements) - ALLOWED_REQUIREMENT_KEYS)
+            if unknown_req_keys:
                 warnings.append(
-                    f"Choice '{choice.get('label', 'unnamed')}' in node '{node_id}' points to missing node '{next_id}'."
+                    f"Choice '{label}' in node '{node_id}' has unknown requirement keys: {', '.join(unknown_req_keys)}."
                 )
+
+            effects = choice.get("effects", {})
+            unknown_effect_keys = sorted(set(effects) - ALLOWED_EFFECT_KEYS)
+            if unknown_effect_keys:
+                warnings.append(
+                    f"Choice '{label}' in node '{node_id}' has unknown effect keys: {', '.join(unknown_effect_keys)}."
+                )
+
+            if "trait_delta" in effects:
+                unknown_traits = sorted(set(effects["trait_delta"]) - set(TRAIT_KEYS))
+                if unknown_traits:
+                    warnings.append(
+                        f"Choice '{label}' in node '{node_id}' uses unknown traits in trait_delta: {', '.join(unknown_traits)}."
+                    )
+
+            if "class" in requirements and not requirements["class"]:
+                warnings.append(f"Choice '{label}' in node '{node_id}' has empty class requirements list.")
+
     return warnings
 
 
