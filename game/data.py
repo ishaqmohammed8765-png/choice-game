@@ -183,6 +183,20 @@ STORY_NODES: Dict[str, Dict[str, Any]] = {
                 },
                 "next": "ashfang_hunt",
             },
+            {
+                "label": "Investigate the flooded shrine road",
+                "effects": {
+                    "log": "You cut through marsh fog toward a drowned shrine where bells still toll underwater.",
+                },
+                "next": "flooded_shrine_approach",
+            },
+            {
+                "label": "Take the ash-choked mill trail",
+                "effects": {
+                    "log": "You follow scorched wheel ruts toward an abandoned mill wrapped in ember smoke.",
+                },
+                "next": "charred_mill_approach",
+            },
         ],
     },
     "dawnwarden_outpost": {
@@ -441,6 +455,236 @@ STORY_NODES: Dict[str, Dict[str, Any]] = {
             },
         ],
     },
+    "flooded_shrine_approach": {
+        "id": "flooded_shrine_approach",
+        "title": "Flooded Shrine Causeway",
+        "text": (
+            "Half-sunken statues line a cracked causeway while cold water swirls around your knees. "
+            "Villagers whisper that a tidebound knight has guarded this ruin road for years, drowning scouts and raiders alike."
+        ),
+        "dialogue": [
+            {"speaker": "Broken Shrine Bell", "line": "Dong... dong... each toll comes from beneath the water."},
+            {"speaker": "Your Instinct", "line": "This path could save Oakrest's flank, if you can survive what's guarding it."},
+        ],
+        "choices": [
+            {
+                "label": "Wade forward with shielded footing (Strength 4)",
+                "requirements": {"min_strength": 4},
+                "effects": {
+                    "hp": -1,
+                    "set_flags": {"shrine_reached": True},
+                    "log": "You muscle through the current and reach the shrine terrace bruised but steady.",
+                },
+                "next": "shrine_depths",
+            },
+            {
+                "label": "Anchor rope lines between statues",
+                "requirements": {"items": ["Rope"]},
+                "effects": {
+                    "set_flags": {"shrine_reached": True},
+                    "log": "Your rope rig keeps you above the undertow as you cross safely.",
+                },
+                "next": "shrine_depths",
+            },
+            {
+                "label": "Backtrack and rejoin the war council",
+                "effects": {"log": "You retreat from the floodline and return to Ember Ridge."},
+                "next": "war_council_hub",
+            },
+        ],
+    },
+    "shrine_depths": {
+        "id": "shrine_depths",
+        "title": "Undershrine Vault",
+        "text": (
+            "Below the altar, a rusted floodgate seals a vault of old warding engines. You can reactivate the pumps "
+            "to drain the road and expose a safer assault lane, but something massive is chained in the dark water."
+        ),
+        "dialogue": [
+            {"speaker": "Ancient Inscription", "line": "When waters rise, the guardian wakes."},
+            {"speaker": "Your Instinct", "line": "No more delays. Whatever is chained down there is your real trial."},
+        ],
+        "choices": [
+            {
+                "label": "Unlock the floodgate with lockpicks",
+                "requirements": {"items": ["Lockpicks"]},
+                "effects": {
+                    "set_flags": {"floodgate_open": True},
+                    "log": "Tumblers grind loose and the floodgate heaves upward.",
+                },
+                "next": "tidebound_knight",
+            },
+            {
+                "label": "Force the floodgate wheel (Strength 5)",
+                "requirements": {"min_strength": 5},
+                "effects": {
+                    "hp": -1,
+                    "set_flags": {"floodgate_open": True},
+                    "log": "You wrench the corroded wheel until the chain snaps and the vault roars awake.",
+                },
+                "next": "tidebound_knight",
+            },
+            {
+                "label": "Fall back before the chamber floods",
+                "effects": {"log": "You abandon the vault and withdraw to regroup."},
+                "next": "war_council_hub",
+            },
+        ],
+    },
+    "tidebound_knight": {
+        "id": "tidebound_knight",
+        "title": "Mini-Boss: Tidebound Knight",
+        "text": (
+            "A barnacled knight rises from the reservoir in chained plate, dragging a bell-hammer the size of a cart axle. "
+            "If you defeat it, the drained causeway will give Oakrest a protected route straight to the ruin's outer wall."
+        ),
+        "dialogue": [
+            {"speaker": "Tidebound Knight", "line": "None pass the drowned oath."},
+            {"speaker": "Your Instinct", "line": "Break this guardian and the whole battlefield changes."},
+        ],
+        "choices": [
+            {
+                "label": "Shatter the knight's guard with brute force (Strength 5)",
+                "requirements": {"min_strength": 5},
+                "effects": {
+                    "hp": -2,
+                    "trait_delta": {"reputation": 2},
+                    "set_flags": {"tidebound_knight_defeated": True, "opened_cleanly": True},
+                    "log": "You crack the barnacle armor apart and the floodwater drains into old channels.",
+                },
+                "next": "war_council_hub",
+            },
+            {
+                "label": "Use the opened floodgate chain to pin and finish it",
+                "requirements": {"flag_true": ["floodgate_open"]},
+                "effects": {
+                    "hp": -1,
+                    "trait_delta": {"trust": 1, "reputation": 1},
+                    "set_flags": {"tidebound_knight_defeated": True, "ruin_supply_line_cut": True},
+                    "log": "You trap the knight in its own chain rig and sever the raiders' water approach.",
+                },
+                "next": "war_council_hub",
+            },
+            {
+                "label": "Retreat with injuries and abandon the shrine",
+                "effects": {"hp": -2, "log": "You escape the vault battered, leaving the guardian undefeated."},
+                "next": "war_council_hub",
+            },
+        ],
+    },
+    "charred_mill_approach": {
+        "id": "charred_mill_approach",
+        "title": "Charred Mill Trail",
+        "text": (
+            "The old grain mill still turns despite having no river, its wheel driven by ember gusts from below. "
+            "Scouts report a pyre-alchemist has been forging firebombs here for the Warden's troops."
+        ),
+        "dialogue": [
+            {"speaker": "Scorched Villager", "line": "That mill made the bombs that burned my field."},
+            {"speaker": "Your Instinct", "line": "If this forge falls, fewer fires reach Oakrest."},
+        ],
+        "choices": [
+            {
+                "label": "Climb the rafters and scout from above (Dexterity 4)",
+                "requirements": {"min_dexterity": 4},
+                "effects": {
+                    "set_flags": {"mill_scouted": True},
+                    "log": "From the rafters you chart patrol patterns and a weak point in the blast kiln.",
+                },
+                "next": "smokeforge_floor",
+            },
+            {
+                "label": "Kick in the side gate and storm the yard",
+                "effects": {
+                    "hp": -1,
+                    "set_flags": {"mill_scouted": False},
+                    "log": "You smash through the side gate, drawing every sentry's attention.",
+                },
+                "next": "smokeforge_floor",
+            },
+            {
+                "label": "Withdraw and return to Ember Ridge",
+                "effects": {"log": "You leave the mill to regroup with allied scouts."},
+                "next": "war_council_hub",
+            },
+        ],
+    },
+    "smokeforge_floor": {
+        "id": "smokeforge_floor",
+        "title": "Smokeforge Interior",
+        "text": (
+            "Bomb racks line the floor beside a roaring kiln. You can sabotage the powder stores now, "
+            "or push straight into the foundry where the pyre-alchemist is chanting over volatile resin."
+        ),
+        "dialogue": [
+            {"speaker": "Ashfang Prisoner", "line": "One spark and this whole place jumps to the sky."},
+            {"speaker": "Your Instinct", "line": "Make this count. The war won't forgive a sloppy fire."},
+        ],
+        "choices": [
+            {
+                "label": "Sabotage the bomb racks before the duel",
+                "effects": {
+                    "set_flags": {"bomb_racks_sabotaged": True},
+                    "trait_delta": {"reputation": 1},
+                    "log": "You soak the fuses and snap detonators, reducing the foundry's firepower.",
+                },
+                "next": "pyre_alchemist",
+            },
+            {
+                "label": "Charge the foundry immediately",
+                "effects": {
+                    "hp": -1,
+                    "set_flags": {"bomb_racks_sabotaged": False},
+                    "log": "You rush the furnace gantry before finishing any sabotage.",
+                },
+                "next": "pyre_alchemist",
+            },
+        ],
+    },
+    "pyre_alchemist": {
+        "id": "pyre_alchemist",
+        "title": "Mini-Boss: Pyre-Alchemist Vorga",
+        "text": (
+            "Vorga hurls flask-bombs while furnace vents spew white fire. Defeating her will cripple the raiders' "
+            "incendiary stockpile and calm the panic spreading through Oakrest's outskirts."
+        ),
+        "dialogue": [
+            {"speaker": "Vorga", "line": "I bottle dawn itself. You cannot outrun sunrise."},
+            {"speaker": "Your Instinct", "line": "End this forge and the village breathes easier tonight."},
+        ],
+        "choices": [
+            {
+                "label": "Win a close-quarters duel (Strength 4)",
+                "requirements": {"min_strength": 4},
+                "effects": {
+                    "hp": -2,
+                    "set_flags": {"pyre_alchemist_defeated": True, "ruin_supply_line_cut": True},
+                    "trait_delta": {"reputation": 2},
+                    "log": "You force Vorga off the gantry and scatter the last armed bombs into cooling ash.",
+                },
+                "next": "war_council_hub",
+            },
+            {
+                "label": "Trigger your sabotage and finish Vorga in the smoke",
+                "requirements": {"flag_true": ["bomb_racks_sabotaged"]},
+                "effects": {
+                    "hp": -1,
+                    "set_flags": {"pyre_alchemist_defeated": True, "opened_cleanly": True},
+                    "trait_delta": {"trust": 1, "alignment": 1},
+                    "log": "Your sabotage blanks her bomb barrage, and one precise strike ends the fight.",
+                },
+                "next": "war_council_hub",
+            },
+            {
+                "label": "Escape the foundry before it erupts",
+                "effects": {
+                    "hp": -2,
+                    "log": "You dive through burning beams and escape, but Vorga survives to arm more raiders.",
+                },
+                "next": "war_council_hub",
+            },
+        ],
+    },
     "war_council_hub": {
         "id": "war_council_hub",
         "title": "War Council at Ember Ridge",
@@ -492,6 +736,26 @@ STORY_NODES: Dict[str, Dict[str, Any]] = {
                     "trait_delta": {"trust": 1, "alignment": 1},
                     "set_flags": {"mercy_reputation": True, "hub_plan": "survivor_diversion"},
                     "log": "Freed prisoners light decoy fires, drawing raiders off your intended route.",
+                },
+                "next": "ruin_gate",
+            },
+            {
+                "label": "Exploit the flooded shrine route opened by your victory",
+                "requirements": {"flag_true": ["tidebound_knight_defeated"]},
+                "effects": {
+                    "set_flags": {"hub_plan": "shrine_route", "opened_cleanly": True},
+                    "trait_delta": {"trust": 1, "reputation": 1},
+                    "log": "Scouts surge down the drained causeway, giving your assault a disciplined flank.",
+                },
+                "next": "ruin_gate",
+            },
+            {
+                "label": "Launch while enemy supplies are crippled",
+                "requirements": {"flag_true": ["ruin_supply_line_cut"]},
+                "effects": {
+                    "set_flags": {"hub_plan": "supply_denial"},
+                    "trait_delta": {"reputation": 1},
+                    "log": "With bomb stocks and river routes cut, enemy resistance at the gate falters.",
                 },
                 "next": "ruin_gate",
             },
@@ -753,6 +1017,26 @@ STORY_NODES: Dict[str, Dict[str, Any]] = {
                     "hp": -1,
                     "set_flags": {"warden_defeated": True, "ending_quality": "mixed"},
                     "log": "You collapse the device core, but debris crushes part of the chamber.",
+                },
+                "next": "ending_mixed",
+            },
+            {
+                "label": "Use the drowned knight's bell-hammer to crack the Warden guard",
+                "requirements": {"flag_true": ["tidebound_knight_defeated"]},
+                "effects": {
+                    "hp": -1,
+                    "set_flags": {"warden_defeated": True, "ending_quality": "good"},
+                    "log": "One crushing blow from the recovered bell-hammer caves in the Warden's shield rig.",
+                },
+                "next": "ending_good",
+            },
+            {
+                "label": "Turn Vorga's seized firebombs against the Emblem pylons",
+                "requirements": {"flag_true": ["pyre_alchemist_defeated"]},
+                "effects": {
+                    "hp": -2,
+                    "set_flags": {"warden_defeated": True, "ending_quality": "mixed"},
+                    "log": "Your captured firebombs collapse two pylons, ending the ritual in violent ruin.",
                 },
                 "next": "ending_mixed",
             },
