@@ -99,14 +99,14 @@ def render_node() -> None:
     choices = node.get("choices", [])
     available_choices = get_available_choices(node)
     if len(available_choices) > MAX_CHOICES_PER_NODE:
-        st.error(
-            f"Choice overflow detected: {node_id} shows {len(available_choices)} options (max {MAX_CHOICES_PER_NODE})."
+        st.warning(
+            f"Choice overflow: {node_id} shows {len(available_choices)} options (max {MAX_CHOICES_PER_NODE}). Displaying first {MAX_CHOICES_PER_NODE}."
         )
         if CHOICE_SIMPLIFICATION_REPORT:
             with st.expander("Choice simplification report", expanded=False):
                 for entry in CHOICE_SIMPLIFICATION_REPORT:
                     st.write(f"- {entry}")
-        raise RuntimeError(f"Choice overflow at {node_id}: {len(available_choices)} choices.")
+        available_choices = available_choices[:MAX_CHOICES_PER_NODE]
 
     if not choices:
         st.success("The story has reached an ending. Restart to explore another path.")

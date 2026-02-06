@@ -13,6 +13,7 @@ from game.content import (
     STAT_KEYS,
     STORY_NODES,
     TRAIT_KEYS,
+    init_story_nodes,
 )
 
 __all__ = [
@@ -25,4 +26,5 @@ __all__ = [
     "STAT_KEYS",
     "STORY_NODES",
     "TRAIT_KEYS",
+    "init_story_nodes",
 ]

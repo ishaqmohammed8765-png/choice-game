@@ -61,23 +61,30 @@ def _collect_story_metadata() -> tuple[set[str], set[str]]:
     return known_flags, obtainable_items
 
 
-def _possible_stat_caps() -> dict[str, int]:
-    max_gains = {stat: 0 for stat in STAT_KEYS}
+def _possible_stat_caps() -> dict[str, dict[str, int]]:
+    """Compute per-class maximum possible stat gains, respecting class-gated choices."""
+    known_classes = set(CLASS_TEMPLATES.keys())
+    max_gains: dict[str, dict[str, int]] = {
+        cls: {stat: 0 for stat in STAT_KEYS} for cls in known_classes
+    }
     for node in STORY_NODES.values():
         for choice in _iter_all_choices(node):
+            req_classes = choice.get("requirements", {}).get("class")
+            eligible = set(req_classes) & known_classes if req_classes else known_classes
             effects = choice.get("effects", {})
             for stat in STAT_KEYS:
                 if stat in effects and effects[stat] > 0:
-                    max_gains[stat] += effects[stat]
+                    for cls in eligible:
+                        max_gains[cls][stat] += effects[stat]
             for variant in choice.get("conditional_effects", []):
+                variant_req_classes = variant.get("requirements", {}).get("class")
+                variant_eligible = set(variant_req_classes) & eligible if variant_req_classes else eligible
                 variant_effects = variant.get("effects", {})
                 for stat in STAT_KEYS:
                     if stat in variant_effects and variant_effects[stat] > 0:
-                        max_gains[stat] += variant_effects[stat]
-    return {
-        class_name: max_gains
-        for class_name in CLASS_TEMPLATES.keys()
-    }
+                        for cls in variant_eligible:
+                            max_gains[cls][stat] += variant_effects[stat]
+    return max_gains
 
 
 def _max_stats_for_class() -> dict[str, dict[str, int]]:
@@ -268,6 +275,76 @@ def validate_story_nodes() -> List[str]:
                 if not _any_choice_possible_for_class(node, class_name, obtainable_items, max_stats[class_name]):
                     warnings.append(
                         f"Node '{node_id}' appears to lock out the {class_name} class with its current requirements."
+                    )
+
+    # Graph cycle detection: find strongly connected components (SCCs) with
+    # no exit edge — these are true dead-end loops the player cannot escape.
+    # Hub loops (village ↔ camp) are intentional and have exits, so they pass.
+    all_edges: dict[str, set[str]] = {}
+    for nid, node in STORY_NODES.items():
+        targets: set[str] = set()
+        for choice in _iter_all_choices(node):
+            next_id = choice.get("next")
+            if next_id and next_id in STORY_NODES:
+                targets.add(next_id)
+        all_edges[nid] = targets
+
+    # Tarjan's SCC algorithm (iterative to avoid deep recursion).
+    index_counter = [0]
+    stack: list[str] = []
+    on_stack: set[str] = set()
+    index_map: dict[str, int] = {}
+    lowlink: dict[str, int] = {}
+    sccs: list[set[str]] = []
+
+    def _strongconnect(v: str) -> None:
+        index_map[v] = lowlink[v] = index_counter[0]
+        index_counter[0] += 1
+        stack.append(v)
+        on_stack.add(v)
+
+        for w in all_edges.get(v, set()):
+            if w not in index_map:
+                _strongconnect(w)
+                lowlink[v] = min(lowlink[v], lowlink[w])
+            elif w in on_stack:
+                lowlink[v] = min(lowlink[v], index_map[w])
+
+        if lowlink[v] == index_map[v]:
+            scc: set[str] = set()
+            while True:
+                w = stack.pop()
+                on_stack.discard(w)
+                scc.add(w)
+                if w == v:
+                    break
+            if len(scc) > 1:
+                sccs.append(scc)
+
+    import sys
+    old_limit = sys.getrecursionlimit()
+    sys.setrecursionlimit(max(old_limit, len(STORY_NODES) * 3))
+    try:
+        for nid in STORY_NODES:
+            if nid not in index_map:
+                _strongconnect(nid)
+    finally:
+        sys.setrecursionlimit(old_limit)
+
+    for scc in sccs:
+        has_exit = False
+        for nid in scc:
+            for target in all_edges.get(nid, set()):
+                if target not in scc:
+                    has_exit = True
+                    break
+            if has_exit:
+                break
+        if not has_exit:
+            for nid in sorted(scc):
+                if not _node_is_terminal(nid, STORY_NODES[nid]):
+                    warnings.append(
+                        f"Node '{nid}' is in a cycle with no exit (potential inescapable loop)."
                     )
 
     return warnings

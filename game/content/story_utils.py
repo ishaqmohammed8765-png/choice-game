@@ -7,6 +7,7 @@ from game.content.constants import CHOICE_SIMPLIFICATION_REPORT, MAX_CHOICES_PER
 
 def simplify_story_nodes(story_nodes: Dict[str, Dict[str, Any]]) -> None:
     """Simplify choices by staging auto-applied outcomes and pruning duplicates."""
+    CHOICE_SIMPLIFICATION_REPORT.clear()
 
     def freeze(value: Any) -> Any:
         if isinstance(value, dict):

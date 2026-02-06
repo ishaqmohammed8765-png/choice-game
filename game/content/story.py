@@ -13,4 +13,13 @@ STORY_NODES: Dict[str, Dict[str, Any]] = {
     **STORY_NODES_ACT3,
 }
 
-simplify_story_nodes(STORY_NODES)
+_simplified = False
+
+
+def init_story_nodes() -> None:
+    """Run story simplification once. Safe to call multiple times."""
+    global _simplified
+    if _simplified:
+        return
+    simplify_story_nodes(STORY_NODES)
+    _simplified = True

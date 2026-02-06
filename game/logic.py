@@ -47,7 +47,7 @@ def execute_choice(node_id: str, label: str, choice: Dict[str, Any]) -> None:
         add_log("This choice proves fatal. Your journey ends immediately.")
         return
 
-    transition_to(resolved_next)
+    transition_to(actual_next)
 
 
 def get_choice_warnings(choice: Dict[str, Any]) -> List[str]:
@@ -197,6 +197,9 @@ def apply_effects(effects: Dict[str, Any] | None) -> None:
     for stat in STAT_KEYS:
         if stat in effects:
             stats[stat] += effects[stat]
+
+    if stats["gold"] < 0:
+        stats["gold"] = 0
 
     for item in effects.get("add_items", []):
         if item not in inventory:
