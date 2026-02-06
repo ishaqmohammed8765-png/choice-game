@@ -276,6 +276,10 @@ STORY_NODES: Dict[str, Dict[str, Any]] = {
             "Halfway across, rotten planks snap. You can muscle through the final jump, "
             "or slip and lose precious strength to the rocks below."
         ),
+        "dialogue": [
+            {"speaker": "Your Instinct", "line": "Move now. The bridge won't offer a second warning."},
+            {"speaker": "Wind Over Stone", "line": "One mistake, and the ravine keeps what it takes."},
+        ],
         "choices": [
             {
                 "label": "Leap and cling to the far ledge (Strength 4)",
@@ -346,6 +350,10 @@ STORY_NODES: Dict[str, Dict[str, Any]] = {
             "The rescued scout gasps that raiders have occupied the ancient ruin and are arming an incendiary device. "
             "He offers a bronze ruin seal that can open hidden doors."
         ),
+        "dialogue": [
+            {"speaker": "Rescued Scout", "line": "They've rigged the core chamber. If you hear bells, run."},
+            {"speaker": "Rescued Scout", "line": "Take this seal. It's older than fear, and twice as stubborn."},
+        ],
         "requirements": {"flag_true": ["rescued_scout"]},
         "choices": [
             {
@@ -385,6 +393,10 @@ STORY_NODES: Dict[str, Dict[str, Any]] = {
             "The scout's map leads you into a collapsed maintenance tunnel beneath the ruin. "
             "You can sabotage the signal braziers now, but doing so will trap anyone still inside."
         ),
+        "dialogue": [
+            {"speaker": "Echoing Voices", "line": "Someone's still down here... or the tunnel remembers them."},
+            {"speaker": "Your Instinct", "line": "This choice wins time, but it might cost lives."},
+        ],
         "requirements": {"flag_true": ["knows_hidden_route"]},
         "choices": [
             {
@@ -416,6 +428,10 @@ STORY_NODES: Dict[str, Dict[str, Any]] = {
             "Cracked stone doors loom beneath ivy and carved suns. A collapsed side breach leads downward, "
             "while the main gate bears a lock made for old emblems."
         ),
+        "dialogue": [
+            {"speaker": "Ruin Lookout", "line": "Last warning, traveler. This door eats heroes."},
+            {"speaker": "Your Instinct", "line": "Every path in is a promise you'll have to keep."},
+        ],
         "choices": [
             {
                 "label": "Force open the main gate (Strength 4)",
@@ -473,6 +489,10 @@ STORY_NODES: Dict[str, Dict[str, Any]] = {
             "Torchlight reveals two routes: a trapped gallery leading to the core chamber, "
             "and an armory vault sealed behind rusted bars."
         ),
+        "dialogue": [
+            {"speaker": "Ancient Inscription", "line": "Only the careful walk twice these halls."},
+            {"speaker": "Distant Raider", "line": "Check the gallery again! Someone's inside!"},
+        ],
         "choices": [
             {
                 "label": "Disarm and pass the trap gallery (Dexterity 4)",
@@ -525,6 +545,10 @@ STORY_NODES: Dict[str, Dict[str, Any]] = {
             "At the chamber's threshold kneels Kest, wounded and desperate. He claims the raider crew betrayed everyone "
             "and begs for mercy. Your choice here may define your fate."
         ),
+        "dialogue": [
+            {"speaker": "Kest", "line": "I sold lies, not villages. Don't let me die for their fire."},
+            {"speaker": "Your Instinct", "line": "Mercy can save a soul, or sharpen a knife in your back."},
+        ],
         "choices": [
             {
                 "label": "Spare Kest and take his warning",
@@ -677,6 +701,9 @@ STORY_NODES: Dict[str, Dict[str, Any]] = {
             "If your path was merciful, Oakrest hails you as a guardian of both lives and honor; "
             "if ruthless, they praise your strength but fear what you may become."
         ),
+        "dialogue": [
+            {"speaker": "Elder Mara", "line": "Oakrest sees the sunrise because you stood when others broke."},
+        ],
         "choices": [],
     },
     "ending_best_warrior": {
@@ -686,6 +713,9 @@ STORY_NODES: Dict[str, Dict[str, Any]] = {
             "Your warrior's stand saves both the Dawn Emblem and the trapped villagers. Word spreads that you held "
             "a collapsing ruin with your bare strength, and Oakrest names you Shield of the Valley."
         ),
+        "dialogue": [
+            {"speaker": "Blacksmith Tor", "line": "I've never seen stone obey a person, until tonight."},
+        ],
         "choices": [],
     },
     "ending_best_rogue": {
@@ -695,6 +725,9 @@ STORY_NODES: Dict[str, Dict[str, Any]] = {
             "Your rogue precision prevents the surge before anyone else even sees the danger. The Rangers record the "
             "night as a flawless victory, and Oakrest entrusts you with its hidden defenses."
         ),
+        "dialogue": [
+            {"speaker": "Captain Serin", "line": "No trumpet, no glory march—just perfect work. That's legend enough."},
+        ],
         "choices": [],
     },
     "ending_mixed": {
@@ -704,6 +737,9 @@ STORY_NODES: Dict[str, Dict[str, Any]] = {
             "The Warden falls, but the ruin partially collapses and nearby farms are lost in the aftermath. "
             "Oakrest survives, though your name is spoken with equal gratitude and regret."
         ),
+        "dialogue": [
+            {"speaker": "Villager", "line": "We lived... but the valley won't forget the price."},
+        ],
         "choices": [],
     },
     "ending_bad": {
@@ -713,6 +749,9 @@ STORY_NODES: Dict[str, Dict[str, Any]] = {
             "Your final gamble fails. The device surges to full power and the forest burns with unnatural fire. "
             "Oakrest is abandoned by sunrise, and your tale becomes a warning."
         ),
+        "dialogue": [
+            {"speaker": "Elder Mara", "line": "Remember this night, so we never choose it again."},
+        ],
         "choices": [],
     },
     "failure_injured": {
@@ -722,6 +761,9 @@ STORY_NODES: Dict[str, Dict[str, Any]] = {
             "You wake in a healer's lean-to, battered and stitched. You lost momentum, but Oakrest still needs you. "
             "Choose how you re-enter the conflict."
         ),
+        "dialogue": [
+            {"speaker": "Healer Brin", "line": "Pain means you're still in the fight. Decide fast."},
+        ],
         "choices": [
             {
                 "label": "Recover slowly and return to the village supply line",
@@ -750,6 +792,10 @@ STORY_NODES: Dict[str, Dict[str, Any]] = {
             "Raiders drag you into a holding pit beneath the ruin. A loose grate and distracted guard offer "
             "dangerous chances to break free."
         ),
+        "dialogue": [
+            {"speaker": "Guard", "line": "Don't bother screaming. Stone doesn't care."},
+            {"speaker": "Prisoner", "line": "If you're planning something, make it count."},
+        ],
         "choices": [
             {
                 "label": "Bribe a guard with hidden coin",
@@ -789,6 +835,9 @@ STORY_NODES: Dict[str, Dict[str, Any]] = {
         "text": (
             "Rumors paint you as a double-agent. Allies hesitate, gates close, and every decision now carries social risk."
         ),
+        "dialogue": [
+            {"speaker": "Whispering Crowd", "line": "Hero? Traitor? Depends who survived your choices."},
+        ],
         "choices": [
             {
                 "label": "Seek Captain Serin and prove your intent",
@@ -816,6 +865,9 @@ STORY_NODES: Dict[str, Dict[str, Any]] = {
         "text": (
             "A failed push costs you supplies and support. You can regroup for stability or gamble on a faster return."
         ),
+        "dialogue": [
+            {"speaker": "Trader Venn", "line": "You can borrow from me once. After that, the forest collects."},
+        ],
         "choices": [
             {
                 "label": "Regroup at the roadside camp",
@@ -843,6 +895,9 @@ STORY_NODES: Dict[str, Dict[str, Any]] = {
         "text": (
             "Your wounds are too severe. The quest ends here, and the fate of Oakrest passes to another soul."
         ),
+        "dialogue": [
+            {"speaker": "Final Thought", "line": "If dawn comes, let it find Oakrest standing."},
+        ],
         "choices": [],
     },
 }
