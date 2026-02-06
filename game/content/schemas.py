@@ -53,6 +53,7 @@ class Choice(TypedDict, total=False):
 
     label: str
     next: str
+    group: str
     requirements: Requirements
     effects: Effects
     conditional_effects: List[ConditionalEffect]

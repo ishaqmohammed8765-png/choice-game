@@ -57,6 +57,12 @@ def render_path_map() -> None:
     choices = node.get("choices", [])
     st.subheader("Path Map")
     st.caption("Current node centered with available and locked choices branching outward.")
+    show_two_hop = st.toggle(
+        "Show 2-hop view",
+        value=False,
+        key="show_two_hop_map",
+        help="Include the next layer of choices to preview upcoming paths.",
+    )
     if not choices:
         st.info("This node has no outgoing choices.")
         return
@@ -71,6 +77,7 @@ def render_path_map() -> None:
     radius = min(width, height) * 0.32
 
     elements: List[str] = []
+    first_hop_positions: List[tuple[float, float, float, Dict[str, Any], str]] = []
     count = len(choices)
     for idx, choice in enumerate(choices):
         angle = (2 * math.pi * idx) / count - math.pi / 2
@@ -93,7 +100,7 @@ def render_path_map() -> None:
                 flags=st.session_state.flags,
                 player_class=st.session_state.player_class,
             )
-            tooltip = f"<title>{_escape_tooltip(tooltip_text)}</title>"
+            tooltip = f"<title>{_escape_svg_text(tooltip_text)}</title>"
 
         label_lines = _wrap_svg_label(choice["label"])
         label_y = y + 36
@@ -126,10 +133,79 @@ def render_path_map() -> None:
             </g>
             """
         )
+        first_hop_positions.append((x, y, angle, choice, next_node))
 
     center_lines = _wrap_svg_label(node.get("title", node_id), max_chars=16)
     center_label = _render_svg_text(center_lines, x=center_x, y=center_y + 6, class_name="center-label")
-    center_tooltip = f"<title>{_escape_tooltip(node_id)}</title>"
+    center_tooltip = f"<title>{_escape_svg_text(node_id)}</title>"
+
+    if show_two_hop:
+        secondary_radius = radius * 1.75
+        for x, y, angle, choice, next_node in first_hop_positions:
+            next_node_data = STORY_NODES.get(next_node, {})
+            secondary_choices = next_node_data.get("choices", [])
+            if not secondary_choices:
+                continue
+            spread = 0.6
+            count_secondary = len(secondary_choices)
+            for idx, secondary_choice in enumerate(secondary_choices):
+                if count_secondary == 1:
+                    offset = 0
+                else:
+                    offset = (idx - (count_secondary - 1) / 2) * (spread / (count_secondary - 1))
+                angle_secondary = angle + offset
+                x2 = center_x + secondary_radius * math.cos(angle_secondary)
+                y2 = center_y + secondary_radius * math.sin(angle_secondary)
+
+                is_unlocked, _ = check_requirements(secondary_choice.get("requirements"))
+                is_locked = not is_unlocked
+                _, next_next_node = resolve_choice_outcome(secondary_choice)
+                edge_key = (next_node, next_next_node)
+                edge_visited = edge_key in visited_edges
+                node_visited = next_next_node in visited_nodes
+
+                tooltip = ""
+                if is_locked:
+                    tooltip_text = format_requirement_tooltip(
+                        secondary_choice.get("requirements"),
+                        stats=st.session_state.stats,
+                        inventory=st.session_state.inventory,
+                        flags=st.session_state.flags,
+                        player_class=st.session_state.player_class,
+                    )
+                    tooltip = f"<title>{_escape_svg_text(tooltip_text)}</title>"
+
+                label_lines = _wrap_svg_label(secondary_choice["label"])
+                label_y = y2 + 32
+                label_svg = _render_svg_text(
+                    label_lines,
+                    x=x2,
+                    y=label_y,
+                    class_name="choice-label secondary-label",
+                )
+
+                group_classes = ["choice-node", "secondary-node"]
+                if is_locked:
+                    group_classes.append("locked")
+                if node_visited:
+                    group_classes.append("visited")
+
+                line_class = "path-line secondary"
+                if edge_visited:
+                    line_class += " visited"
+                if is_locked:
+                    line_class += " locked"
+
+                elements.append(
+                    f"""
+                    <line class="{line_class}" x1="{x}" y1="{y}" x2="{x2}" y2="{y2}"></line>
+                    <g class="{' '.join(group_classes)}">
+                        {tooltip}
+                        <circle cx="{x2}" cy="{y2}" r="16"></circle>
+                        {label_svg}
+                    </g>
+                    """
+                )
 
     svg = f"""
         <svg viewBox="0 0 {width} {height}" width="100%" height="{height}px" style="max-width:{width}px; display:block; margin:0 auto;">
@@ -161,10 +237,21 @@ def render_path_map() -> None:
                     fill: #e2e8f0;
                     font-size: 11px;
                 }}
+                .secondary-label {{
+                    font-size: 10px;
+                }}
+                .path-line.secondary {{
+                    stroke-width: 1.4;
+                    opacity: 0.7;
+                }}
                 .center-node circle {{
                     fill: #0f172a;
                     stroke: #facc15;
                     stroke-width: 3;
+                }}
+                .secondary-node circle {{
+                    stroke-width: 1.5;
+                    fill: #111827;
                 }}
                 .center-label {{
                     fill: #f8fafc;
@@ -241,13 +328,13 @@ def _render_svg_text(lines: List[str], *, x: float, y: float, class_name: str) -
     line_height = 13
     start_y = y - (len(lines) - 1) * line_height / 2
     tspan_lines = "".join(
-        f'<tspan x="{x}" y="{start_y + index * line_height}">{_escape_tooltip(line)}</tspan>'
+        f'<tspan x="{x}" y="{start_y + index * line_height}">{_escape_svg_text(line)}</tspan>'
         for index, line in enumerate(lines)
     )
     return f'<text text-anchor="middle" class="{class_name}">{tspan_lines}</text>'
 
 
-def _escape_tooltip(text: str) -> str:
+def _escape_svg_text(text: str) -> str:
     return (
         text.replace("&", "&amp;")
         .replace("<", "&lt;")

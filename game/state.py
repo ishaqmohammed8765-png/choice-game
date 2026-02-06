@@ -23,6 +23,9 @@ def reset_game_state() -> None:
     st.session_state.factions = {name: 0 for name in FACTION_KEYS}
     st.session_state.decision_history = []
     st.session_state.last_choice_feedback = []
+    st.session_state.last_outcome_summary = None
+    st.session_state.auto_event_summary = []
+    st.session_state.pending_auto_death = False
     st.session_state.event_log = []
     st.session_state.history = []
     st.session_state.save_blob = ""
@@ -49,6 +52,9 @@ def start_game(player_class: str) -> None:
     st.session_state.factions = {name: 0 for name in FACTION_KEYS}
     st.session_state.decision_history = []
     st.session_state.last_choice_feedback = []
+    st.session_state.last_outcome_summary = None
+    st.session_state.auto_event_summary = []
+    st.session_state.pending_auto_death = False
     st.session_state.event_log = [f"You begin your journey as a {player_class}."]
     st.session_state.history = []
     st.session_state.pending_choice_confirmation = None
@@ -128,6 +134,9 @@ def snapshot_state() -> Dict[str, Any]:
         "factions": copy.deepcopy(st.session_state.factions),
         "decision_history": copy.deepcopy(st.session_state.decision_history),
         "last_choice_feedback": copy.deepcopy(st.session_state.last_choice_feedback),
+        "last_outcome_summary": copy.deepcopy(st.session_state.last_outcome_summary),
+        "auto_event_summary": copy.deepcopy(st.session_state.auto_event_summary),
+        "pending_auto_death": copy.deepcopy(st.session_state.pending_auto_death),
         "event_log": copy.deepcopy(st.session_state.event_log),
         "pending_choice_confirmation": copy.deepcopy(st.session_state.pending_choice_confirmation),
         "visited_nodes": copy.deepcopy(st.session_state.visited_nodes),
@@ -146,6 +155,9 @@ def load_snapshot(snapshot: Dict[str, Any]) -> None:
     st.session_state.factions = snapshot.get("factions", {name: 0 for name in FACTION_KEYS})
     st.session_state.decision_history = snapshot.get("decision_history", [])
     st.session_state.last_choice_feedback = snapshot.get("last_choice_feedback", [])
+    st.session_state.last_outcome_summary = snapshot.get("last_outcome_summary")
+    st.session_state.auto_event_summary = snapshot.get("auto_event_summary", [])
+    st.session_state.pending_auto_death = snapshot.get("pending_auto_death", False)
     st.session_state.event_log = snapshot["event_log"]
     st.session_state.pending_choice_confirmation = snapshot.get("pending_choice_confirmation")
     st.session_state.visited_nodes = snapshot.get("visited_nodes", [snapshot["current_node"]])
@@ -171,6 +183,12 @@ def ensure_session_state() -> None:
         st.session_state.last_choice_feedback = []
     if "pending_choice_confirmation" not in st.session_state:
         st.session_state.pending_choice_confirmation = None
+    if "last_outcome_summary" not in st.session_state:
+        st.session_state.last_outcome_summary = None
+    if "auto_event_summary" not in st.session_state:
+        st.session_state.auto_event_summary = []
+    if "pending_auto_death" not in st.session_state:
+        st.session_state.pending_auto_death = False
     if "show_locked_choices" not in st.session_state:
         st.session_state.show_locked_choices = False
     if "visited_nodes" not in st.session_state:
