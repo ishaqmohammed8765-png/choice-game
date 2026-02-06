@@ -8,7 +8,7 @@ from game.content.constants import (
     STAT_KEYS,
     TRAIT_KEYS,
 )
-from game.content.story import STORY_NODES
+from game.content.story import STORY_NODES, init_story_nodes
 
 __all__ = [
     "CHOICE_SIMPLIFICATION_REPORT",
@@ -20,4 +20,5 @@ __all__ = [
     "STAT_KEYS",
     "STORY_NODES",
     "TRAIT_KEYS",
+    "init_story_nodes",
 ]

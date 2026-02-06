@@ -1,5 +1,6 @@
 from game.streamlit_compat import st
 
+from game.data import init_story_nodes
 from game.logic import validate_story_nodes
 from game.state import ensure_session_state, start_game
 from game.ui import render_log, render_node, render_path_map, render_sidebar
@@ -52,6 +53,7 @@ def render_game_header() -> None:
 def main() -> None:
     st.set_page_config(page_title="Oakrest: Deterministic Adventure", page_icon="🛡️", layout="centered")
     inject_game_theme()
+    init_story_nodes()
     ensure_session_state()
     for warning in validate_story_nodes():
         st.warning(f"Story validator: {warning}")
