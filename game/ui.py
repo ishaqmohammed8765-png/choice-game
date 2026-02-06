@@ -133,12 +133,6 @@ def render_node() -> None:
                 quote = line.get("line", "")
                 st.markdown(f"**{speaker}:** _\"{quote}\"_")
 
-    if st.session_state.last_choice_feedback:
-        with st.container(border=True):
-            st.caption("Consequence feedback")
-            for line in st.session_state.last_choice_feedback:
-                st.write(f"• {line}")
-
     # Death can happen from previous choice effects.
     if st.session_state.stats["hp"] <= 0:
         transition_to_failure("injured")
