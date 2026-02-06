@@ -11,6 +11,7 @@ from game.logic import (
     get_available_choices,
     get_choice_warnings,
     transition_to,
+    transition_to_failure,
 )
 from game.state import add_log, load_snapshot, reset_game_state, snapshot_state
 
@@ -116,7 +117,7 @@ def render_node() -> None:
     node_ok, node_reason = check_requirements(node.get("requirements"))
     if not node_ok:
         st.error(f"You cannot access this path: {node_reason}")
-        transition_to("death")
+        transition_to_failure("traitor")
         st.rerun()
         return
 
@@ -131,7 +132,7 @@ def render_node() -> None:
 
     # Death can happen from previous choice effects.
     if st.session_state.stats["hp"] <= 0:
-        transition_to("death")
+        transition_to_failure("injured")
         st.rerun()
         return
 
@@ -181,8 +182,8 @@ def render_node() -> None:
 
     if not available_choices:
         st.warning("No valid choices remain based on your current stats, items, and flags.")
-        if st.button("Accept your fate", type="primary"):
-            transition_to("death")
+        if st.button("Take a setback and adapt", type="primary"):
+            transition_to_failure("resource_loss")
             st.rerun()
 
 

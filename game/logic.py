@@ -5,6 +5,30 @@ import streamlit as st
 from game.data import HIGH_COST_GOLD_LOSS, HIGH_COST_HP_LOSS, STAT_KEYS, STORY_NODES
 from game.state import add_log, snapshot_state
 
+
+def transition_to_failure(failure_type: str) -> None:
+    """Send the player to a recoverable failure node instead of ending the run."""
+    failure_nodes = {
+        "injured": "failure_injured",
+        "captured": "failure_captured",
+        "traitor": "failure_traitor",
+        "resource_loss": "failure_resource_loss",
+    }
+    failure_logs = {
+        "injured": "You are gravely injured, but not out of the fight yet.",
+        "captured": "You are captured alive and must now escape.",
+        "traitor": "Word spreads that you are branded a traitor. You need to reclaim trust.",
+        "resource_loss": "Setbacks cost you gear and allies, but the mission continues.",
+    }
+
+    next_node = failure_nodes.get(failure_type, "failure_injured")
+    if next_node not in STORY_NODES:
+        next_node = "death"
+
+    st.session_state.current_node = next_node
+    add_log(failure_logs.get(failure_type, failure_logs["injured"]))
+
+
 def execute_choice(node_id: str, label: str, choice: Dict[str, Any]) -> None:
     """Apply a selected choice and transition to its next node."""
     st.session_state.pending_choice_confirmation = None
@@ -14,6 +38,12 @@ def execute_choice(node_id: str, label: str, choice: Dict[str, Any]) -> None:
     if choice.get("irreversible"):
         st.session_state.history = []
         add_log("This decision is irreversible. You cannot undo beyond this point.")
+
+    if choice.get("instant_death"):
+        st.session_state.current_node = "death"
+        add_log("This choice proves fatal. Your journey ends immediately.")
+        return
+
     transition_to(choice["next"])
 
 
@@ -24,6 +54,8 @@ def get_choice_warnings(choice: Dict[str, Any]) -> List[str]:
 
     if choice.get("irreversible"):
         warnings.append("Irreversible choice: this clears undo history once confirmed.")
+    if choice.get("instant_death"):
+        warnings.append("Lethal outcome: this choice causes immediate death.")
     if effects.get("hp", 0) <= -HIGH_COST_HP_LOSS:
         warnings.append(f"High HP cost: {effects['hp']} HP")
     if effects.get("gold", 0) <= -HIGH_COST_GOLD_LOSS:
@@ -131,15 +163,14 @@ def apply_effects(effects: Dict[str, Any] | None) -> None:
 
 
 def transition_to(next_node_id: str) -> None:
-    """Move to the next node, handling missing IDs and death checks."""
+    """Move to the next node, redirecting hard failures to recoverable paths."""
     if st.session_state.stats["hp"] <= 0:
-        st.session_state.current_node = "death"
-        add_log("Your HP dropped to 0. You collapse before the quest can be completed.")
+        transition_to_failure("injured")
         return
 
     if next_node_id not in STORY_NODES:
-        st.session_state.current_node = "death"
-        add_log(f"Broken path: node '{next_node_id}' was missing. Your story ends abruptly.")
+        transition_to_failure("captured")
+        add_log(f"Broken path detected for '{next_node_id}'. You are rerouted to a fallback failure arc.")
         return
 
     st.session_state.current_node = next_node_id
@@ -159,6 +190,7 @@ def validate_story_nodes() -> List[str]:
                     f"Choice '{choice.get('label', 'unnamed')}' in node '{node_id}' points to missing node '{next_id}'."
                 )
     return warnings
+
 
 def get_available_choices(node: Dict[str, Any]) -> List[Dict[str, Any]]:
     """Return choices that pass requirements for display and interaction."""
