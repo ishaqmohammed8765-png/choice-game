@@ -78,22 +78,6 @@ def render_sidebar() -> None:
             for faction in FACTION_KEYS:
                 st.write(f"{faction.title()}: {st.session_state.factions[faction]}")
 
-        with st.expander("Debug data (flags & events)", expanded=False):
-            st.caption("Quick access to runtime state while testing story branches.")
-            if st.session_state.flags:
-                st.write("**Flags**")
-                for key, value in sorted(st.session_state.flags.items()):
-                    st.write(f"- {key}: {value}")
-            else:
-                st.caption("No flags set.")
-
-            st.write("**Key Events Seen**")
-            if st.session_state.seen_events:
-                for event in st.session_state.seen_events[-8:]:
-                    st.write(f"- {event}")
-            else:
-                st.caption("(none)")
-
         st.divider()
         if st.button("⬅️ Back (undo last choice)", use_container_width=True, disabled=not st.session_state.history):
             previous = st.session_state.history.pop()

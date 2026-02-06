@@ -19,7 +19,6 @@ class StateTests(unittest.TestCase):
     def test_reset_initializes_toggle_and_factions(self):
         self.assertIn("oakrest", st.session_state.factions)
         self.assertFalse(st.session_state.show_locked_choices)
-        self.assertFalse(st.session_state.spoiler_debug_mode)
 
     def test_snapshot_roundtrip(self):
         start_game("Warrior")
