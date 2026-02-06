@@ -2,9 +2,9 @@ import json
 
 from game.streamlit_compat import st
 
-from game.data import FACTION_KEYS, STORY_NODES, TRAIT_KEYS
+from game.data import FACTION_KEYS, TRAIT_KEYS
 from game.logic import apply_morality_flags
-from game.state import add_log, load_snapshot, reset_game_state, snapshot_state
+from game.state import add_log, load_snapshot, reset_game_state, snapshot_state, validate_snapshot
 
 
 def _render_save_load_controls() -> None:
@@ -21,23 +21,9 @@ def _render_save_load_controls() -> None:
         if st.button("Import state", use_container_width=True):
             try:
                 payload = json.loads(save_text)
-                required_keys = {
-                    "player_class",
-                    "current_node",
-                    "stats",
-                    "inventory",
-                    "flags",
-                    "event_log",
-                    "traits",
-                    "seen_events",
-                    "factions",
-                    "decision_history",
-                    "last_choice_feedback",
-                }
-                if not required_keys.issubset(payload.keys()):
-                    st.error("Invalid save: missing required keys.")
-                elif payload["current_node"] not in STORY_NODES:
-                    st.error("Invalid save: current node does not exist.")
+                is_valid, errors = validate_snapshot(payload)
+                if not is_valid:
+                    st.error("Invalid save: " + " ".join(errors))
                 else:
                     load_snapshot(payload)
                     apply_morality_flags(st.session_state.flags)

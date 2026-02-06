@@ -5,6 +5,7 @@ from game.logic import (
     check_requirements,
     get_available_choices,
     resolve_choice_outcome,
+    transition_to,
     validate_story_nodes,
 )
 from game.state import ensure_session_state, reset_game_state
@@ -89,6 +90,10 @@ class LogicTests(unittest.TestCase):
     def test_validate_story_nodes_has_no_warnings(self):
         warnings = validate_story_nodes()
         self.assertEqual([], warnings)
+
+    def test_transition_to_unknown_node_redirects(self):
+        transition_to("missing_node")
+        self.assertEqual(st.session_state.current_node, "failure_captured")
 
 
 if __name__ == "__main__":

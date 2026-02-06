@@ -15,6 +15,14 @@ def get_epilogue_aftermath_lines() -> List[str]:
         lines.append("Bards celebrate your ferocity, while elders debate the cost of your methods.")
     if flags.get("ember_ridge_vigil_taken"):
         lines.append("The quiet vigil at Ember Ridge becomes a ritual before every future campaign.")
+    if flags.get("ember_ridge_vigil_spoken"):
+        lines.append("Your pre-assault words at Ember Ridge are repeated as a vow among new recruits.")
+    if flags.get("ember_ridge_vigil_walked"):
+        lines.append("Scouts chart your ridge walk as the template for pre-battle recon patrols.")
+    if flags.get("causeway_quiet_marked"):
+        lines.append("The causeway footing you marked is now carved into the ranger manuals.")
+    if flags.get("causeway_quiet_steadied"):
+        lines.append("The causeway's hush becomes part of the tale told to test courage in silence.")
 
     if flags.get("militia_drilled"):
         lines.append("The militia you drilled forms the core of Oakrest's new shieldwall companies.")
@@ -22,6 +30,12 @@ def get_epilogue_aftermath_lines() -> List[str]:
         lines.append("Your early shadow routes become the town's emergency evacuation grid.")
     if flags.get("archer_watch_established"):
         lines.append("The belltower watch keeps your signal cadence, warning the valley hours in advance.")
+    if flags.get("warrior_oath_taken"):
+        lines.append("Your warrior's oath is etched into the palisade as a reminder of steadfast resolve.")
+    if flags.get("rogue_oath_taken"):
+        lines.append("Rogues in Oakrest swear by your alleyway vow when they take their first contracts.")
+    if flags.get("archer_oath_taken"):
+        lines.append("Archers carve your opening signal into their bow grips as a charm against surprise.")
 
     if flags.get("morality") == "merciful" or flags.get("mercy_reputation"):
         lines.append("Families you protected petition Elder Mara to create a standing refuge network.")
@@ -40,6 +54,18 @@ def get_epilogue_aftermath_lines() -> List[str]:
         lines.append("Ranger lieutenants teach your barricade stance as the standard for holding lines.")
     if flags.get("archer_routes_marked"):
         lines.append("Ridgewatch signal nests expand along the valley, following your overwatch example.")
+    if flags.get("dawnwarden_allied"):
+        lines.append("Dawnwarden banners fly beside Oakrest colors, a reminder of the alliance you forged.")
+    if flags.get("ashfang_allied"):
+        lines.append("Ashfang drums echo at winter markets, a tense but lasting symbol of your pact.")
+    if flags.get("serin_endorsement"):
+        lines.append("Serin's endorsement keeps rival captains from contesting your battlefield authority.")
+    if flags.get("drogath_endorsement"):
+        lines.append("Drogath's backing keeps the most ruthless fighters in line, if only barely.")
+    if flags.get("tidebound_knight_defeated"):
+        lines.append("The cleared causeway becomes a safer trade lane, reducing coastal raids for a season.")
+    if flags.get("pyre_alchemist_defeated"):
+        lines.append("Without Vorga's forge, raider firebombs vanish from the valley's battle reports.")
 
     if traits.get("trust", 0) >= 4:
         lines.append("High trust earned you a seat at future war councils, not just a hero's farewell.")
@@ -61,4 +87,4 @@ def get_epilogue_aftermath_lines() -> List[str]:
     elif traits.get("alignment", 0) <= -3:
         lines.append("Your brutal efficiency ends the immediate threat, but hardens future conflicts across the frontier.")
 
-    return lines[:7]
+    return lines[:9]
