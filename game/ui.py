@@ -124,6 +124,15 @@ def render_node() -> None:
     st.title(node["title"])
     st.write(node["text"])
 
+    dialogue = node.get("dialogue", [])
+    if dialogue:
+        with st.container(border=True):
+            st.caption("Dialogue")
+            for line in dialogue:
+                speaker = line.get("speaker", "Unknown")
+                quote = line.get("line", "")
+                st.markdown(f"**{speaker}:** _\"{quote}\"_")
+
     if st.session_state.last_choice_feedback:
         with st.container(border=True):
             st.caption("Consequence feedback")
