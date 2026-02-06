@@ -32,9 +32,14 @@ STORY_NODES: Dict[str, Dict[str, Any]] = {
         "id": "village_square",
         "title": "Oakrest Village Square",
         "text": (
-            "The bell of Oakrest tolls at dusk. Villagers whisper of raiders, a cursed ruin in the forest, "
+            "The bell of Oakrest tolls at dusk. Smoke from the outer farms hangs over the square while frightened "
+            "families gather beneath boarded windows. Villagers whisper of raiders, a cursed ruin in the forest, "
             "and a missing relic known as the Dawn Emblem. Elder Mara asks you to track the threat before nightfall."
         ),
+        "dialogue": [
+            {"speaker": "Elder Mara", "line": "Oakrest has one night left before panic turns to bloodshed."},
+            {"speaker": "Blacksmith Tor", "line": "If the roads fall, we fall with them. Bring us sunrise."},
+        ],
         "choices": [
             {
                 "label": "Buy a rope from the quartermaster (3 gold)",
@@ -74,9 +79,13 @@ STORY_NODES: Dict[str, Dict[str, Any]] = {
         "id": "camp_shop",
         "title": "Roadside Trader & Rest Fire",
         "text": (
-            "A retired scout sells practical tools near a safe firepit. You can buy gear or patch your wounds "
-            "before entering deeper wilderness."
+            "A retired scout sells practical tools near a safe firepit. Rain ticks against canvas while weary "
+            "travelers trade rumors about missing patrols. You can buy gear or patch your wounds before entering deeper wilderness."
         ),
+        "dialogue": [
+            {"speaker": "Trader Venn", "line": "Pay now, complain later. The forest collects debts in bone."},
+            {"speaker": "Tired Ranger", "line": "We lost two scouts at the ruin gate. Keep a light ready."},
+        ],
         "choices": [
             {
                 "label": "Buy rope (3 gold)",
@@ -117,10 +126,13 @@ STORY_NODES: Dict[str, Dict[str, Any]] = {
         "id": "forest_crossroad",
         "title": "Forest Crossroad",
         "text": (
-            "Pines crowd around a fork in the path. To the left: a narrow ravine crossing. "
-            "To the right: a campfire glow where bandits argue over spoils. Ahead, war drums echo from "
-            "the Ashfang warband while silver lanterns of the Rangers flicker between trees."
+            "Pines crowd around a fork in the path. Fresh cart tracks and bloodied cloth mark recent fighting. "
+            "To the left: a narrow ravine crossing. To the right: a campfire glow where bandits argue over spoils. "
+            "Ahead, war drums echo from the Ashfang warband while silver lanterns of the Rangers flicker between trees."
         ),
+        "dialogue": [
+            {"speaker": "Unknown Voice", "line": "Pick wrong, and the forest picks your grave."},
+        ],
         "choices": [
             {
                 "label": "Cross the ravine by hauling yourself on old beams (Strength 3)",
@@ -171,8 +183,13 @@ STORY_NODES: Dict[str, Dict[str, Any]] = {
         "title": "Ranger Outpost",
         "text": (
             "Captain Serin of the Rangers studies maps pinned by dagger points. Archivist Pell and "
-            "shield-bearer Nima argue about whether to assault the ruin now or save trapped villagers first."
+            "shield-bearer Nima argue about whether to assault the ruin now or save trapped villagers first. "
+            "Every minute of debate is measured against distant screams from the valley road."
         ),
+        "dialogue": [
+            {"speaker": "Captain Serin", "line": "Choose quickly. We either save the living or stop the fire at its source."},
+            {"speaker": "Archivist Pell", "line": "The Emblem is not a relic now; it is a lit fuse."},
+        ],
         "choices": [
             {
                 "label": "Swear temporary alliance with Captain Serin",
@@ -210,8 +227,12 @@ STORY_NODES: Dict[str, Dict[str, Any]] = {
         "title": "Ashfang Hunting Grounds",
         "text": (
             "Warchief Drogath leads the Ashfangs with scout Yara and beast-handler Korr. They stalk a raider "
-            "convoy guarded by ember-hounds and masked zealots. The warband invites you to prove yourself."
+            "convoy guarded by ember-hounds and masked zealots. The warband invites you to prove yourself before moonrise."
         ),
+        "dialogue": [
+            {"speaker": "Warchief Drogath", "line": "In our lands, words are wind. Deeds are law."},
+            {"speaker": "Scout Yara", "line": "Show me clean hands in a dirty war, outsider."},
+        ],
         "choices": [
             {
                 "label": "Join the ambush and crush the convoy (Strength 4)",
@@ -273,9 +294,13 @@ STORY_NODES: Dict[str, Dict[str, Any]] = {
         "id": "bandit_camp",
         "title": "Bandit Camp",
         "text": (
-            "Three bandits surround a bound scout from Oakrest. Their leader, Kest, offers a bargain: "
-            "leave the scout and walk away with coin, or interfere and spill blood."
+            "Three bandits surround a bound scout from Oakrest. Their leader, Kest, kicks a broken lantern into the mud "
+            "and offers a bargain: leave the scout and walk away with coin, or interfere and spill blood."
         ),
+        "dialogue": [
+            {"speaker": "Kest", "line": "This one dies either way. Only question is whether you get paid."},
+            {"speaker": "Bound Scout", "line": "Don't buy his lie. The ruin is ready to burn Oakrest."},
+        ],
         "choices": [
             {
                 "label": "Break their line in open combat (Strength 3)",
@@ -535,9 +560,13 @@ STORY_NODES: Dict[str, Dict[str, Any]] = {
         "id": "final_confrontation",
         "title": "Final Confrontation: The Ruin Warden",
         "text": (
-            "In the heart of the ruin, the armored Warden channels power into the Dawn Emblem. "
-            "You must stop the device before Oakrest burns."
+            "In the heart of the ruin, the armored Warden channels power into the Dawn Emblem. Cracks of molten light "
+            "spread across the chamber ceiling as the relic begins to overload. You must stop the device before Oakrest burns."
         ),
+        "dialogue": [
+            {"speaker": "Ruin Warden", "line": "Witness the old kingdom's dawn reborn in fire."},
+            {"speaker": "You", "line": "No more villages for your altar. It ends here."},
+        ],
         "choices": [
             {
                 "label": "Warrior finale: hold the collapsing arch and strike the Warden down",
