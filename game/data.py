@@ -725,9 +725,9 @@ STORY_NODES: Dict[str, Dict[str, Any]] = {
                 "effects": {
                     "trait_delta": {"trust": 1},
                     "set_flags": {"hub_plan": "hidden_route"},
-                    "log": "You trust the scout's map and steer the strike team underground.",
+                    "log": "You trust the scout's map and steer the strike team underground for a second strike.",
                 },
-                "next": "hidden_tunnel",
+                "next": "hidden_route_assault",
             },
             {
                 "label": "Rally survivors you rescued to create a diversion",
@@ -762,11 +762,107 @@ STORY_NODES: Dict[str, Dict[str, Any]] = {
             {
                 "label": "Advance alone before reinforcements arrive",
                 "effects": {
-                    "trait_delta": {"reputation": -1},
+                    "trait_delta": {"reputation": -1, "trust": -1},
                     "set_flags": {"hub_plan": "solo_push"},
-                    "log": "You reject every banner and move on the ruin with only your own judgment.",
+                    "log": "You reject every banner and slip toward the ruin before anyone can stop you.",
+                },
+                "next": "lonely_approach",
+            },
+        ],
+    },
+    "hidden_route_assault": {
+        "id": "hidden_route_assault",
+        "title": "Hidden Route Counterstrike",
+        "text": (
+            "The service tunnel forks beneath the ruin into a powder store and a prisoner corridor. "
+            "You can either gut the raiders' reserves, or escort captives to the breach and risk losing momentum."
+        ),
+        "dialogue": [
+            {"speaker": "Scout's Markings", "line": "Blue chalk means stores. White chalk means survivors."},
+            {"speaker": "Your Instinct", "line": "Either path changes the siege, but not in the same way."},
+        ],
+        "requirements": {"flag_true": ["knows_hidden_route"]},
+        "choices": [
+            {
+                "label": "Ruin the powder cache before the alarm spreads",
+                "effects": {
+                    "hp": -1,
+                    "trait_delta": {"reputation": 1, "alignment": -1},
+                    "set_flags": {"ruin_supply_line_cut": True, "opened_cleanly": True},
+                    "seen_events": ["hidden_cache_destroyed"],
+                    "log": "You flood the cache with lamp oil and sparks, collapsing the raiders' munitions tunnel.",
                 },
                 "next": "ruin_gate",
+            },
+            {
+                "label": "Escort captives through the service culvert",
+                "effects": {
+                    "trait_delta": {"trust": 2, "alignment": 1},
+                    "set_flags": {"rescued_prisoners": True, "mercy_reputation": True},
+                    "seen_events": ["captives_escorted"],
+                    "log": "You lead captives out first; grateful families spread word of your mercy.",
+                },
+                "next": "ruin_gate",
+            },
+            {
+                "label": "Split your attention and attempt both objectives",
+                "requirements": {"min_dexterity": 4},
+                "effects": {
+                    "hp": -2,
+                    "trait_delta": {"reputation": 2},
+                    "set_flags": {
+                        "ruin_supply_line_cut": True,
+                        "rescued_prisoners": True,
+                        "opened_cleanly": True,
+                    },
+                    "seen_events": ["captives_escorted", "hidden_cache_destroyed"],
+                    "log": "You juggle sabotage and evacuation at once, barely outrunning the blast wave.",
+                },
+                "next": "ruin_gate",
+            },
+        ],
+    },
+    "lonely_approach": {
+        "id": "lonely_approach",
+        "title": "No-Banner Approach",
+        "text": (
+            "Without allied cover, the ruin's outer trenches are thicker with patrols than expected. "
+            "A horn call sweeps the hillside and you must pick one hard gamble before the encirclement closes."
+        ),
+        "dialogue": [
+            {"speaker": "Raider Spotter", "line": "Single runner on the north ridge! Cut them off!"},
+            {"speaker": "Your Instinct", "line": "Going solo was never meant to be safe. Commit or be cornered."},
+        ],
+        "choices": [
+            {
+                "label": "Break through the trench line by force (Strength 5)",
+                "requirements": {"min_strength": 5},
+                "effects": {
+                    "hp": -2,
+                    "trait_delta": {"reputation": 1},
+                    "set_flags": {"opened_cleanly": False},
+                    "log": "You smash through shields and barbed stakes, reaching the gate bloodied but unbroken.",
+                },
+                "next": "ruin_gate",
+            },
+            {
+                "label": "Vanish through drainage culverts (Dexterity 4)",
+                "requirements": {"min_dexterity": 4},
+                "effects": {
+                    "hp": -1,
+                    "trait_delta": {"trust": -1, "reputation": 1},
+                    "set_flags": {"opened_cleanly": True},
+                    "log": "You crawl through black water and emerge inside the ruin perimeter unseen.",
+                },
+                "next": "ruin_gate",
+            },
+            {
+                "label": "Fake surrender, then bolt when they open the cage",
+                "effects": {
+                    "trait_delta": {"alignment": -1},
+                    "log": "The ploy nearly works, but a branded jailer recognizes your face.",
+                },
+                "next": "failure_captured",
             },
         ],
     },
