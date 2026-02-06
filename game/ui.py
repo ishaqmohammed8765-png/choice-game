@@ -187,12 +187,6 @@ def render_node() -> None:
     with st.container(border=True):
         st.write(node["text"])
 
-    if st.session_state.last_choice_feedback:
-        with st.container(border=True):
-            st.caption("Outcome recap")
-            for line in st.session_state.last_choice_feedback[:5]:
-                st.write(f"- {line}")
-
     dialogue = node.get("dialogue", [])
     if dialogue:
         with st.container(border=True):
