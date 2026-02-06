@@ -2,6 +2,7 @@ from typing import Any, Dict
 
 STAT_KEYS = ("hp", "gold", "strength", "dexterity")
 TRAIT_KEYS = ("trust", "reputation", "alignment")
+FACTION_KEYS = ("oakrest", "dawnwardens", "ashfang", "bandits")
 HIGH_COST_HP_LOSS = 3
 HIGH_COST_GOLD_LOSS = 5
 
@@ -248,6 +249,7 @@ STORY_NODES: Dict[str, Dict[str, Any]] = {
                 "requirements": {"flag_false": ["branch_ashfang_completed"]},
                 "effects": {
                     "set_flags": {"met_ashfang": True, "branch_ashfang_completed": True},
+                    "faction_delta": {"ashfang": 1},
                     "log": "You shadow the drumming trail toward an Ashfang hunting column.",
                 },
                 "next": "ashfang_hunt",
@@ -257,6 +259,7 @@ STORY_NODES: Dict[str, Dict[str, Any]] = {
                 "requirements": {"class": ["Warrior"], "flag_false": ["branch_ashfang_completed"]},
                 "effects": {
                     "trait_delta": {"reputation": 2},
+                    "faction_delta": {"ashfang": 2},
                     "set_flags": {"branch_ashfang_completed": True, "met_ashfang": True, "ashfang_challenge_answered": True},
                     "seen_events": ["warrior_drum_challenge"],
                     "log": "You meet Drogath's vanguard in open challenge, forcing respect before a word is spoken.",
@@ -282,6 +285,45 @@ STORY_NODES: Dict[str, Dict[str, Any]] = {
                 "next": "charred_mill_approach",
             },
             {
+                "label": "Scavenge the collapsed scout cache with Rope and Torch",
+                "requirements": {"items": ["Rope", "Torch"], "flag_false": ["cache_salvaged"]},
+                "effects": {
+                    "gold": 4,
+                    "trait_delta": {"reputation": 1},
+                    "set_flags": {"cache_salvaged": True},
+                    "seen_events": ["cache_salvaged_combo"],
+                    "log": "Using rope and torch together, you recover a hidden cache that others missed.",
+                },
+                "next": "forest_crossroad",
+            },
+            {
+                "label": "Warrior duty: fortify a ranger barricade line",
+                "requirements": {"class": ["Warrior"], "flag_false": ["warrior_mid_arc_done"]},
+                "effects": {
+                    "set_flags": {"warrior_mid_arc_done": True},
+                    "log": "You step off-road to harden a weak barricade before nightfall.",
+                },
+                "next": "warrior_barricade",
+            },
+            {
+                "label": "Rogue duty: investigate a smuggler safehouse",
+                "requirements": {"class": ["Rogue"], "flag_false": ["rogue_mid_arc_done"]},
+                "effects": {
+                    "set_flags": {"rogue_mid_arc_done": True},
+                    "log": "You follow coded marks toward a hidden safehouse.",
+                },
+                "next": "rogue_safehouse",
+            },
+            {
+                "label": "Archer duty: secure a ridgewatch sniper nest",
+                "requirements": {"class": ["Archer"], "flag_false": ["archer_mid_arc_done"]},
+                "effects": {
+                    "set_flags": {"archer_mid_arc_done": True},
+                    "log": "You climb toward a windswept ridge to claim a tactical overlook.",
+                },
+                "next": "archer_ridgewatch",
+            },
+            {
                 "label": "Leave the crossroads and commit your gathered allies to Ember Ridge",
                 "requirements": {"flag_true": ["any_branch_completed"]},
                 "effects": {
@@ -290,6 +332,75 @@ STORY_NODES: Dict[str, Dict[str, Any]] = {
                 },
                 "next": "war_council_hub",
             },
+        ],
+    },
+    "warrior_barricade": {
+        "id": "warrior_barricade",
+        "title": "Broken Barricade",
+        "text": (
+            "A ranger line is moments from collapse under brute pressure. Your presence could hold it or break it."
+        ),
+        "dialogue": [
+            {"speaker": "Serin's Lieutenant", "line": "Hold here and we keep civilians alive until dawn."}
+        ],
+        "choices": [
+            {
+                "label": "Hold the line by force",
+                "effects": {
+                    "hp": -2,
+                    "trait_delta": {"reputation": 2},
+                    "faction_delta": {"dawnwardens": 2, "oakrest": 1},
+                    "set_flags": {"warrior_line_held": True},
+                    "log": "Your shield discipline steadies the defenders and buys the valley precious time.",
+                },
+                "next": "forest_crossroad",
+            }
+        ],
+    },
+    "rogue_safehouse": {
+        "id": "rogue_safehouse",
+        "title": "Smuggler Safehouse",
+        "text": (
+            "Behind a false wall, smugglers stash maps and coded letters naming both allies and traitors."
+        ),
+        "dialogue": [
+            {"speaker": "Captured Runner", "line": "Every name in that ledger changes who survives this week."}
+        ],
+        "choices": [
+            {
+                "label": "Steal intel and leak it to Oakrest",
+                "effects": {
+                    "trait_delta": {"trust": 1, "alignment": -1},
+                    "faction_delta": {"oakrest": 2, "bandits": -2},
+                    "set_flags": {"rogue_intel_leaked": True},
+                    "seen_events": ["rogue_safehouse_breach"],
+                    "log": "You lift the ledger and pass names to Oakrest sentries before dawn.",
+                },
+                "next": "forest_crossroad",
+            }
+        ],
+    },
+    "archer_ridgewatch": {
+        "id": "archer_ridgewatch",
+        "title": "Ridgewatch Nest",
+        "text": (
+            "From the ridge, you can relay signals across the valley and redirect patrols before clashes begin."
+        ),
+        "dialogue": [
+            {"speaker": "Lookout Fen", "line": "One arrow in the right place saves ten swords from being drawn."}
+        ],
+        "choices": [
+            {
+                "label": "Mark safe lanes and hostile routes",
+                "effects": {
+                    "trait_delta": {"trust": 2, "reputation": 1},
+                    "faction_delta": {"dawnwardens": 1, "oakrest": 1},
+                    "set_flags": {"archer_routes_marked": True},
+                    "seen_events": ["archer_ridge_signals"],
+                    "log": "Your signal work prevents an ambush and keeps both civilians and scouts moving.",
+                },
+                "next": "forest_crossroad",
+            }
         ],
     },
     "dawnwarden_outpost": {

@@ -53,6 +53,12 @@ class LogicTests(unittest.TestCase):
         self.assertIn("scout_meeting", st.session_state.seen_events)
         self.assertIn("Test event", st.session_state.event_log)
 
+
+    def test_apply_effects_updates_factions(self):
+        apply_effects({"faction_delta": {"oakrest": 2, "bandits": -1}})
+        self.assertEqual(st.session_state.factions["oakrest"], 2)
+        self.assertEqual(st.session_state.factions["bandits"], -1)
+
     def test_get_available_choices_filters_invalid(self):
         node = {
             "choices": [

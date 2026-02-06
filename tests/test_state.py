@@ -15,6 +15,12 @@ class StateTests(unittest.TestCase):
         self.assertEqual(st.session_state.current_node, "village_square")
         self.assertIn("Lockpicks", st.session_state.inventory)
 
+
+    def test_reset_initializes_toggle_and_factions(self):
+        self.assertIn("oakrest", st.session_state.factions)
+        self.assertFalse(st.session_state.show_locked_choices)
+        self.assertFalse(st.session_state.spoiler_debug_mode)
+
     def test_snapshot_roundtrip(self):
         start_game("Warrior")
         st.session_state.stats["gold"] += 3

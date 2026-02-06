@@ -3,7 +3,7 @@ from typing import Any, Dict, List
 
 from game.streamlit_compat import st
 
-from game.data import STAT_KEYS, STORY_NODES, TRAIT_KEYS
+from game.data import FACTION_KEYS, STAT_KEYS, STORY_NODES, TRAIT_KEYS
 from game.logic import (
     apply_morality_flags,
     check_requirements,
@@ -45,6 +45,10 @@ def render_sidebar() -> None:
         for trait in TRAIT_KEYS:
             st.write(f"{trait.title()}: {st.session_state.traits[trait]}")
 
+        st.subheader("Faction Standing")
+        for faction in FACTION_KEYS:
+            st.write(f"{faction.title()}: {st.session_state.factions[faction]}")
+
         st.subheader("Key Events Seen")
         if st.session_state.seen_events:
             for event in st.session_state.seen_events[-6:]:
@@ -81,6 +85,7 @@ def render_sidebar() -> None:
                         "event_log",
                         "traits",
                         "seen_events",
+                        "factions",
                         "decision_history",
                         "last_choice_feedback",
                     }
@@ -131,12 +136,42 @@ def get_epilogue_aftermath_lines() -> List[str]:
 
     if traits.get("reputation", 0) >= 5:
         lines.append("Your reputation draws recruits from distant holds, reshaping Oakrest's standing in the region.")
+
+    factions = st.session_state.factions
+    if factions.get("dawnwardens", 0) >= 2:
+        lines.append("Dawnwarden captains keep a signal fire lit in your honor, promising future mutual defense.")
+    if factions.get("ashfang", 0) >= 2:
+        lines.append("Ashfang envoys accept a tense truce, naming you as the only outsider they'll parley with.")
+    if factions.get("bandits", 0) <= -2:
+        lines.append("Bandit crews fracture after your campaign, and river raids drop through the next season.")
     if traits.get("alignment", 0) >= 3:
         lines.append("Your restraint becomes the measure younger scouts are taught to emulate.")
     elif traits.get("alignment", 0) <= -3:
         lines.append("Your brutal efficiency ends the immediate threat, but hardens future conflicts across the frontier.")
 
     return lines[:5]
+
+
+def get_active_objectives() -> List[str]:
+    """Build a lightweight quest journal from current flags."""
+    flags = st.session_state.flags
+    objectives: List[str] = []
+
+    if not flags.get("any_branch_completed"):
+        objectives.append("Scout at least one major threat from the forest crossroad.")
+    if flags.get("any_branch_completed") and not flags.get("midgame_commitment_made"):
+        objectives.append("Return to the crossroad and commit your gathered allies to Ember Ridge.")
+    if flags.get("met_dawnwardens") and not flags.get("branch_dawnwarden_completed"):
+        objectives.append("Earn deeper Dawnwarden trust before the final war council.")
+    if flags.get("met_ashfang") and not flags.get("branch_ashfang_completed"):
+        objectives.append("Resolve the Ashfang warband front before it threatens Oakrest.")
+    if flags.get("cache_salvaged"):
+        objectives.append("Leverage recovered scout cache intelligence in upcoming negotiations.")
+
+    if not objectives:
+        objectives.append("No urgent objectives. Press ahead and shape the ending.")
+
+    return objectives[:4]
 
 def render_node() -> None:
     """Render current node, narrative, choices, and edge-case handling."""
@@ -190,6 +225,7 @@ def render_node() -> None:
         return
 
     st.subheader("What do you do?")
+    st.toggle("Show locked choices", key="show_locked_choices", help="Toggle off to hide paths you cannot currently take.")
     pending = st.session_state.pending_choice_confirmation
 
     if pending and pending.get("node") == node_id:
@@ -210,6 +246,10 @@ def render_node() -> None:
                     st.session_state.pending_choice_confirmation = None
                     st.rerun()
 
+    with st.expander("Current Objectives", expanded=False):
+        for objective in get_active_objectives():
+            st.write(f"- {objective}")
+
     for idx, choice in enumerate(available_choices):
         label = choice["label"]
         warnings = get_choice_warnings(choice)
@@ -225,6 +265,18 @@ def render_node() -> None:
             else:
                 execute_choice(node_id, label, choice)
             st.rerun()
+
+    if st.session_state.show_locked_choices:
+        locked_choices: List[tuple[Dict[str, Any], str]] = []
+        for choice in choices:
+            ok, reason = check_requirements(choice.get("requirements"))
+            if not ok:
+                locked_choices.append((choice, reason))
+
+        if locked_choices:
+            with st.expander("Locked paths", expanded=False):
+                for choice, reason in locked_choices:
+                    st.write(f"- **{choice['label']}** — _{reason}_")
 
     if not available_choices:
         st.warning("No valid choices remain based on your current stats, items, and flags.")
@@ -288,6 +340,9 @@ def format_outcomes(effects: Dict[str, Any] | None) -> str:
         details.append(f"Add items: {', '.join(effects['add_items'])}")
     if effects.get("remove_items"):
         details.append(f"Remove items: {', '.join(effects['remove_items'])}")
+    if effects.get("faction_delta"):
+        shifts = ", ".join([f"{name} {('+' if delta >= 0 else '')}{delta}" for name, delta in effects["faction_delta"].items()])
+        details.append(f"Faction shifts: {shifts}")
     if effects.get("set_flags"):
         spoiler_flags = {"ending_quality", "warrior_best_ending", "rogue_best_ending"}
         visible_flags = {k: v for k, v in effects["set_flags"].items() if k not in spoiler_flags}
@@ -307,7 +362,11 @@ def format_outcomes(effects: Dict[str, Any] | None) -> str:
 def render_choice_outcomes_tab() -> None:
     """Render a separate tab that lists every node choice and its outcomes."""
     st.subheader("All Choices & Outcomes")
-    show_full_spoilers = st.toggle("Show spoiler-heavy routing details", value=False)
+    show_full_spoilers = st.toggle(
+        "Show spoiler-heavy routing details",
+        key="spoiler_debug_mode",
+        help="Debug mode reveals routing destinations and full branch structure.",
+    )
     if show_full_spoilers:
         st.caption("Spoilers enabled: next-node IDs are visible for every choice.")
     else:
