@@ -165,7 +165,8 @@ def apply_effects(effects: Dict[str, Any] | None) -> None:
 def transition_to(next_node_id: str) -> None:
     """Move to the next node, redirecting hard failures to recoverable paths."""
     if st.session_state.stats["hp"] <= 0:
-        transition_to_failure("injured")
+        st.session_state.current_node = "death"
+        add_log("You collapse from your wounds. Your journey ends here.")
         return
 
     if next_node_id not in STORY_NODES:
