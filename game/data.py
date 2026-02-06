@@ -1,4 +1,4 @@
-from typing import Any, Dict
+from typing import Any, Dict, List
 
 STAT_KEYS = ("hp", "gold", "strength", "dexterity")
 TRAIT_KEYS = ("trust", "reputation", "alignment")
@@ -1855,6 +1855,74 @@ STORY_NODES: Dict[str, Dict[str, Any]] = {
         "choices": [],
     },
 }
+
+
+def _rebalance_choice_nodes(max_choices: int = 4) -> None:
+    """Split overloaded nodes into paged subnodes so each node exposes at most max_choices."""
+    if max_choices < 3:
+        return
+
+    original_nodes = [
+        node_id
+        for node_id in STORY_NODES
+        if "__choices_page_" not in node_id and len(STORY_NODES[node_id].get("choices", [])) > max_choices
+    ]
+
+    first_page_size = max_choices - 1
+    page_size = max_choices - 2
+    for node_id in original_nodes:
+        node = STORY_NODES[node_id]
+        choices = list(node.get("choices", []))
+        if len(choices) <= max_choices:
+            continue
+
+        first_page_choices = choices[:first_page_size]
+        remaining = choices[first_page_size:]
+        page_node_ids: List[str] = []
+
+        for page_index in range(0, len(remaining), page_size):
+            page_num = (page_index // page_size) + 2
+            page_id = f"{node_id}__choices_page_{page_num}"
+            page_node_ids.append(page_id)
+            chunk = remaining[page_index : page_index + page_size]
+
+            page_node = {
+                "id": page_id,
+                "title": f"{node['title']} — More Choices ({page_num})",
+                "text": "You review additional options before deciding your next move.",
+                "dialogue": [],
+                "choices": chunk,
+            }
+
+            if page_index + page_size < len(remaining):
+                next_page_num = page_num + 1
+                page_node["choices"].append(
+                    {
+                        "label": "Review more options",
+                        "effects": {"log": "You review the remaining tactical options."},
+                        "next": f"{node_id}__choices_page_{next_page_num}",
+                    }
+                )
+
+            page_node["choices"].append(
+                {
+                    "label": "Return to the previous options",
+                    "effects": {"log": "You return to the previous set of options."},
+                    "next": node_id if page_num == 2 else f"{node_id}__choices_page_{page_num - 1}",
+                }
+            )
+            STORY_NODES[page_id] = page_node
+
+        node["choices"] = first_page_choices + [
+            {
+                "label": "Review more options",
+                "effects": {"log": "You take a moment to review more options."},
+                "next": page_node_ids[0],
+            }
+        ]
+
+
+_rebalance_choice_nodes()
 
 
 # -----------------------------
