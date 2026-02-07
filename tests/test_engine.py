@@ -355,6 +355,11 @@ class SnapshotIntegrationTests(unittest.TestCase):
 
 
 class SimplificationTests(unittest.TestCase):
+    @classmethod
+    def setUpClass(cls):
+        from game.data import init_story_nodes
+        init_story_nodes()
+
     def test_auto_apply_choices_extracted(self):
         """Nodes with auto_apply choices should have them in auto_choices after simplification."""
         for node_id, node in STORY_NODES.items():
@@ -388,6 +393,277 @@ class SimplificationTests(unittest.TestCase):
                     f"Duplicate choice found in {node_id}: {choice.get('label')}",
                 )
                 seen_keys.add(key)
+
+
+class AnyOfRequirementTests(unittest.TestCase):
+    def setUp(self):
+        ensure_session_state()
+        reset_game_state()
+        st.session_state.player_class = "Warrior"
+        st.session_state.stats = {"hp": 10, "gold": 8, "strength": 4, "dexterity": 2}
+        st.session_state.inventory = []
+        st.session_state.flags = {}
+        st.session_state.traits = {"trust": 0, "reputation": 0, "alignment": 0}
+
+    def test_any_of_failure_includes_specific_reasons(self):
+        """When all any_of options fail, the reason should list specific failures."""
+        ok, reason = check_requirements({
+            "any_of": [
+                {"min_strength": 99},
+                {"min_gold": 99},
+            ]
+        })
+        self.assertFalse(ok)
+        self.assertIn("strength", reason.lower())
+        self.assertIn("gold", reason.lower())
+
+    def test_any_of_passes_when_one_option_met(self):
+        ok, reason = check_requirements({
+            "any_of": [
+                {"min_strength": 99},
+                {"min_gold": 5},
+            ]
+        })
+        self.assertTrue(ok)
+        self.assertEqual(reason, "")
+
+
+class AutoChoiceDeathTests(unittest.TestCase):
+    def setUp(self):
+        ensure_session_state()
+        reset_game_state()
+        st.session_state.player_class = "Warrior"
+        st.session_state.stats = {"hp": 2, "gold": 8, "strength": 4, "dexterity": 2}
+        st.session_state.inventory = []
+        st.session_state.flags = {}
+        st.session_state.traits = {"trust": 0, "reputation": 0, "alignment": 0}
+        st.session_state.factions = {"oakrest": 0, "dawnwardens": 0, "ashfang": 0, "bandits": 0}
+        st.session_state.seen_events = []
+        st.session_state.event_log = []
+        st.session_state.auto_event_summary = []
+        st.session_state.pending_auto_death = False
+
+    def test_auto_choice_triggers_death_when_hp_zero(self):
+        """Auto-choices that reduce HP to 0 should trigger pending_auto_death."""
+        node = {
+            "auto_choices": [
+                {"label": "Lethal trap", "effects": {"hp": -10}},
+                {"label": "Should not fire", "effects": {"hp": 5}},
+            ]
+        }
+        apply_node_auto_choices("death_test_node", node)
+        self.assertTrue(st.session_state.pending_auto_death)
+        self.assertLessEqual(st.session_state.stats["hp"], 0)
+
+    def test_auto_choice_death_stops_further_processing(self):
+        """After death trigger, remaining auto-choices should not fire."""
+        node = {
+            "auto_choices": [
+                {"label": "Lethal trap", "effects": {"hp": -10}},
+                {"label": "Heal after death", "effects": {"hp": 99}},
+            ]
+        }
+        apply_node_auto_choices("stop_test_node", node)
+        # HP should be -8 (2 - 10), not -8 + 99
+        self.assertEqual(st.session_state.stats["hp"], -8)
+
+
+class ExecuteChoiceHPDeathTests(unittest.TestCase):
+    def setUp(self):
+        ensure_session_state()
+        reset_game_state()
+        st.session_state.player_class = "Warrior"
+        st.session_state.current_node = "village_square"
+        st.session_state.stats = {"hp": 2, "gold": 8, "strength": 4, "dexterity": 2}
+        st.session_state.inventory = ["Rusty Sword"]
+        st.session_state.flags = {"class": "Warrior"}
+        st.session_state.traits = {"trust": 0, "reputation": 0, "alignment": 0}
+        st.session_state.factions = {"oakrest": 0, "dawnwardens": 0, "ashfang": 0, "bandits": 0}
+        st.session_state.seen_events = []
+        st.session_state.event_log = []
+        st.session_state.decision_history = []
+        st.session_state.history = []
+        st.session_state.visited_nodes = []
+        st.session_state.visited_edges = []
+        st.session_state.pending_choice_confirmation = None
+
+    def test_execute_choice_hp_death_redirects(self):
+        """A choice that reduces HP to 0 should redirect to death node."""
+        choice = {
+            "label": "Dangerous choice",
+            "next": "camp_shop",
+            "effects": {"hp": -10},
+        }
+        execute_choice("village_square", "Dangerous choice", choice)
+        self.assertEqual(st.session_state.current_node, "death")
+
+
+class FormatOutcomeSummaryTests(unittest.TestCase):
+    def test_empty_summary(self):
+        from game.logic import format_outcome_summary
+        self.assertEqual(format_outcome_summary({}), "No immediate changes.")
+        self.assertEqual(format_outcome_summary(None), "No immediate changes.")
+
+    def test_stat_changes_formatted(self):
+        from game.logic import format_outcome_summary
+        summary = {
+            "stats_delta": {"hp": -3, "gold": 2, "strength": 0, "dexterity": 0},
+            "items_gained": [],
+            "items_lost": [],
+            "flags_set": [],
+        }
+        result = format_outcome_summary(summary)
+        self.assertIn("HP -3", result)
+        self.assertIn("GOLD +2", result)
+
+    def test_items_and_flags_formatted(self):
+        from game.logic import format_outcome_summary
+        summary = {
+            "stats_delta": {"hp": 0, "gold": 0, "strength": 0, "dexterity": 0},
+            "items_gained": ["Torch"],
+            "items_lost": ["Key"],
+            "flags_set": [("met_king", True)],
+        }
+        result = format_outcome_summary(summary)
+        self.assertIn("Gained: Torch", result)
+        self.assertIn("Lost: Key", result)
+        self.assertIn("met_king", result)
+
+
+class TransitionToFailureTests(unittest.TestCase):
+    def setUp(self):
+        ensure_session_state()
+        reset_game_state()
+        st.session_state.player_class = "Warrior"
+        st.session_state.event_log = []
+
+    def test_transition_to_failure_injured(self):
+        from game.logic import transition_to_failure
+        transition_to_failure("injured")
+        self.assertEqual(st.session_state.current_node, "failure_injured")
+
+    def test_transition_to_failure_unknown_type_defaults(self):
+        from game.logic import transition_to_failure
+        transition_to_failure("nonexistent_type")
+        self.assertEqual(st.session_state.current_node, "failure_injured")
+
+
+class EpilogueTests(unittest.TestCase):
+    def setUp(self):
+        ensure_session_state()
+        reset_game_state()
+        start_game("Warrior")
+
+    def test_epilogue_returns_list(self):
+        from game.ui_components.epilogue import get_epilogue_aftermath_lines
+        lines = get_epilogue_aftermath_lines()
+        self.assertIsInstance(lines, list)
+
+    def test_epilogue_respects_max_lines(self):
+        from game.ui_components.epilogue import get_epilogue_aftermath_lines
+        # Set many flags to generate lots of lines
+        st.session_state.flags.update({
+            "final_plan_shared": True,
+            "charged_finale": True,
+            "ember_ridge_vigil_taken": True,
+            "ember_ridge_vigil_spoken": True,
+            "ember_ridge_vigil_walked": True,
+            "causeway_quiet_marked": True,
+            "causeway_quiet_steadied": True,
+            "militia_drilled": True,
+            "shadow_routes_marked": True,
+            "archer_watch_established": True,
+            "warrior_oath_taken": True,
+            "morality": "merciful",
+        })
+        lines = get_epilogue_aftermath_lines()
+        self.assertLessEqual(len(lines), 9)
+
+    def test_epilogue_morality_flags(self):
+        from game.ui_components.epilogue import get_epilogue_aftermath_lines
+        st.session_state.flags["morality"] = "merciful"
+        lines = get_epilogue_aftermath_lines()
+        self.assertTrue(
+            any("refuge" in line.lower() or "protected" in line.lower() for line in lines)
+            if lines else True
+        )
+
+
+class SnapshotVisitedFieldsTests(unittest.TestCase):
+    def setUp(self):
+        ensure_session_state()
+        reset_game_state()
+
+    def test_validate_rejects_bad_visited_nodes_type(self):
+        start_game("Warrior")
+        snap = snapshot_state()
+        snap["visited_nodes"] = "not a list"
+        ok, errors = validate_snapshot(snap)
+        self.assertFalse(ok)
+        self.assertTrue(any("visited nodes" in e.lower() for e in errors))
+
+    def test_validate_rejects_bad_visited_edges_type(self):
+        start_game("Warrior")
+        snap = snapshot_state()
+        snap["visited_edges"] = "not a list"
+        ok, errors = validate_snapshot(snap)
+        self.assertFalse(ok)
+        self.assertTrue(any("visited edges" in e.lower() for e in errors))
+
+    def test_snapshot_preserves_visited_data(self):
+        start_game("Warrior")
+        st.session_state.visited_nodes = ["village_square", "camp_shop"]
+        st.session_state.visited_edges = [{"from": "village_square", "to": "camp_shop"}]
+        snap = snapshot_state()
+        reset_game_state()
+        load_snapshot(snap)
+        self.assertEqual(st.session_state.visited_nodes, ["village_square", "camp_shop"])
+        self.assertEqual(st.session_state.visited_edges, [{"from": "village_square", "to": "camp_shop"}])
+
+
+class MergeEffectsMetaTests(unittest.TestCase):
+    def test_unlock_meta_items_merge(self):
+        base = {"unlock_meta_items": ["Locket"]}
+        incoming = {"unlock_meta_items": ["Locket", "Ring"]}
+        merged = merge_effects(base, incoming)
+        self.assertEqual(sorted(merged["unlock_meta_items"]), ["Locket", "Ring"])
+
+    def test_remove_meta_nodes_merge(self):
+        base = {"remove_meta_nodes": ["node_a"]}
+        incoming = {"remove_meta_nodes": ["node_a", "node_b"]}
+        merged = merge_effects(base, incoming)
+        self.assertEqual(sorted(merged["remove_meta_nodes"]), ["node_a", "node_b"])
+
+    def test_remove_items_merge(self):
+        base = {"remove_items": ["Key"]}
+        incoming = {"remove_items": ["Key", "Rope"]}
+        merged = merge_effects(base, incoming)
+        self.assertEqual(sorted(merged["remove_items"]), ["Key", "Rope"])
+
+    def test_empty_base_merge(self):
+        merged = merge_effects({}, {"hp": -3, "add_items": ["Torch"]})
+        self.assertEqual(merged["hp"], -3)
+        self.assertEqual(merged["add_items"], ["Torch"])
+
+
+class IsPublicFlagTests(unittest.TestCase):
+    def test_internal_prefixes_hidden(self):
+        from game.logic import _is_public_flag
+        self.assertFalse(_is_public_flag("auto_choice::node::0"))
+        self.assertFalse(_is_public_flag("branch_forest_completed"))
+        self.assertFalse(_is_public_flag("system_init"))
+        self.assertFalse(_is_public_flag("internal_counter"))
+        self.assertFalse(_is_public_flag("visited_node"))
+
+    def test_any_branch_completed_hidden(self):
+        from game.logic import _is_public_flag
+        self.assertFalse(_is_public_flag("any_branch_completed"))
+
+    def test_normal_flags_visible(self):
+        from game.logic import _is_public_flag
+        self.assertTrue(_is_public_flag("met_scout"))
+        self.assertTrue(_is_public_flag("morality"))
+        self.assertTrue(_is_public_flag("dawnwarden_allied"))
 
 
 if __name__ == "__main__":

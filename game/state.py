@@ -122,6 +122,11 @@ def validate_snapshot(snapshot: Dict[str, Any]) -> tuple[bool, list[str]]:
     if not isinstance(snapshot.get("event_log"), list):
         errors.append("Event log payload must be a list.")
 
+    if "visited_nodes" in snapshot and not isinstance(snapshot["visited_nodes"], list):
+        errors.append("Visited nodes payload must be a list.")
+    if "visited_edges" in snapshot and not isinstance(snapshot["visited_edges"], list):
+        errors.append("Visited edges payload must be a list.")
+
     return not errors, errors
 
 def add_log(message: str) -> None:
