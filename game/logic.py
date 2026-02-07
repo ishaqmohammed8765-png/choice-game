@@ -57,9 +57,11 @@ def execute_choice(node_id: str, label: str, choice: Dict[str, Any]) -> None:
 
     actual_next = _resolve_transition_node(resolved_next)
     _record_visit(node_id, actual_next)
-    if actual_next != resolved_next:
+    if actual_next == "death" and resolved_next != "death":
+        add_log("You collapse from your wounds. Your journey ends here.")
+    elif actual_next != resolved_next:
         add_log(f"Broken path detected for '{resolved_next}'. You are rerouted to a fallback failure arc.")
-    transition_to(actual_next)
+    st.session_state.current_node = actual_next
 
 
 def get_choice_warnings(choice: Dict[str, Any]) -> List[str]:
@@ -90,6 +92,25 @@ def apply_morality_flags(flags: Dict[str, Any]) -> None:
         flags["cruel_reputation"] = True
 
 
+# Stat/trait requirement specs: (requirement_key, value_getter_name, label, comparator, message_template)
+# "min" checks: current < required  →  fail
+# "max" checks: current > required  →  fail
+_MIN_REQUIREMENT_CHECKS: List[tuple[str, str, str]] = [
+    ("min_hp", "hp", "HP"),
+    ("min_gold", "gold", "gold"),
+    ("min_strength", "strength", "strength"),
+    ("min_dexterity", "dexterity", "dexterity"),
+]
+
+_TRAIT_RANGE_CHECKS: List[tuple[str, str, str, str]] = [
+    # (requirement_key, trait_key, label, direction)
+    ("min_reputation", "reputation", "reputation", "min"),
+    ("max_reputation", "reputation", "reputation", "max"),
+    ("min_ember_tide", "ember_tide", "ember tide", "min"),
+    ("max_ember_tide", "ember_tide", "ember tide", "max"),
+]
+
+
 def check_requirements(requirements: Dict[str, Any] | None) -> tuple[bool, str]:
     """Validate requirements against current player state."""
     if not requirements:
@@ -116,22 +137,20 @@ def check_requirements(requirements: Dict[str, Any] | None) -> tuple[bool, str]:
     if "class" in requirements and pclass not in requirements["class"]:
         return False, f"Requires class: {', '.join(requirements['class'])}"
 
-    if "min_hp" in requirements and stats["hp"] < requirements["min_hp"]:
-        return False, f"Requires HP >= {requirements['min_hp']}"
-    if "min_gold" in requirements and stats["gold"] < requirements["min_gold"]:
-        return False, f"Requires gold >= {requirements['min_gold']}"
-    if "min_strength" in requirements and stats["strength"] < requirements["min_strength"]:
-        return False, f"Requires strength >= {requirements['min_strength']}"
-    if "min_dexterity" in requirements and stats["dexterity"] < requirements["min_dexterity"]:
-        return False, f"Requires dexterity >= {requirements['min_dexterity']}"
-    if "min_reputation" in requirements and st.session_state.traits.get("reputation", 0) < requirements["min_reputation"]:
-        return False, f"Requires reputation >= {requirements['min_reputation']}"
-    if "max_reputation" in requirements and st.session_state.traits.get("reputation", 0) > requirements["max_reputation"]:
-        return False, f"Requires reputation <= {requirements['max_reputation']}"
-    if "min_ember_tide" in requirements and st.session_state.traits.get("ember_tide", 0) < requirements["min_ember_tide"]:
-        return False, f"Requires ember tide >= {requirements['min_ember_tide']}"
-    if "max_ember_tide" in requirements and st.session_state.traits.get("ember_tide", 0) > requirements["max_ember_tide"]:
-        return False, f"Requires ember tide <= {requirements['max_ember_tide']}"
+    for req_key, stat_key, label in _MIN_REQUIREMENT_CHECKS:
+        if req_key in requirements and stats[stat_key] < requirements[req_key]:
+            return False, f"Requires {label} >= {requirements[req_key]}"
+
+    traits = st.session_state.traits
+    for req_key, trait_key, label, direction in _TRAIT_RANGE_CHECKS:
+        if req_key not in requirements:
+            continue
+        current = traits.get(trait_key, 0)
+        threshold = requirements[req_key]
+        if direction == "min" and current < threshold:
+            return False, f"Requires {label} >= {threshold}"
+        if direction == "max" and current > threshold:
+            return False, f"Requires {label} <= {threshold}"
 
     for item in requirements.get("items", []):
         if item not in inventory:
@@ -164,6 +183,19 @@ def check_requirements(requirements: Dict[str, Any] | None) -> tuple[bool, str]:
     return True, ""
 
 
+# Summarization specs for stat/trait requirements: (key, label, operator)
+_SUMMARY_STAT_SPECS: List[tuple[str, str, str]] = [
+    ("min_hp", "HP", ""),
+    ("min_gold", "Gold", ""),
+    ("min_strength", "Strength", ""),
+    ("min_dexterity", "Dexterity", ""),
+    ("min_reputation", "Reputation", ">="),
+    ("max_reputation", "Reputation", "<="),
+    ("min_ember_tide", "Ember Tide", ">="),
+    ("max_ember_tide", "Ember Tide", "<="),
+]
+
+
 def _summarize_requirements(requirements: Dict[str, Any] | None) -> str:
     if not requirements:
         return ""
@@ -176,22 +208,11 @@ def _summarize_requirements(requirements: Dict[str, Any] | None) -> str:
     parts: List[str] = []
     if "class" in requirements:
         parts.append(f"Class {', '.join(requirements['class'])}")
-    if "min_hp" in requirements:
-        parts.append(f"HP {requirements['min_hp']}")
-    if "min_gold" in requirements:
-        parts.append(f"Gold {requirements['min_gold']}")
-    if "min_strength" in requirements:
-        parts.append(f"Strength {requirements['min_strength']}")
-    if "min_dexterity" in requirements:
-        parts.append(f"Dexterity {requirements['min_dexterity']}")
-    if "min_reputation" in requirements:
-        parts.append(f"Reputation >= {requirements['min_reputation']}")
-    if "max_reputation" in requirements:
-        parts.append(f"Reputation <= {requirements['max_reputation']}")
-    if "min_ember_tide" in requirements:
-        parts.append(f"Ember Tide >= {requirements['min_ember_tide']}")
-    if "max_ember_tide" in requirements:
-        parts.append(f"Ember Tide <= {requirements['max_ember_tide']}")
+
+    for key, label, op in _SUMMARY_STAT_SPECS:
+        if key in requirements:
+            sep = f" {op} " if op else " "
+            parts.append(f"{label}{sep}{requirements[key]}")
 
     for item in requirements.get("items", []):
         parts.append(item)
@@ -234,6 +255,13 @@ def resolve_choice_outcome(choice: Dict[str, Any]) -> tuple[Dict[str, Any], str]
     return effects, next_node
 
 
+# Keys in effects that are deduplicated lists when merging
+_MERGE_LIST_KEYS = ("add_items", "remove_items", "seen_events", "unlock_meta_items", "remove_meta_nodes")
+
+# Keys in effects that are additive dicts when merging
+_MERGE_ADDITIVE_DICT_KEYS = ("trait_delta", "faction_delta")
+
+
 def merge_effects(base: Dict[str, Any], incoming: Dict[str, Any]) -> Dict[str, Any]:
     """Merge two effect dicts deterministically, favoring incoming for log text."""
     merged = dict(base)
@@ -241,39 +269,20 @@ def merge_effects(base: Dict[str, Any], incoming: Dict[str, Any]) -> Dict[str, A
         if stat in incoming:
             merged[stat] = merged.get(stat, 0) + incoming[stat]
 
-    if incoming.get("add_items"):
-        merged.setdefault("add_items", [])
-        merged["add_items"] = list({*merged["add_items"], *incoming["add_items"]})
-
-    if incoming.get("remove_items"):
-        merged.setdefault("remove_items", [])
-        merged["remove_items"] = list({*merged["remove_items"], *incoming["remove_items"]})
+    for key in _MERGE_LIST_KEYS:
+        if incoming.get(key):
+            merged.setdefault(key, [])
+            merged[key] = list({*merged[key], *incoming[key]})
 
     if incoming.get("set_flags"):
         merged.setdefault("set_flags", {})
         merged["set_flags"].update(incoming["set_flags"])
 
-    if incoming.get("trait_delta"):
-        merged.setdefault("trait_delta", {})
-        for trait, delta in incoming["trait_delta"].items():
-            merged["trait_delta"][trait] = merged["trait_delta"].get(trait, 0) + delta
-
-    if incoming.get("faction_delta"):
-        merged.setdefault("faction_delta", {})
-        for faction, delta in incoming["faction_delta"].items():
-            merged["faction_delta"][faction] = merged["faction_delta"].get(faction, 0) + delta
-
-    if incoming.get("seen_events"):
-        merged.setdefault("seen_events", [])
-        merged["seen_events"] = list({*merged["seen_events"], *incoming["seen_events"]})
-
-    if incoming.get("unlock_meta_items"):
-        merged.setdefault("unlock_meta_items", [])
-        merged["unlock_meta_items"] = list({*merged["unlock_meta_items"], *incoming["unlock_meta_items"]})
-
-    if incoming.get("remove_meta_nodes"):
-        merged.setdefault("remove_meta_nodes", [])
-        merged["remove_meta_nodes"] = list({*merged["remove_meta_nodes"], *incoming["remove_meta_nodes"]})
+    for key in _MERGE_ADDITIVE_DICT_KEYS:
+        if incoming.get(key):
+            merged.setdefault(key, {})
+            for name, delta in incoming[key].items():
+                merged[key][name] = merged[key].get(name, 0) + delta
 
     if "log" in incoming:
         merged["log"] = incoming["log"]

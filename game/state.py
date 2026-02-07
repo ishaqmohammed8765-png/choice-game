@@ -11,29 +11,53 @@ INTRO_NODE_BY_CLASS = {
     "Archer": "intro_archer",
 }
 
+# Canonical default values for all game-state fields.
+# Used by reset, ensure, snapshot, and load to stay in sync.
+_DEFAULT_STATE_FIELDS: Dict[str, Any] = {
+    "player_class": None,
+    "current_node": None,
+    "stats": lambda: {"hp": 0, "gold": 0, "strength": 0, "dexterity": 0},
+    "inventory": lambda: [],
+    "flags": lambda: {},
+    "traits": lambda: {name: 0 for name in TRAIT_KEYS},
+    "seen_events": lambda: [],
+    "factions": lambda: {name: 0 for name in FACTION_KEYS},
+    "decision_history": lambda: [],
+    "last_choice_feedback": lambda: [],
+    "last_outcome_summary": None,
+    "auto_event_summary": lambda: [],
+    "pending_auto_death": False,
+    "event_log": lambda: [],
+    "history": lambda: [],
+    "save_blob": "",
+    "pending_choice_confirmation": None,
+    "show_locked_choices": False,
+    "visited_nodes": lambda: [],
+    "visited_edges": lambda: [],
+    "meta_state": lambda: {"unlocked_items": [], "removed_nodes": []},
+}
+
+# Fields that are captured in snapshots for save/load and undo.
+_SNAPSHOT_FIELDS = (
+    "player_class", "current_node", "stats", "inventory", "flags",
+    "traits", "seen_events", "factions", "decision_history",
+    "last_choice_feedback", "last_outcome_summary", "auto_event_summary",
+    "pending_auto_death", "event_log", "pending_choice_confirmation",
+    "visited_nodes", "visited_edges", "meta_state",
+)
+
+
+def _get_default(key: str) -> Any:
+    """Return the default value for a state field, calling factory lambdas for mutable types."""
+    value = _DEFAULT_STATE_FIELDS[key]
+    return value() if callable(value) else value
+
+
 def reset_game_state() -> None:
     """Reset all session state values to begin a fresh run."""
-    meta_state = st.session_state.get("meta_state", {"unlocked_items": [], "removed_nodes": []})
-    st.session_state.player_class = None
-    st.session_state.current_node = None
-    st.session_state.stats = {"hp": 0, "gold": 0, "strength": 0, "dexterity": 0}
-    st.session_state.inventory = []
-    st.session_state.flags = {}
-    st.session_state.traits = {name: 0 for name in TRAIT_KEYS}
-    st.session_state.seen_events = []
-    st.session_state.factions = {name: 0 for name in FACTION_KEYS}
-    st.session_state.decision_history = []
-    st.session_state.last_choice_feedback = []
-    st.session_state.last_outcome_summary = None
-    st.session_state.auto_event_summary = []
-    st.session_state.pending_auto_death = False
-    st.session_state.event_log = []
-    st.session_state.history = []
-    st.session_state.save_blob = ""
-    st.session_state.pending_choice_confirmation = None
-    st.session_state.show_locked_choices = False
-    st.session_state.visited_nodes = []
-    st.session_state.visited_edges = []
+    meta_state = st.session_state.get("meta_state", _get_default("meta_state"))
+    for key in _DEFAULT_STATE_FIELDS:
+        setattr(st.session_state, key, _get_default(key))
     st.session_state.meta_state = meta_state
 
 def start_game(player_class: str) -> None:
@@ -147,47 +171,24 @@ def add_log(message: str) -> None:
 def snapshot_state() -> Dict[str, Any]:
     """Capture game state for backtracking and save export."""
     return {
-        "player_class": st.session_state.player_class,
-        "current_node": st.session_state.current_node,
-        "stats": copy.deepcopy(st.session_state.stats),
-        "inventory": copy.deepcopy(st.session_state.inventory),
-        "flags": copy.deepcopy(st.session_state.flags),
-        "traits": copy.deepcopy(st.session_state.traits),
-        "seen_events": copy.deepcopy(st.session_state.seen_events),
-        "factions": copy.deepcopy(st.session_state.factions),
-        "decision_history": copy.deepcopy(st.session_state.decision_history),
-        "last_choice_feedback": copy.deepcopy(st.session_state.last_choice_feedback),
-        "last_outcome_summary": copy.deepcopy(st.session_state.last_outcome_summary),
-        "auto_event_summary": copy.deepcopy(st.session_state.auto_event_summary),
-        "pending_auto_death": copy.deepcopy(st.session_state.pending_auto_death),
-        "event_log": copy.deepcopy(st.session_state.event_log),
-        "pending_choice_confirmation": copy.deepcopy(st.session_state.pending_choice_confirmation),
-        "visited_nodes": copy.deepcopy(st.session_state.visited_nodes),
-        "visited_edges": copy.deepcopy(st.session_state.visited_edges),
-        "meta_state": copy.deepcopy(st.session_state.get("meta_state", {"unlocked_items": [], "removed_nodes": []})),
+        key: copy.deepcopy(
+            st.session_state.get(key, _get_default(key))
+        )
+        for key in _SNAPSHOT_FIELDS
     }
 
 def load_snapshot(snapshot: Dict[str, Any]) -> None:
     """Restore game state from a validated snapshot."""
-    st.session_state.player_class = snapshot["player_class"]
-    st.session_state.current_node = snapshot["current_node"]
-    st.session_state.stats = snapshot["stats"]
-    st.session_state.inventory = snapshot["inventory"]
-    st.session_state.flags = snapshot["flags"]
-    st.session_state.traits = snapshot.get("traits", {name: 0 for name in TRAIT_KEYS})
-    st.session_state.seen_events = snapshot.get("seen_events", [])
-    st.session_state.factions = snapshot.get("factions", {name: 0 for name in FACTION_KEYS})
-    st.session_state.decision_history = snapshot.get("decision_history", [])
-    st.session_state.last_choice_feedback = snapshot.get("last_choice_feedback", [])
-    st.session_state.last_outcome_summary = snapshot.get("last_outcome_summary")
-    st.session_state.auto_event_summary = snapshot.get("auto_event_summary", [])
-    st.session_state.pending_auto_death = snapshot.get("pending_auto_death", False)
-    st.session_state.event_log = snapshot["event_log"]
-    st.session_state.pending_choice_confirmation = snapshot.get("pending_choice_confirmation")
-    st.session_state.visited_nodes = snapshot.get("visited_nodes", [snapshot["current_node"]])
-    st.session_state.visited_edges = snapshot.get("visited_edges", [])
+    for key in _SNAPSHOT_FIELDS:
+        if key == "meta_state":
+            continue  # meta_state uses merge logic below
+        if key == "visited_nodes" and key not in snapshot:
+            setattr(st.session_state, key, [snapshot["current_node"]])
+            continue
+        setattr(st.session_state, key, snapshot.get(key, _get_default(key)))
+
     if "meta_state" in snapshot:
-        existing_meta = st.session_state.get("meta_state", {"unlocked_items": [], "removed_nodes": []})
+        existing_meta = st.session_state.get("meta_state", _get_default("meta_state"))
         incoming_meta = snapshot["meta_state"]
         merged_items = list(dict.fromkeys(existing_meta.get("unlocked_items", []) + incoming_meta.get("unlocked_items", [])))
         merged_nodes = list(dict.fromkeys(existing_meta.get("removed_nodes", []) + incoming_meta.get("removed_nodes", [])))
@@ -197,33 +198,6 @@ def ensure_session_state() -> None:
     """Initialize session state keys on first load."""
     if "player_class" not in st.session_state:
         reset_game_state()
-    if "history" not in st.session_state:
-        st.session_state.history = []
-    if "save_blob" not in st.session_state:
-        st.session_state.save_blob = ""
-    if "traits" not in st.session_state:
-        st.session_state.traits = {name: 0 for name in TRAIT_KEYS}
-    if "seen_events" not in st.session_state:
-        st.session_state.seen_events = []
-    if "factions" not in st.session_state:
-        st.session_state.factions = {name: 0 for name in FACTION_KEYS}
-    if "decision_history" not in st.session_state:
-        st.session_state.decision_history = []
-    if "last_choice_feedback" not in st.session_state:
-        st.session_state.last_choice_feedback = []
-    if "pending_choice_confirmation" not in st.session_state:
-        st.session_state.pending_choice_confirmation = None
-    if "last_outcome_summary" not in st.session_state:
-        st.session_state.last_outcome_summary = None
-    if "auto_event_summary" not in st.session_state:
-        st.session_state.auto_event_summary = []
-    if "pending_auto_death" not in st.session_state:
-        st.session_state.pending_auto_death = False
-    if "show_locked_choices" not in st.session_state:
-        st.session_state.show_locked_choices = False
-    if "visited_nodes" not in st.session_state:
-        st.session_state.visited_nodes = []
-    if "visited_edges" not in st.session_state:
-        st.session_state.visited_edges = []
-    if "meta_state" not in st.session_state:
-        st.session_state.meta_state = {"unlocked_items": [], "removed_nodes": []}
+    for key in _DEFAULT_STATE_FIELDS:
+        if key not in st.session_state:
+            setattr(st.session_state, key, _get_default(key))

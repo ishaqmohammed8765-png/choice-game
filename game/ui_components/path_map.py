@@ -7,6 +7,15 @@ from game.data import STORY_NODES
 from game.logic import check_requirements, resolve_choice_outcome
 
 
+# Stat requirement specs for tooltip formatting: (requirement_key, stat_key, label)
+_TOOLTIP_STAT_SPECS: List[tuple[str, str, str]] = [
+    ("min_hp", "hp", "HP"),
+    ("min_gold", "gold", "Gold"),
+    ("min_strength", "strength", "Strength"),
+    ("min_dexterity", "dexterity", "Dexterity"),
+]
+
+
 def format_requirement_tooltip(
     requirements: Dict[str, Any] | None,
     *,
@@ -44,6 +53,107 @@ def format_requirement_tooltip(
         )
 
     return "\n".join(lines) if lines else "No requirements."
+
+
+def _build_choice_node_svg(
+    choice: Dict[str, Any],
+    *,
+    x: float,
+    y: float,
+    origin_x: float,
+    origin_y: float,
+    origin_node_id: str,
+    visited_nodes: set,
+    visited_edges: set,
+    node_radius: int,
+    label_offset: int,
+    label_class: str,
+    extra_group_classes: List[str] | None = None,
+    extra_line_classes: List[str] | None = None,
+    icon_y_offset: int = 5,
+    show_available_icon: bool = True,
+) -> tuple[str, str]:
+    """Build SVG elements for a single choice node and its connecting line.
+
+    Returns (line_svg, node_group_svg).
+    """
+    is_unlocked, _ = check_requirements(choice.get("requirements"))
+    is_locked = not is_unlocked
+    _, next_node = resolve_choice_outcome(choice)
+    edge_key = (origin_node_id, next_node)
+    edge_visited = edge_key in visited_edges
+    node_visited = next_node in visited_nodes
+
+    # Tooltip for locked nodes
+    tooltip = ""
+    if is_locked:
+        tooltip_text = format_requirement_tooltip(
+            choice.get("requirements"),
+            stats=st.session_state.stats,
+            inventory=st.session_state.inventory,
+            flags=st.session_state.flags,
+            player_class=st.session_state.player_class,
+        )
+        tooltip = f"<title>{_escape_svg_text(tooltip_text)}</title>"
+
+    # Label
+    label_lines = _wrap_svg_label(choice["label"])
+    label_svg = _render_svg_text(
+        label_lines, x=x, y=y + label_offset, class_name=label_class,
+    )
+
+    # Group CSS classes
+    group_classes = ["choice-node"] + (extra_group_classes or [])
+    if is_locked:
+        group_classes.append("locked")
+    elif not node_visited:
+        group_classes.append("available")
+    if node_visited:
+        group_classes.append("visited")
+
+    # Line CSS classes
+    line_class_parts = ["path-line"] + (extra_line_classes or [])
+    if edge_visited:
+        line_class_parts.append("visited")
+    if is_locked:
+        line_class_parts.append("locked")
+    elif not edge_visited and "secondary" not in (extra_line_classes or []):
+        line_class_parts.append("available")
+
+    # Status icon
+    icon_y = y + icon_y_offset
+    icon_svg = ""
+    icon_suffix = " sec" if extra_group_classes and "secondary-node" in extra_group_classes else ""
+    if is_locked:
+        icon_svg = (
+            f'<text x="{x}" y="{icon_y}" text-anchor="middle" '
+            f'class="node-icon locked-icon{icon_suffix}">\U0001F512</text>'
+        )
+    elif node_visited:
+        icon_svg = (
+            f'<text x="{x}" y="{icon_y}" text-anchor="middle" '
+            f'class="node-icon visited-icon{icon_suffix}">\u2713</text>'
+        )
+    elif show_available_icon:
+        icon_svg = (
+            f'<text x="{x}" y="{icon_y}" text-anchor="middle" '
+            f'class="node-icon available-icon{icon_suffix}">\u2726</text>'
+        )
+
+    line_svg = (
+        f'<line class="{" ".join(line_class_parts)}" '
+        f'x1="{origin_x}" y1="{origin_y}" x2="{x}" y2="{y}"></line>'
+    )
+    node_svg = (
+        f'<g class="{" ".join(group_classes)}">'
+        f'{tooltip}'
+        f'<circle cx="{x}" cy="{y}" r="{node_radius}"></circle>'
+        f'{icon_svg}'
+        f'{label_svg}'
+        f'</g>'
+    )
+
+    return line_svg, node_svg, next_node
 
 
 def render_path_map() -> None:
@@ -89,7 +199,7 @@ def render_path_map() -> None:
     # -- Collect all rendering layers --
     line_elements: List[str] = []
     node_elements: List[str] = []
-    first_hop_positions: List[tuple[float, float, float, Dict[str, Any], str]] = []
+    first_hop_positions: List[tuple[float, float, float, str]] = []
     count = len(choices)
 
     for idx, choice in enumerate(choices):
@@ -97,89 +207,27 @@ def render_path_map() -> None:
         x = center_x + radius * math.cos(angle)
         y = center_y + radius * math.sin(angle)
 
-        is_unlocked, _ = check_requirements(choice.get("requirements"))
-        is_locked = not is_unlocked
-        _, next_node = resolve_choice_outcome(choice)
-        edge_key = (node_id, next_node)
-        edge_visited = edge_key in visited_edges
-        node_visited = next_node in visited_nodes
-
-        tooltip = ""
-        if is_locked:
-            tooltip_text = format_requirement_tooltip(
-                choice.get("requirements"),
-                stats=st.session_state.stats,
-                inventory=st.session_state.inventory,
-                flags=st.session_state.flags,
-                player_class=st.session_state.player_class,
-            )
-            tooltip = f"<title>{_escape_svg_text(tooltip_text)}</title>"
-
-        label_lines = _wrap_svg_label(choice["label"])
-        label_y = y + 38
-        label_svg = _render_svg_text(
-            label_lines,
-            x=x,
-            y=label_y,
-            class_name="choice-label",
+        line_svg, node_svg, next_node = _build_choice_node_svg(
+            choice,
+            x=x, y=y,
+            origin_x=center_x, origin_y=center_y,
+            origin_node_id=node_id,
+            visited_nodes=visited_nodes,
+            visited_edges=visited_edges,
+            node_radius=22,
+            label_offset=38,
+            label_class="choice-label",
         )
-
-        # Build CSS classes
-        group_classes = ["choice-node"]
-        if is_locked:
-            group_classes.append("locked")
-        elif not node_visited:
-            group_classes.append("available")
-        if node_visited:
-            group_classes.append("visited")
-
-        line_class = "path-line"
-        if edge_visited:
-            line_class += " visited"
-        if is_locked:
-            line_class += " locked"
-        elif not edge_visited:
-            line_class += " available"
-
-        # Status icon
-        icon_svg = ""
-        if is_locked:
-            icon_svg = (
-                f'<text x="{x}" y="{y + 5}" text-anchor="middle" '
-                f'class="node-icon locked-icon">\U0001F512</text>'
-            )
-        elif node_visited:
-            icon_svg = (
-                f'<text x="{x}" y="{y + 5}" text-anchor="middle" '
-                f'class="node-icon visited-icon">\u2713</text>'
-            )
-        else:
-            icon_svg = (
-                f'<text x="{x}" y="{y + 5}" text-anchor="middle" '
-                f'class="node-icon available-icon">\u2726</text>'
-            )
-
-        # Lines go on a lower layer, nodes on top
-        line_elements.append(
-            f'<line class="{line_class}" x1="{center_x}" y1="{center_y}" '
-            f'x2="{x}" y2="{y}"></line>'
-        )
-        node_elements.append(
-            f"""<g class="{' '.join(group_classes)}">
-                {tooltip}
-                <circle cx="{x}" cy="{y}" r="22"></circle>
-                {icon_svg}
-                {label_svg}
-            </g>"""
-        )
-        first_hop_positions.append((x, y, angle, choice, next_node))
+        line_elements.append(line_svg)
+        node_elements.append(node_svg)
+        first_hop_positions.append((x, y, angle, next_node))
 
     # -- 2-hop secondary nodes --
     secondary_line_elements: List[str] = []
     secondary_node_elements: List[str] = []
     if show_two_hop:
         secondary_radius = radius * 1.8
-        for x, y, angle, choice, next_node in first_hop_positions:
+        for x, y, angle, next_node in first_hop_positions:
             next_node_data = STORY_NODES.get(next_node, {})
             secondary_choices = next_node_data.get("choices", [])
             if not secondary_choices:
@@ -197,73 +245,23 @@ def render_path_map() -> None:
                 x2 = center_x + secondary_radius * math.cos(angle_secondary)
                 y2 = center_y + secondary_radius * math.sin(angle_secondary)
 
-                is_unlocked, _ = check_requirements(
-                    secondary_choice.get("requirements")
+                line_svg, node_svg, _ = _build_choice_node_svg(
+                    secondary_choice,
+                    x=x2, y=y2,
+                    origin_x=x, origin_y=y,
+                    origin_node_id=next_node,
+                    visited_nodes=visited_nodes,
+                    visited_edges=visited_edges,
+                    node_radius=16,
+                    label_offset=32,
+                    label_class="choice-label secondary-label",
+                    extra_group_classes=["secondary-node"],
+                    extra_line_classes=["secondary"],
+                    icon_y_offset=4,
+                    show_available_icon=False,
                 )
-                is_locked = not is_unlocked
-                _, next_next_node = resolve_choice_outcome(secondary_choice)
-                edge_key = (next_node, next_next_node)
-                edge_visited = edge_key in visited_edges
-                node_visited = next_next_node in visited_nodes
-
-                tooltip = ""
-                if is_locked:
-                    tooltip_text = format_requirement_tooltip(
-                        secondary_choice.get("requirements"),
-                        stats=st.session_state.stats,
-                        inventory=st.session_state.inventory,
-                        flags=st.session_state.flags,
-                        player_class=st.session_state.player_class,
-                    )
-                    tooltip = f"<title>{_escape_svg_text(tooltip_text)}</title>"
-
-                label_lines = _wrap_svg_label(secondary_choice["label"])
-                label_y = y2 + 32
-                label_svg = _render_svg_text(
-                    label_lines,
-                    x=x2,
-                    y=label_y,
-                    class_name="choice-label secondary-label",
-                )
-
-                group_classes = ["choice-node", "secondary-node"]
-                if is_locked:
-                    group_classes.append("locked")
-                elif not node_visited:
-                    group_classes.append("available")
-                if node_visited:
-                    group_classes.append("visited")
-
-                line_class = "path-line secondary"
-                if edge_visited:
-                    line_class += " visited"
-                if is_locked:
-                    line_class += " locked"
-
-                icon_svg = ""
-                if is_locked:
-                    icon_svg = (
-                        f'<text x="{x2}" y="{y2 + 4}" text-anchor="middle" '
-                        f'class="node-icon locked-icon sec">\U0001F512</text>'
-                    )
-                elif node_visited:
-                    icon_svg = (
-                        f'<text x="{x2}" y="{y2 + 4}" text-anchor="middle" '
-                        f'class="node-icon visited-icon sec">\u2713</text>'
-                    )
-
-                secondary_line_elements.append(
-                    f'<line class="{line_class}" x1="{x}" y1="{y}" '
-                    f'x2="{x2}" y2="{y2}"></line>'
-                )
-                secondary_node_elements.append(
-                    f"""<g class="{' '.join(group_classes)}">
-                        {tooltip}
-                        <circle cx="{x2}" cy="{y2}" r="16"></circle>
-                        {icon_svg}
-                        {label_svg}
-                    </g>"""
-                )
+                secondary_line_elements.append(line_svg)
+                secondary_node_elements.append(node_svg)
 
     # -- Center node (rendered last so it draws on top) --
     center_lines = _wrap_svg_label(node.get("title", node_id), max_chars=14)
@@ -274,8 +272,6 @@ def render_path_map() -> None:
 
     # -- SVG CSS styles --
     svg_style = """
-        /* --- Definitions for glow filters --- */
-
         /* --- Path lines --- */
         .path-line {
             stroke: #475569;
@@ -576,14 +572,9 @@ def _format_requirement_lines(
         required = ", ".join(requirements["class"])
         current = player_class or "Unknown"
         lines.append(f"Class: {required} (you: {current})")
-    if "min_hp" in requirements:
-        lines.append(f"HP >= {requirements['min_hp']} (you: {stats['hp']})")
-    if "min_gold" in requirements:
-        lines.append(f"Gold >= {requirements['min_gold']} (you: {stats['gold']})")
-    if "min_strength" in requirements:
-        lines.append(f"Strength >= {requirements['min_strength']} (you: {stats['strength']})")
-    if "min_dexterity" in requirements:
-        lines.append(f"Dexterity >= {requirements['min_dexterity']} (you: {stats['dexterity']})")
+    for req_key, stat_key, label in _TOOLTIP_STAT_SPECS:
+        if req_key in requirements:
+            lines.append(f"{label} >= {requirements[req_key]} (you: {stats[stat_key]})")
     for item in requirements.get("items", []):
         status = "have" if item in inventory else "missing"
         lines.append(f"Needs item: {item} (you: {status})")
