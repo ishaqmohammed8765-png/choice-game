@@ -247,6 +247,38 @@ def _render_class_selection() -> None:
         unsafe_allow_html=True,
     )
 
+    meta_state = st.session_state.get("meta_state", {"unlocked_items": [], "removed_nodes": []})
+    unlocked = meta_state.get("unlocked_items", [])
+    if unlocked:
+        st.markdown(
+            f"""
+            <div style="
+                padding: 0.6rem 1rem;
+                border: 1px solid #c9a54e40;
+                border-radius: 8px;
+                background: linear-gradient(135deg, rgba(30,20,10,0.6), rgba(20,15,8,0.4));
+                margin-bottom: 1rem;
+                text-align: center;
+            ">
+                <p style="
+                    margin: 0;
+                    color: #c9a54e;
+                    font-family: 'Cinzel', serif;
+                    font-size: 0.85rem;
+                    letter-spacing: 0.04em;
+                ">Legacy items carried forward: <strong>{', '.join(unlocked)}</strong></p>
+                <p style="
+                    margin: 0.2rem 0 0 0;
+                    color: #8b7355;
+                    font-family: 'Crimson Text', Georgia, serif;
+                    font-size: 0.85rem;
+                    font-style: italic;
+                ">These relics from past journeys will join your inventory and unlock new paths.</p>
+            </div>
+            """,
+            unsafe_allow_html=True,
+        )
+
     col1, col2, col3 = st.columns(3)
     classes = [("Warrior", col1), ("Rogue", col2), ("Archer", col3)]
     for class_name, col in classes:
