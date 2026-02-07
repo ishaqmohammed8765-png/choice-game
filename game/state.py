@@ -19,7 +19,7 @@ def reset_game_state() -> None:
     st.session_state.stats = {"hp": 0, "gold": 0, "strength": 0, "dexterity": 0}
     st.session_state.inventory = []
     st.session_state.flags = {}
-    st.session_state.traits = {"trust": 0, "reputation": 0, "alignment": 0}
+    st.session_state.traits = {name: 0 for name in TRAIT_KEYS}
     st.session_state.seen_events = []
     st.session_state.factions = {name: 0 for name in FACTION_KEYS}
     st.session_state.decision_history = []
@@ -53,7 +53,7 @@ def start_game(player_class: str) -> None:
         if item not in st.session_state.inventory:
             st.session_state.inventory.append(item)
     st.session_state.flags = {"class": player_class}
-    st.session_state.traits = {"trust": 0, "reputation": 0, "alignment": 0}
+    st.session_state.traits = {name: 0 for name in TRAIT_KEYS}
     st.session_state.seen_events = []
     st.session_state.factions = {name: 0 for name in FACTION_KEYS}
     st.session_state.decision_history = []
@@ -163,7 +163,7 @@ def load_snapshot(snapshot: Dict[str, Any]) -> None:
     st.session_state.stats = snapshot["stats"]
     st.session_state.inventory = snapshot["inventory"]
     st.session_state.flags = snapshot["flags"]
-    st.session_state.traits = snapshot.get("traits", {"trust": 0, "reputation": 0, "alignment": 0})
+    st.session_state.traits = snapshot.get("traits", {name: 0 for name in TRAIT_KEYS})
     st.session_state.seen_events = snapshot.get("seen_events", [])
     st.session_state.factions = snapshot.get("factions", {name: 0 for name in FACTION_KEYS})
     st.session_state.decision_history = snapshot.get("decision_history", [])
@@ -185,7 +185,7 @@ def ensure_session_state() -> None:
     if "save_blob" not in st.session_state:
         st.session_state.save_blob = ""
     if "traits" not in st.session_state:
-        st.session_state.traits = {"trust": 0, "reputation": 0, "alignment": 0}
+        st.session_state.traits = {name: 0 for name in TRAIT_KEYS}
     if "seen_events" not in st.session_state:
         st.session_state.seen_events = []
     if "factions" not in st.session_state:

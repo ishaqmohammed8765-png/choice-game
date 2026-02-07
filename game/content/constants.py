@@ -1,7 +1,7 @@
 from typing import List
 
 STAT_KEYS = ("hp", "gold", "strength", "dexterity")
-TRAIT_KEYS = ("trust", "reputation", "alignment")
+TRAIT_KEYS = ("trust", "reputation", "alignment", "ember_tide")
 FACTION_KEYS = ("oakrest", "dawnwardens", "ashfang", "bandits")
 HIGH_COST_HP_LOSS = 3
 HIGH_COST_GOLD_LOSS = 5

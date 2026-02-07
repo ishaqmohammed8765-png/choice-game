@@ -5,12 +5,14 @@ STORY_NODES_ACT2: Dict[str, Dict[str, Any]] = {
         "id": "scout_report",
         "title": "Scout's Warning",
         "text": (
-            "The rescued scout gasps that raiders have occupied the ancient ruin and are arming an incendiary device. "
-            "He offers a bronze ruin seal that can open hidden doors."
+            "The rescued scout gasps out details about Caldus's operation. The ruin is not just occupied — "
+            "Caldus is channeling the Dawn Emblem through a ritual array. His old mentor Sir Edrin guards "
+            "the causeway approach, corrupted by the Emblem's overflow. Vorga, his alchemist, forges "
+            "incendiary weapons at a mill nearby. The scout offers a bronze seal taken from a dead zealot."
         ),
         "dialogue": [
-            {"speaker": "Rescued Scout", "line": "They've rigged the core chamber. If you hear bells, run."},
-            {"speaker": "Rescued Scout", "line": "Take this seal. It's older than fear, and twice as stubborn."},
+            {"speaker": "Rescued Scout", "line": "Caldus talks to the Emblem like it's alive. He says the old kingdom speaks through it."},
+            {"speaker": "Rescued Scout", "line": "Take this seal. It opens doors his zealots use. Older than fear, and twice as stubborn."},
         ],
         "requirements": {"flag_true": ["rescued_scout"]},
         "choices": [
@@ -22,18 +24,18 @@ STORY_NODES_ACT2: Dict[str, Dict[str, Any]] = {
                     "trait_delta": {"trust": 1},
                     "seen_events": ["accepted_seal"],
                     "set_flags": {"has_seal": True},
-                    "log": "You take the bronze seal; old markings glow faintly.",
+                    "log": "You take the bronze seal; old markings glow faintly, resonating with the Emblem's distant pulse.",
                 },
                 "next": "war_council_hub",
             },
             {
-                "label": "Ask the scout for a hidden approach to the raiders",
+                "label": "Ask the scout for a hidden approach to Caldus's ruin",
                 "requirements": {"flag_true": ["rescued_scout"]},
                 "effects": {
                     "trait_delta": {"trust": 1, "reputation": 1},
                     "seen_events": ["learned_hidden_route"],
                     "set_flags": {"knows_hidden_route": True},
-                    "log": "The scout marks an old service tunnel only Oakrest wardens remember.",
+                    "log": "The scout marks an old service tunnel that predates Caldus's occupation.",
                 },
                 "next": "hidden_tunnel",
             },
@@ -41,7 +43,7 @@ STORY_NODES_ACT2: Dict[str, Dict[str, Any]] = {
                 "label": "Refuse and hurry to the ruin",
                 "effects": {
                     "trait_delta": {"reputation": -1},
-                    "log": "You refuse the token and press onward.",
+                    "log": "You refuse the token and press onward. Speed over preparation.",
                 },
                 "next": "war_council_hub",
             },
@@ -51,17 +53,19 @@ STORY_NODES_ACT2: Dict[str, Dict[str, Any]] = {
         "id": "hidden_tunnel",
         "title": "Forgotten Service Tunnel",
         "text": (
-            "The scout's map leads you into a collapsed maintenance tunnel beneath the ruin. "
-            "You can sabotage the signal braziers now, but doing so will trap anyone still inside."
+            "The scout's map leads you into a collapsed maintenance tunnel beneath Caldus's ruin. "
+            "Fresh boot prints and ember residue tell you Caldus's zealots use this route too. "
+            "You can sabotage the signal braziers to blind his sentries, but the collapse will trap "
+            "anyone still inside."
         ),
         "dialogue": [
             {"speaker": "Echoing Voices", "line": "Someone's still down here... or the tunnel remembers them."},
-            {"speaker": "Your Instinct", "line": "This choice wins time, but it might cost lives."},
+            {"speaker": "Your Instinct", "line": "Caldus uses this tunnel. Collapsing it costs him a route — and costs anyone trapped below their life."},
         ],
         "requirements": {"flag_true": ["knows_hidden_route"]},
         "choices": [
             {
-                "label": "Collapse the tunnel supports to deny raider reinforcements (irreversible)",
+                "label": "Collapse the tunnel to deny Caldus reinforcements (irreversible)",
                 "effects": {
                     "trait_delta": {"trust": -1, "reputation": 2, "alignment": -1},
                     "seen_events": ["tunnel_collapsed"],
@@ -84,14 +88,16 @@ STORY_NODES_ACT2: Dict[str, Dict[str, Any]] = {
     },
     "flooded_causeway_approach": {
         "id": "flooded_causeway_approach",
-        "title": "Flooded Causeway",
+        "title": "Flooded Causeway — Sir Edrin's Domain",
         "text": (
             "Half-sunken statues line a cracked causeway while cold water swirls around your knees. "
-            "Villagers whisper that a tidebound knight has guarded this ruin road for years, drowning scouts and raiders alike."
+            "Sir Edrin, Caldus's former mentor and the captain who trained him, was the first person "
+            "Caldus tested the Dawn Emblem on. The experiment went wrong — Edrin survived but was "
+            "transformed, bound to the causeway by the Emblem's warding power, neither alive nor dead."
         ),
         "dialogue": [
-            {"speaker": "Broken Causeway Bell", "line": "Dong... dong... each toll comes from beneath the water."},
-            {"speaker": "Your Instinct", "line": "This path could save Oakrest's flank, if you can survive what's guarding it."},
+            {"speaker": "Broken Causeway Bell", "line": "Dong... dong... each toll comes from beneath the water, keeping Edrin tethered."},
+            {"speaker": "Your Instinct", "line": "Caldus did this to his own teacher. Understanding Edrin means understanding what the Emblem does to people."},
         ],
         "choices": [
             {
@@ -99,8 +105,9 @@ STORY_NODES_ACT2: Dict[str, Dict[str, Any]] = {
                 "requirements": {"min_strength": 4},
                 "effects": {
                     "hp": -1,
+                    "trait_delta": {"ember_tide": 1},
                     "set_flags": {"causeway_reached": True},
-                    "log": "You muscle through the current and reach the upper terrace bruised but steady.",
+                    "log": "You muscle through the current and reach the upper terrace, but the detour costs the valley time.",
                 },
                 "next": "causeway_depths",
             },
@@ -108,6 +115,7 @@ STORY_NODES_ACT2: Dict[str, Dict[str, Any]] = {
                 "label": "Anchor rope lines between statues",
                 "requirements": {"items": ["Rope"]},
                 "effects": {
+                    "trait_delta": {"ember_tide": 1},
                     "set_flags": {"causeway_reached": True},
                     "log": "Your rope rig keeps you above the undertow as you cross safely.",
                 },
@@ -124,12 +132,13 @@ STORY_NODES_ACT2: Dict[str, Dict[str, Any]] = {
         "id": "causeway_depths",
         "title": "Undervault Chamber",
         "text": (
-            "Below the altar, a rusted floodgate seals a vault of old warding engines. You can reactivate the pumps "
-            "to drain the road and expose a safer assault lane, but something massive is chained in the dark water."
+            "Below the altar, a rusted floodgate seals a vault of old warding engines — the same "
+            "kind Caldus repurposed for his ritual array. You can reactivate the pumps to drain the "
+            "road and expose a safer assault lane, but Edrin's chain-bound form stirs in the dark water."
         ),
         "dialogue": [
-            {"speaker": "Ancient Inscription", "line": "When waters rise, the guardian wakes."},
-            {"speaker": "Your Instinct", "line": "No more delays. Whatever is chained down there is your real trial."},
+            {"speaker": "Ancient Inscription", "line": "When waters rise, the guardian wakes. When the Emblem burns, the guardian weeps."},
+            {"speaker": "Your Instinct", "line": "Edrin was Caldus's first victim. Whatever is chained down there was once a good man."},
         ],
         "choices": [
             {
@@ -162,11 +171,12 @@ STORY_NODES_ACT2: Dict[str, Dict[str, Any]] = {
         "id": "causeway_quiet",
         "title": "Quiet Beat — Drowned Silence",
         "text": (
-            "Water drains in slow spirals, revealing the causeway's carved reliefs. The chamber stills, the echo of the "
-            "floodgate hanging like a held breath before the guardian rises."
+            "Water drains in slow spirals, revealing the causeway's carved reliefs — scenes of the "
+            "old kingdom's fall that Caldus is trying to reverse. The chamber stills, the echo of the "
+            "floodgate hanging like a held breath before Edrin's corrupted form rises."
         ),
         "dialogue": [
-            {"speaker": "Your Instinct", "line": "This pause is the last calm the causeway will give you."},
+            {"speaker": "Your Instinct", "line": "Edrin didn't choose this. Caldus made him into a weapon. Remember that when you face him."},
             {"speaker": "Distant Water", "line": "The chains begin to sing beneath the surface."},
         ],
         "choices": [
@@ -180,7 +190,7 @@ STORY_NODES_ACT2: Dict[str, Dict[str, Any]] = {
                 "next": "tidebound_knight",
             },
             {
-                "label": "Steady your grip and confront the guardian",
+                "label": "Steady your grip and confront Edrin",
                 "effects": {
                     "trait_delta": {"reputation": 1},
                     "seen_events": ["causeway_quiet_steadied"],
@@ -189,69 +199,75 @@ STORY_NODES_ACT2: Dict[str, Dict[str, Any]] = {
                 "next": "tidebound_knight",
             },
             {
-                "label": "Withdraw before the knight rises",
-                "effects": {"log": "You back away from the vault, leaving the guardian unchallenged."},
+                "label": "Withdraw before Edrin rises",
+                "effects": {"log": "You back away from the vault, leaving Caldus's first victim unchallenged."},
                 "next": "war_council_hub",
             },
         ],
     },
     "tidebound_knight": {
         "id": "tidebound_knight",
-        "title": "Mini-Boss: Tidebound Knight",
+        "title": "Mini-Boss: Sir Edrin, the Tidebound Knight",
         "text": (
-            "A barnacled knight rises from the reservoir in chained plate, dragging a bell-hammer the size of a cart axle. "
-            "If you defeat it, the drained causeway will give Oakrest a protected route straight to the ruin's outer wall."
+            "A barnacled knight rises from the reservoir in chained plate, dragging a bell-hammer. "
+            "Once Caldus's mentor and the finest captain in the Dawnwardens, Sir Edrin was the Emblem's "
+            "first test subject. The corruption fused him to the causeway's warding stones. He fights "
+            "not from malice but from the compulsion Caldus burned into him. Defeating Edrin opens a "
+            "protected assault route to the ruin."
         ),
         "dialogue": [
-            {"speaker": "Tidebound Knight", "line": "None pass the drowned oath."},
-            {"speaker": "Your Instinct", "line": "Break this guardian and the whole battlefield changes."},
+            {"speaker": "Sir Edrin", "line": "Caldus... forgive... I cannot stop... the Emblem commands..."},
+            {"speaker": "Your Instinct", "line": "This is what the Dawn Emblem does. This is what Caldus will do to Oakrest."},
         ],
         "choices": [
             {
-                "label": "Shatter the knight's guard with brute force (Strength 5)",
+                "label": "Shatter Edrin's guard with brute force (Strength 5)",
                 "requirements": {"min_strength": 5},
                 "effects": {
                     "hp": -2,
                     "trait_delta": {"reputation": 2},
                     "set_flags": {"tidebound_knight_defeated": True, "opened_cleanly": True},
-                    "log": "You crack the barnacle armor apart and the floodwater drains into old channels.",
+                    "log": "You crack the barnacle armor apart. Edrin collapses and the floodwater drains into old channels.",
                 },
                 "next": "war_council_hub",
             },
             {
-                "label": "Use the opened floodgate chain to pin and finish it",
+                "label": "Use the opened floodgate chain to pin and finish Edrin",
                 "requirements": {"flag_true": ["floodgate_open"]},
                 "effects": {
                     "hp": -1,
                     "trait_delta": {"trust": 1, "reputation": 1},
                     "set_flags": {"tidebound_knight_defeated": True, "ruin_supply_line_cut": True},
-                    "log": "You trap the knight in its own chain rig and sever the raiders' water approach.",
+                    "log": "You trap the knight in its own chain rig and sever Caldus's water approach.",
                 },
                 "next": "war_council_hub",
             },
             {
                 "label": "Retreat with injuries and abandon the flooded route",
-                "effects": {"hp": -2, "log": "You escape the vault battered, leaving the guardian undefeated."},
+                "effects": {"hp": -2, "log": "You escape the vault battered, leaving Edrin — and Caldus's causeway — intact."},
                 "next": "war_council_hub",
             },
         ],
     },
     "charred_mill_approach": {
         "id": "charred_mill_approach",
-        "title": "Charred Mill Trail",
+        "title": "Charred Mill Trail — Vorga's Foundry",
         "text": (
-            "The old grain mill still turns despite having no river, its wheel driven by ember gusts from below. "
-            "Scouts report a pyre-alchemist has been forging firebombs here for the Warden's troops."
+            "The old grain mill still turns despite having no river, its wheel driven by ember gusts "
+            "channeled from the Dawn Emblem. Vorga, Caldus's apprentice alchemist, has converted it "
+            "into a bomb forge. She shares Caldus's vision of a purifying fire but lacks his restraint — "
+            "if he has any left. The firebombs she makes here will burn Oakrest to cinders."
         ),
         "dialogue": [
-            {"speaker": "Scorched Villager", "line": "That mill made the bombs that burned my field."},
-            {"speaker": "Your Instinct", "line": "If this forge falls, fewer fires reach Oakrest."},
+            {"speaker": "Scorched Villager", "line": "That mill made the bombs that burned my field. Vorga laughed while we ran."},
+            {"speaker": "Your Instinct", "line": "Vorga is Caldus's weapons maker. Shut her down and half his firepower dies."},
         ],
         "choices": [
             {
                 "label": "Climb the rafters and scout from above (Dexterity 4)",
                 "requirements": {"min_dexterity": 4},
                 "effects": {
+                    "trait_delta": {"ember_tide": 1},
                     "set_flags": {"mill_scouted": True},
                     "log": "From the rafters you chart patrol patterns and a weak point in the blast kiln.",
                 },
@@ -261,14 +277,15 @@ STORY_NODES_ACT2: Dict[str, Dict[str, Any]] = {
                 "label": "Kick in the side gate and storm the yard",
                 "effects": {
                     "hp": -1,
+                    "trait_delta": {"ember_tide": 1},
                     "set_flags": {"mill_scouted": False},
                     "log": "You smash through the side gate, drawing every sentry's attention.",
                 },
                 "next": "smokeforge_floor",
             },
             {
-                "label": "Withdraw and return to Ember Ridge",
-                "effects": {"log": "You leave the mill to regroup with allied scouts."},
+                "label": "Withdraw and return to the war council",
+                "effects": {"log": "You leave Vorga's forge intact and regroup."},
                 "next": "war_council_hub",
             },
         ],
@@ -277,12 +294,13 @@ STORY_NODES_ACT2: Dict[str, Dict[str, Any]] = {
         "id": "smokeforge_floor",
         "title": "Smokeforge Interior",
         "text": (
-            "Bomb racks line the floor beside a roaring kiln. You can sabotage the powder stores now, "
-            "or push straight into the foundry where the pyre-alchemist is chanting over volatile resin."
+            "Bomb racks line the floor beside a roaring kiln fed by ember energy from the ruin. "
+            "Vorga's latest batch can level a village block. You can sabotage the powder stores "
+            "before confronting her, or push straight into the foundry where she chants over volatile resin."
         ),
         "dialogue": [
-            {"speaker": "Ashfang Prisoner", "line": "One spark and this whole place jumps to the sky."},
-            {"speaker": "Your Instinct", "line": "Make this count. The war won't forgive a sloppy fire."},
+            {"speaker": "Ashfang Prisoner", "line": "Vorga said Caldus promised her a new kingdom. She believes every word."},
+            {"speaker": "Your Instinct", "line": "These bombs are meant for Oakrest. Every rack you destroy is a street that survives."},
         ],
         "choices": [
             {
@@ -290,7 +308,7 @@ STORY_NODES_ACT2: Dict[str, Dict[str, Any]] = {
                 "effects": {
                     "set_flags": {"bomb_racks_sabotaged": True},
                     "trait_delta": {"reputation": 1},
-                    "log": "You soak the fuses and snap detonators, reducing the foundry's firepower.",
+                    "log": "You soak the fuses and snap detonators, crippling Caldus's firebomb supply.",
                 },
                 "next": "pyre_alchemist",
             },
@@ -309,12 +327,14 @@ STORY_NODES_ACT2: Dict[str, Dict[str, Any]] = {
         "id": "pyre_alchemist",
         "title": "Mini-Boss: Pyre-Alchemist Vorga",
         "text": (
-            "Vorga hurls flask-bombs while furnace vents spew white fire. Defeating her will cripple the raiders' "
-            "incendiary stockpile and calm the panic spreading through Oakrest's outskirts."
+            "Vorga hurls flask-bombs while furnace vents spew white fire. She is Caldus's true believer — "
+            "convinced that burning the valley will fertilize a new golden age. Unlike Caldus, who has "
+            "the cold logic of a zealot, Vorga fights with the passion of a fanatic. Defeating her "
+            "cripples Caldus's incendiary stockpile."
         ),
         "dialogue": [
-            {"speaker": "Vorga", "line": "I bottle dawn itself. You cannot outrun sunrise."},
-            {"speaker": "Your Instinct", "line": "End this forge and the village breathes easier tonight."},
+            {"speaker": "Vorga", "line": "Caldus showed me the old kingdom in the Emblem's fire. It was beautiful. You'll see it too — when Oakrest burns."},
+            {"speaker": "Your Instinct", "line": "She's not evil. She's convinced. That makes her more dangerous."},
         ],
         "choices": [
             {
@@ -335,7 +355,7 @@ STORY_NODES_ACT2: Dict[str, Dict[str, Any]] = {
                     "hp": -1,
                     "set_flags": {"pyre_alchemist_defeated": True, "opened_cleanly": True},
                     "trait_delta": {"trust": 1, "alignment": 1},
-                    "log": "Your sabotage blanks her bomb barrage, and one precise strike ends the fight.",
+                    "log": "Your sabotage blanks her bomb barrage. One precise strike ends the fight.",
                 },
                 "next": "war_council_hub",
             },
@@ -343,7 +363,7 @@ STORY_NODES_ACT2: Dict[str, Dict[str, Any]] = {
                 "label": "Escape the foundry before it erupts",
                 "effects": {
                     "hp": -2,
-                    "log": "You surge through burning beams and escape, but Vorga survives to arm more raiders.",
+                    "log": "You surge through burning beams and escape, but Vorga survives to arm more of Caldus's raiders.",
                 },
                 "next": "war_council_hub",
             },
@@ -353,12 +373,13 @@ STORY_NODES_ACT2: Dict[str, Dict[str, Any]] = {
         "id": "war_council_hub",
         "title": "War Council at Ember Ridge",
         "text": (
-            "Trails from every skirmish converge at Ember Ridge, where scouts trade reports before the final push. "
-            "Allies and rivals judge you by what you've done: spared lives, won respect, or ruled through fear. "
-            "Your next move decides who stands with you at the ruin gate."
+            "Trails from every skirmish converge at Ember Ridge, where scouts trade reports before the "
+            "final push against Caldus. The orange glow above the ruin is visible now, pulsing like a "
+            "heartbeat. Allies and rivals judge you by what you've done — spared lives, won respect, "
+            "or ruled through fear. Your next move decides who stands with you at Caldus's gate."
         ),
         "dialogue": [
-            {"speaker": "Signal Runner Tams", "line": "Reports keep stacking, commander. Say the word and I move people now."},
+            {"speaker": "Signal Runner Tams", "line": "The Ember Tide keeps rising. Caldus is almost ready. Say the word and I move people now."},
             {"speaker": "Your Instinct", "line": "This ridge is a ledger. Every spared enemy and ignored threat gets collected tonight."},
             {"speaker": "Elder Mara", "line": "How you fought matters as much as whether you win. Oakrest will remember both."},
         ],
@@ -377,26 +398,34 @@ STORY_NODES_ACT2: Dict[str, Dict[str, Any]] = {
                 },
             },
             {
-                "label": "Council references the causeway victory",
+                "label": "Council references the causeway victory over Sir Edrin",
                 "requirements": {"flag_true": ["tidebound_knight_defeated"]},
-                "effects": {"log": "Scouts remind the council that your causeway win opened a flank the raiders still fear."},
+                "effects": {"log": "Scouts remind the council that you defeated Caldus's own corrupted mentor at the causeway."},
             },
             {
-                "label": "Council recalls the foundry sabotage",
+                "label": "Council recalls the foundry sabotage against Vorga",
                 "requirements": {"flag_true": ["pyre_alchemist_defeated"]},
-                "effects": {"log": "Elder Mara notes the foundry sabotage that blunted Vorga's firebomb supply."},
+                "effects": {"log": "Elder Mara notes that Vorga's defeat blunted Caldus's firebomb supply."},
+            },
+            {
+                "label": "Council notes Kest's intelligence on Caldus's defenses",
+                "requirements": {"flag_true": ["kest_informant"]},
+                "effects": {
+                    "set_flags": {"kest_intel_available": True},
+                    "log": "Kest's detailed account of Caldus's inner defenses circulates among the commanders.",
+                },
             },
         ],
         "choices": [
             {
-                "label": "Return to the forest crossroads and resolve more unfinished threats",
+                "label": "Return to the forest crossroads and resolve more threats",
                 "group": "Recon & Reassessment",
                 "requirements": {"flag_false": ["returned_for_more_branches"]},
                 "effects": {
                     "hp": -1,
-                    "trait_delta": {"trust": 1},
+                    "trait_delta": {"trust": 1, "ember_tide": 2},
                     "set_flags": {"returned_for_more_branches": True},
-                    "log": "You delay the siege and head back out, but every hour costs blood along Oakrest's outer farms.",
+                    "log": "You delay the assault. Every hour costs blood along Oakrest's outer farms, but preparation has its own value.",
                 },
                 "next": "forest_crossroad",
             },
@@ -406,9 +435,9 @@ STORY_NODES_ACT2: Dict[str, Dict[str, Any]] = {
                 "requirements": {"flag_true": ["returned_for_more_branches"]},
                 "effects": {
                     "hp": -2,
-                    "trait_delta": {"trust": -1, "reputation": -1},
+                    "trait_delta": {"trust": -1, "reputation": -1, "ember_tide": 3},
                     "set_flags": {"repeated_delay": True},
-                    "log": "Tams reports burned wagons and missing scouts as you postpone the assault a second time.",
+                    "log": "Tams reports burned wagons and missing scouts as you postpone the assault a second time. Caldus's ritual accelerates.",
                 },
                 "next": "forest_crossroad",
             },
@@ -430,7 +459,7 @@ STORY_NODES_ACT2: Dict[str, Dict[str, Any]] = {
                 "effects": {
                     "trait_delta": {"trust": 1},
                     "set_flags": {"serin_endorsement": True},
-                    "log": "Serin says your mercy bought real allies; Rangers volunteer for the hardest breach lanes.",
+                    "log": "Serin says your mercy bought real allies; Rangers volunteer for the hardest breach lanes against Caldus.",
                 },
                 "next": "war_council_hub",
             },
@@ -465,7 +494,7 @@ STORY_NODES_ACT2: Dict[str, Dict[str, Any]] = {
                 "effects": {
                     "trait_delta": {"trust": -2, "reputation": -1, "alignment": -1},
                     "set_flags": {"hub_plan": "fear_push", "council_cowed": True},
-                    "log": "Fear replaces strategy as you force the council into a headlong assault.",
+                    "log": "Fear replaces strategy as you force the council into a headlong assault against Caldus.",
                 },
                 "next": "ruin_gate",
             },
@@ -495,7 +524,7 @@ STORY_NODES_ACT2: Dict[str, Dict[str, Any]] = {
                         "effects": {
                             "trait_delta": {"trust": 1, "reputation": 1},
                             "set_flags": {"opened_cleanly": True, "hub_plan": "dawnwarden_breach"},
-                            "log": "Serin's rangers secure the perimeter and hand you a clear line to the gate.",
+                            "log": "Serin's rangers secure the perimeter. They want Caldus alive — the Dawnwardens demand justice.",
                         },
                     },
                     {
@@ -504,7 +533,7 @@ STORY_NODES_ACT2: Dict[str, Dict[str, Any]] = {
                             "hp": -1,
                             "trait_delta": {"reputation": 2, "alignment": -1},
                             "set_flags": {"cruel_reputation": True, "hub_plan": "ashfang_push"},
-                            "log": "Ashfang drums break enemy nerve, but the assault leaves casualties in its wake.",
+                            "log": "Ashfang drums break enemy nerve. Drogath wants Caldus dead, not captured.",
                         },
                     },
                 ],
@@ -520,7 +549,7 @@ STORY_NODES_ACT2: Dict[str, Dict[str, Any]] = {
                 "effects": {
                     "trait_delta": {"trust": 1},
                     "set_flags": {"hub_plan": "hidden_route"},
-                    "log": "You trust the scout's map and steer the strike team underground for a second strike.",
+                    "log": "You trust the scout's map and steer the strike team underground toward Caldus.",
                 },
                 "next": "hidden_route_assault",
             },
@@ -531,7 +560,7 @@ STORY_NODES_ACT2: Dict[str, Dict[str, Any]] = {
                 "effects": {
                     "trait_delta": {"trust": 1, "alignment": 1},
                     "set_flags": {"mercy_reputation": True, "hub_plan": "survivor_diversion"},
-                    "log": "Freed prisoners light decoy fires, drawing raiders off your intended route.",
+                    "log": "Freed prisoners light decoy fires, drawing Caldus's sentries off your intended route.",
                 },
                 "next": "ruin_gate",
             },
@@ -543,7 +572,7 @@ STORY_NODES_ACT2: Dict[str, Dict[str, Any]] = {
                     "any_of": [
                         {"flag_true": ["tidebound_knight_defeated"]},
                         {"flag_true": ["ruin_supply_line_cut"], "min_strength": 4},
-                    ]
+                    ],
                 },
                 "conditional_effects": [
                     {
@@ -551,7 +580,7 @@ STORY_NODES_ACT2: Dict[str, Dict[str, Any]] = {
                         "effects": {
                             "set_flags": {"hub_plan": "causeway_route", "opened_cleanly": True},
                             "trait_delta": {"trust": 1, "reputation": 1},
-                            "log": "Scouts surge down the drained causeway, giving your assault a disciplined flank.",
+                            "log": "With Edrin defeated, scouts surge down the drained causeway to flank Caldus.",
                         },
                     },
                     {
@@ -559,7 +588,7 @@ STORY_NODES_ACT2: Dict[str, Dict[str, Any]] = {
                         "effects": {
                             "set_flags": {"hub_plan": "supply_denial"},
                             "trait_delta": {"reputation": 1},
-                            "log": "With bomb stocks and river routes cut, enemy resistance at the gate falters.",
+                            "log": "With Caldus's supply lines cut, enemy resistance at the gate falters.",
                         },
                     },
                 ],
@@ -572,7 +601,7 @@ STORY_NODES_ACT2: Dict[str, Dict[str, Any]] = {
                 "effects": {
                     "trait_delta": {"reputation": -1, "trust": -1},
                     "set_flags": {"hub_plan": "solo_push"},
-                    "log": "You reject every banner and slip toward the ruin before anyone can stop you.",
+                    "log": "You reject every banner and slip toward Caldus's ruin before anyone can stop you.",
                 },
                 "next": "lonely_approach",
             },
@@ -582,12 +611,13 @@ STORY_NODES_ACT2: Dict[str, Dict[str, Any]] = {
         "id": "ember_reliquary",
         "title": "Ember Reliquary",
         "text": (
-            "Below Ember Ridge, a reliquary chamber hums with old warding lines. The Bronze Seal presses into a socket, "
-            "and the Echo Locket vibrates in your palm as if the ruin itself remembers you."
+            "Below Ember Ridge, a reliquary chamber hums with old warding lines — the same energy "
+            "Caldus corrupted for his ritual. The Bronze Seal presses into a socket, and the Echo "
+            "Locket vibrates in your palm as if the ruin itself remembers you."
         ),
         "dialogue": [
             {"speaker": "Ancient Script", "line": "Legacy is a door that only opens twice."},
-            {"speaker": "Your Instinct", "line": "Take what the ridge hid, and carry its weight forward."},
+            {"speaker": "Your Instinct", "line": "Take what the ridge hid, and carry its weight forward against Caldus."},
         ],
         "requirements": {"meta_nodes_present": ["ember_reliquary"]},
         "choices": [

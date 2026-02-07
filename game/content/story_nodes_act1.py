@@ -5,16 +5,16 @@ STORY_NODES_ACT1: Dict[str, Dict[str, Any]] = {
         "id": "village_square",
         "title": "Oakrest Village Square",
         "text": (
-            "The bell of Oakrest tolls at dusk. Smoke from the outer farms hangs over the square while frightened "
-            "families gather beneath boarded windows. Villagers whisper of raiders, a cursed ruin in the forest, "
-            "and a missing relic known as the Dawn Emblem. A bloodstained order nailed to the chapel door bears one "
-            "signature: Warden Caldus, sworn to 'rekindle dawn through fire.' Elder Mara asks you to track the threat "
-            "before nightfall."
+            "The bell of Oakrest tolls at dusk. Smoke from the outer farms hangs over the square while "
+            "frightened families shelter beneath boarded windows. Caldus's proclamation is nailed to every "
+            "door: 'The old kingdom rises at dawn. Stand aside or burn with the old world.' Elder Mara presses "
+            "a purse of emergency coin into your hand and begs you to prepare before the night closes in. "
+            "Every hour spent here is an hour Caldus uses to charge the Dawn Emblem."
         ),
         "dialogue": [
-            {"speaker": "Elder Mara", "line": "Oakrest has one night left before panic turns to bloodshed."},
-            {"speaker": "Blacksmith Tor", "line": "If the roads fall, we fall with them. Bring us sunrise."},
-            {"speaker": "Signal Runner Tams", "line": "Every patrol report carries that same Warden seal now."},
+            {"speaker": "Elder Mara", "line": "Caldus was our protector once. Now he believes burning us will bring back a kingdom that died centuries ago."},
+            {"speaker": "Blacksmith Tor", "line": "His raiders hit the grain stores at midnight. We have until then to be ready."},
+            {"speaker": "Signal Runner Tams", "line": "Every patrol report carries that same Warden seal. He's not hiding anymore."},
         ],
         "choices": [
             {
@@ -68,7 +68,7 @@ STORY_NODES_ACT1: Dict[str, Dict[str, Any]] = {
             },
             {
                 "label": "Take the forest road toward the old watchtower",
-                "effects": {"log": "You leave Oakrest and follow the shadowed road into the forest."},
+                "effects": {"log": "You leave Oakrest and follow the shadowed road into the forest. The Ember Tide rises behind you."},
                 "next": "forest_crossroad",
             },
         ],
@@ -77,12 +77,13 @@ STORY_NODES_ACT1: Dict[str, Dict[str, Any]] = {
         "id": "camp_shop",
         "title": "Roadside Trader & Rest Fire",
         "text": (
-            "A retired scout sells practical tools near a safe firepit. Rain ticks against canvas while weary "
-            "travelers trade rumors about missing patrols. You can buy gear or patch your wounds before entering deeper wilderness."
+            "A retired scout tends a firepit beneath oilcloth, selling tools salvaged from Caldus's abandoned "
+            "supply caches. Weary travelers swap grim stories about missing patrols and the orange glow "
+            "spreading above the treeline. Every purchase here feels like rationing before a siege."
         ),
         "dialogue": [
-            {"speaker": "Trader Venn", "line": "Pay now, complain later. The forest collects debts in bone."},
-            {"speaker": "Tired Ranger", "line": "We lost two scouts at the ruin gate. Keep a light ready."},
+            {"speaker": "Trader Venn", "line": "Half this gear was Caldus's before he went mad. Ironic you need it to stop him."},
+            {"speaker": "Tired Ranger", "line": "We lost two scouts at the ruin gate. Caldus's zealots don't take prisoners anymore."},
         ],
         "choices": [
             {
@@ -154,14 +155,15 @@ STORY_NODES_ACT1: Dict[str, Dict[str, Any]] = {
         "id": "forest_crossroad",
         "title": "Forest Crossroad",
         "text": (
-            "Pines crowd around a fork in the path. Fresh cart tracks and bloodied cloth mark recent fighting. "
-            "To the left: a narrow ravine crossing. To the right: a campfire glow where bandits argue over spoils. "
-            "Ahead, war drums echo from the Ashfang warband while silver lanterns of the Rangers flicker between trees."
+            "Pines crowd around a fork in the path. Fresh cart tracks and bloodied cloth mark Caldus's "
+            "supply lines. To the left: a ravine where his early experiments cracked the earth. To the "
+            "right: a campfire glow where his deserters argue over stolen spoils. Ahead, the war drums "
+            "of Drogath's Ashfang warband compete with the coded lantern flashes of Serin's Dawnwardens, "
+            "the very order Caldus betrayed."
         ),
         "dialogue": [
-            {"speaker": "Scout Iven", "line": "Every trail here writes a different ending. Choose what you're willing to own."},
-            {"speaker": "Drum-Echo", "line": "Ignore a threat now, and it will remember your name later."},
-            {"speaker": "Signal Runner Tams", "line": "Caldus isn't raiding for gold. He's gathering fuel for something bigger at Ember Ridge."},
+            {"speaker": "Scout Iven", "line": "Every trail here was carved by Caldus's operations. Choose which thread you pull."},
+            {"speaker": "Signal Runner Tams", "line": "Caldus isn't raiding for gold. He's channeling the Dawn Emblem at the ruin. Every hour, the glow gets brighter."},
         ],
         "choices": [
             {
@@ -177,14 +179,16 @@ STORY_NODES_ACT1: Dict[str, Dict[str, Any]] = {
                         "requirements": {"min_strength": 4, "flag_false": ["branch_ravine_completed"]},
                         "effects": {
                             "strength": 1,
-                            "log": "Your raw force carries you across the groaning beams and leaves your arms battle-hardened.",
+                            "trait_delta": {"ember_tide": 1},
+                            "log": "Your raw force carries you across the groaning beams, but the detour costs precious time.",
                             "set_flags": {"branch_ravine_completed": True},
                         },
                     },
                     {
                         "requirements": {"items": ["Rope"], "flag_false": ["branch_ravine_completed"]},
                         "effects": {
-                            "log": "You anchor your rope and swing across the ravine safely.",
+                            "trait_delta": {"ember_tide": 1},
+                            "log": "You anchor your rope and swing across the ravine safely, though the ember glow brightens while you climb.",
                             "set_flags": {"used_rope_crossing": True, "branch_ravine_completed": True},
                         },
                     },
@@ -192,7 +196,7 @@ STORY_NODES_ACT1: Dict[str, Dict[str, Any]] = {
                 "next": "ravine_crossing",
             },
             {
-                "label": "Approach the bandit camp (sneak, misdirect, or march)",
+                "label": "Approach Caldus's deserters at the bandit camp",
                 "requirements": {
                     "any_of": [
                         {"min_dexterity": 4, "flag_false": ["branch_bandit_completed"]},
@@ -204,24 +208,26 @@ STORY_NODES_ACT1: Dict[str, Dict[str, Any]] = {
                     {
                         "requirements": {"class": ["Rogue"], "flag_false": ["branch_bandit_completed"]},
                         "effects": {
-                            "trait_delta": {"reputation": 1, "trust": 1},
+                            "trait_delta": {"reputation": 1, "trust": 1, "ember_tide": 1},
                             "set_flags": {"branch_bandit_completed": True, "false_tracks_set": True},
                             "seen_events": ["rogue_false_tracks"],
-                            "log": "Your decoys split the camp patrols before you slip in to face Kest.",
+                            "log": "Your decoys split the camp patrols before you slip in to confront Kest.",
                         },
                     },
                     {
                         "requirements": {"min_dexterity": 4, "flag_false": ["branch_bandit_completed"]},
                         "effects": {
                             "dexterity": 1,
-                            "log": "You melt into the brush and approach unheard, sharpening your movement control.",
+                            "trait_delta": {"ember_tide": 1},
+                            "log": "You melt into the brush and approach unheard.",
                             "set_flags": {"branch_bandit_completed": True},
                         },
                     },
                     {
                         "requirements": {"min_strength": 3, "flag_false": ["branch_bandit_completed"]},
                         "effects": {
-                            "log": "Branches crack under your boots as you confront the raiders openly.",
+                            "trait_delta": {"ember_tide": 1},
+                            "log": "Branches crack under your boots as you confront the deserters openly.",
                             "set_flags": {"branch_bandit_completed": True},
                         },
                     },
@@ -241,11 +247,11 @@ STORY_NODES_ACT1: Dict[str, Dict[str, Any]] = {
                 "next": "forest_crossroad_fronts",
             },
             {
-                "label": "Leave the crossroads and commit your gathered allies to Ember Ridge",
+                "label": "Commit your gathered allies and march on the ruin",
                 "requirements": {"flag_true": ["any_branch_completed"]},
                 "effects": {
                     "set_flags": {"midgame_commitment_made": True},
-                    "log": "After scouting multiple fronts, you call your banners and move to Ember Ridge.",
+                    "log": "You call your banners and move toward the ruin. Every step forward is a step the Ember Tide cannot reclaim.",
                 },
                 "next": "war_council_hub",
             },
@@ -255,19 +261,21 @@ STORY_NODES_ACT1: Dict[str, Dict[str, Any]] = {
         "id": "forest_crossroad_fronts",
         "title": "Forest Crossroad - Faction Fronts",
         "text": (
-            "You shift away from the central fork and watch the valley fronts unfold: ranger lanterns in one direction, "
-            "Ashfang war drums in another, and side roads where fresh threats keep emerging."
+            "You shift away from the central fork and watch the valley fronts unfold. To one side, "
+            "Serin's Dawnwarden lanterns flash coded warnings — the same order Caldus abandoned when "
+            "he stole the Emblem. To the other, Drogath's Ashfang war drums beat a rhythm of raw power."
         ),
         "dialogue": [
-            {"speaker": "Scout Iven", "line": "Pick a front and finish it hard. Half-measures become tomorrow's ambush."}
+            {"speaker": "Scout Iven", "line": "Serin wants Caldus brought to justice. Drogath wants him crushed. Pick your instrument."},
         ],
         "choices": [
             {
-                "label": "Follow the ranger lanterns to their hidden outpost",
+                "label": "Follow the ranger lanterns to Serin's outpost",
                 "requirements": {"flag_false": ["branch_dawnwarden_completed"]},
                 "effects": {
                     "set_flags": {"met_dawnwardens": True, "branch_dawnwarden_completed": True},
-                    "log": "You leave the road and follow coded lantern flashes to a concealed ranger camp.",
+                    "trait_delta": {"ember_tide": 1},
+                    "log": "You follow coded lantern flashes to the concealed camp of the wardens Caldus betrayed.",
                 },
                 "next": "dawnwarden_outpost",
             },
@@ -275,7 +283,7 @@ STORY_NODES_ACT1: Dict[str, Dict[str, Any]] = {
                 "label": "Archer route: send a signal arrow to the ranger lantern line",
                 "requirements": {"class": ["Archer"], "flag_false": ["branch_dawnwarden_completed"]},
                 "effects": {
-                    "trait_delta": {"trust": 1, "reputation": 1},
+                    "trait_delta": {"trust": 1, "reputation": 1, "ember_tide": 1},
                     "set_flags": {"branch_dawnwarden_completed": True, "met_dawnwardens": True, "signal_arrow_used": True},
                     "seen_events": ["archer_signal_arrow"],
                     "log": "Your signal arrow lands beside Serin's scouts, earning immediate escort to their outpost.",
@@ -288,7 +296,8 @@ STORY_NODES_ACT1: Dict[str, Dict[str, Any]] = {
                 "effects": {
                     "set_flags": {"met_ashfang": True, "branch_ashfang_completed": True},
                     "faction_delta": {"ashfang": 1},
-                    "log": "You shadow the drumming trail toward an Ashfang hunting column.",
+                    "trait_delta": {"ember_tide": 1},
+                    "log": "You shadow the drumming trail toward Drogath's hunting column.",
                 },
                 "next": "ashfang_hunt",
             },
@@ -296,7 +305,7 @@ STORY_NODES_ACT1: Dict[str, Dict[str, Any]] = {
                 "label": "Warrior route: answer the war drums with a shield challenge",
                 "requirements": {"class": ["Warrior"], "min_strength": 4, "flag_false": ["branch_ashfang_completed"]},
                 "effects": {
-                    "trait_delta": {"reputation": 2},
+                    "trait_delta": {"reputation": 2, "ember_tide": 1},
                     "faction_delta": {"ashfang": 2},
                     "set_flags": {"branch_ashfang_completed": True, "met_ashfang": True, "ashfang_challenge_answered": True},
                     "seen_events": ["warrior_drum_challenge"],
@@ -315,29 +324,30 @@ STORY_NODES_ACT1: Dict[str, Dict[str, Any]] = {
         "id": "forest_crossroad_operations",
         "title": "Forest Crossroad - Operations Map",
         "text": (
-            "You unfold a rain-stained field map marked with ranger shorthand. Secondary fronts and tactical errands "
-            "branch from the crossroads, each promising leverage before Ember Ridge."
+            "You unfold a rain-stained field map marked with ranger shorthand. Secondary fronts and "
+            "tactical errands branch from the crossroads. Each promises leverage against Caldus, but "
+            "each costs time the valley may not have."
         ),
         "dialogue": [
-            {"speaker": "Scout Iven", "line": "These side routes look optional, until the final battle proves they weren't."},
+            {"speaker": "Scout Iven", "line": "These side routes look optional until the final battle proves they weren't. But Caldus doesn't wait."},
             {"speaker": "Quartermaster Note", "line": "Supplies, routes, and local favors decide sieges before steel does."},
         ],
         "choices": [
             {
-                "label": "Investigate the flooded causeway road",
+                "label": "Investigate the flooded causeway — Sir Edrin's domain",
                 "requirements": {"flag_false": ["branch_causeway_completed"]},
                 "effects": {
                     "set_flags": {"branch_causeway_completed": True},
-                    "log": "You cut through marsh fog toward a drowned causeway where bells still toll underwater.",
+                    "log": "You cut through marsh fog toward a drowned causeway where Caldus's old mentor still keeps vigil.",
                 },
                 "next": "flooded_causeway_approach",
             },
             {
-                "label": "Take the ash-choked mill trail",
+                "label": "Take the ash-choked mill trail — Vorga's forge",
                 "requirements": {"flag_false": ["branch_mill_completed"]},
                 "effects": {
                     "set_flags": {"branch_mill_completed": True},
-                    "log": "You follow scorched wheel ruts toward an abandoned mill wrapped in ember smoke.",
+                    "log": "You follow scorched wheel ruts toward Vorga's foundry, where Caldus's firebombs are made.",
                 },
                 "next": "charred_mill_approach",
             },
@@ -360,29 +370,29 @@ STORY_NODES_ACT1: Dict[str, Dict[str, Any]] = {
                 "next": "echo_shrine",
             },
             {
-                "label": "Warrior duty: fortify a ranger barricade line",
+                "label": "Warrior duty: fortify the barricade line against Caldus's raiders",
                 "requirements": {"class": ["Warrior"], "flag_false": ["warrior_mid_arc_done"]},
                 "effects": {
                     "set_flags": {"warrior_mid_arc_done": True},
-                    "log": "You step off-road to harden a weak barricade before nightfall.",
+                    "log": "You step off-road to harden a weak barricade before Caldus's next wave hits.",
                 },
                 "next": "warrior_barricade",
             },
             {
-                "label": "Rogue duty: investigate a smuggler safehouse",
+                "label": "Rogue duty: infiltrate a safehouse in Caldus's supply chain",
                 "requirements": {"class": ["Rogue"], "flag_false": ["rogue_mid_arc_done"]},
                 "effects": {
                     "set_flags": {"rogue_mid_arc_done": True},
-                    "log": "You follow coded marks toward a hidden safehouse.",
+                    "log": "You follow coded marks toward a safehouse embedded in Caldus's logistics network.",
                 },
                 "next": "rogue_safehouse",
             },
             {
-                "label": "Archer duty: secure a ridgewatch sniper nest",
+                "label": "Archer duty: secure a ridgewatch overlooking Caldus's approach",
                 "requirements": {"class": ["Archer"], "flag_false": ["archer_mid_arc_done"]},
                 "effects": {
                     "set_flags": {"archer_mid_arc_done": True},
-                    "log": "You climb toward a windswept ridge to claim a tactical overlook.",
+                    "log": "You climb toward a windswept ridge that commands Caldus's supply route.",
                 },
                 "next": "archer_ridgewatch",
             },
@@ -397,11 +407,11 @@ STORY_NODES_ACT1: Dict[str, Dict[str, Any]] = {
         "id": "echo_shrine",
         "title": "Echo Shrine",
         "text": (
-            "A mossy shrine sits between leaning pines. Wind chimes ring without a breeze, and a carved locket rests "
-            "on the altar as if it has been waiting for your return."
+            "A mossy shrine sits between leaning pines. Wind chimes ring without a breeze, and a carved "
+            "locket rests on the altar as if it has been waiting for your return."
         ),
         "dialogue": [
-            {"speaker": "Your Instinct", "line": "This is not a gift. It's a promise that the forest remembers you."}
+            {"speaker": "Your Instinct", "line": "This is not a gift. It's a promise that the forest remembers you."},
         ],
         "requirements": {"meta_nodes_present": ["echo_shrine"]},
         "choices": [
@@ -428,112 +438,197 @@ STORY_NODES_ACT1: Dict[str, Dict[str, Any]] = {
         "id": "warrior_barricade",
         "title": "Broken Barricade",
         "text": (
-            "A ranger line is moments from collapse under brute pressure. Your presence could hold it or break it."
+            "A ranger line is moments from collapse under pressure from Caldus's ember troopers. "
+            "Serin's lieutenant recognizes you and begs for help. The barricade guards the only "
+            "civilian corridor left — if it falls, families die on the road."
         ),
         "dialogue": [
-            {"speaker": "Serin's Lieutenant", "line": "Hold here and we keep civilians alive until dawn."}
+            {"speaker": "Serin's Lieutenant", "line": "Hold here and we keep civilians alive until dawn. Caldus's troopers don't stop."},
+            {"speaker": "Your Instinct", "line": "This line breaks or holds on your back. Choose how to carry it."},
         ],
         "choices": [
             {
-                "label": "Hold the line by force",
+                "label": "Hold the line by brute force, absorbing every hit",
                 "effects": {
                     "hp": -2,
-                    "trait_delta": {"reputation": 2},
+                    "trait_delta": {"reputation": 2, "ember_tide": 1},
                     "faction_delta": {"dawnwardens": 2, "oakrest": 1},
-                    "set_flags": {"warrior_line_held": True},
-                    "log": "Your shield discipline steadies the defenders and buys the valley precious time.",
+                    "set_flags": {"warrior_line_held": True, "warrior_barricade_method": "force"},
+                    "log": "Your shield discipline steadies the defenders and buys the valley precious hours.",
                 },
                 "next": "forest_crossroad",
-            }
+            },
+            {
+                "label": "Rally the rangers into a disciplined fallback, trading ground for lives",
+                "effects": {
+                    "hp": -1,
+                    "trait_delta": {"trust": 2, "alignment": 1, "ember_tide": 1},
+                    "faction_delta": {"dawnwardens": 1, "oakrest": 2},
+                    "set_flags": {"warrior_line_held": True, "warrior_barricade_method": "fallback"},
+                    "log": "You give ground slowly, saving every defender as you retreat to a stronger position.",
+                },
+                "next": "forest_crossroad",
+            },
+            {
+                "label": "Charge the ember troopers alone to break their morale (Strength 5)",
+                "requirements": {"min_strength": 5},
+                "effects": {
+                    "hp": -3,
+                    "strength": 1,
+                    "trait_delta": {"reputation": 3, "alignment": -1, "ember_tide": 1},
+                    "faction_delta": {"dawnwardens": 1, "ashfang": 1},
+                    "set_flags": {"warrior_line_held": True, "warrior_barricade_method": "charge"},
+                    "seen_events": ["warrior_barricade_charge"],
+                    "log": "You crash into the trooper line alone, scattering them with a display of terrifying strength.",
+                },
+                "next": "forest_crossroad",
+            },
         ],
     },
     "rogue_safehouse": {
         "id": "rogue_safehouse",
         "title": "Smuggler Safehouse",
         "text": (
-            "Behind a false wall, smugglers stash maps and coded letters naming both allies and traitors."
+            "Behind a false wall, a hub in Caldus's supply chain stores maps, coded letters, and "
+            "a ledger naming both his agents and their marks. A captured runner whimpers in the corner. "
+            "The intelligence here could shatter Caldus's logistics — or be sold for personal gain."
         ),
         "dialogue": [
-            {"speaker": "Captured Runner", "line": "Every name in that ledger changes who survives this week."}
+            {"speaker": "Captured Runner", "line": "Every name in that ledger changes who survives this week. Caldus pays well for silence."},
+            {"speaker": "Your Instinct", "line": "This network was yours once. Now decide what to do with its bones."},
         ],
         "choices": [
             {
-                "label": "Steal intel and leak it to Oakrest",
+                "label": "Steal the ledger and leak it to Oakrest's defenders",
                 "effects": {
-                    "trait_delta": {"trust": 1, "alignment": -1},
+                    "trait_delta": {"trust": 1, "alignment": 1, "ember_tide": 1},
                     "faction_delta": {"oakrest": 2, "bandits": -2},
-                    "set_flags": {"rogue_intel_leaked": True},
+                    "set_flags": {"rogue_intel_leaked": True, "rogue_safehouse_method": "leaked"},
                     "seen_events": ["rogue_safehouse_breach"],
-                    "log": "You lift the ledger and pass names to Oakrest sentries before dawn.",
+                    "log": "You lift the ledger and pass names to Oakrest sentries before dawn. Caldus loses eyes and ears.",
                 },
                 "next": "forest_crossroad",
-            }
+            },
+            {
+                "label": "Burn the safehouse and destroy Caldus's supply records",
+                "effects": {
+                    "trait_delta": {"reputation": 2, "alignment": -1, "ember_tide": 1},
+                    "faction_delta": {"bandits": -1},
+                    "set_flags": {"rogue_safehouse_burned": True, "rogue_safehouse_method": "burned"},
+                    "seen_events": ["rogue_safehouse_burned"],
+                    "log": "Flames consume the ledger and the safehouse both. Nobody reads those names again — including you.",
+                },
+                "next": "forest_crossroad",
+            },
+            {
+                "label": "Copy the critical pages and leave the safehouse intact as a trap",
+                "requirements": {"min_dexterity": 4},
+                "effects": {
+                    "dexterity": 1,
+                    "trait_delta": {"trust": 2, "reputation": 1, "ember_tide": 1},
+                    "faction_delta": {"oakrest": 1},
+                    "set_flags": {"rogue_intel_leaked": True, "rogue_safehouse_trapped": True, "rogue_safehouse_method": "trapped"},
+                    "seen_events": ["rogue_safehouse_trapped"],
+                    "log": "You copy the critical intelligence and rig the safehouse. Caldus's next courier walks into an ambush.",
+                },
+                "next": "forest_crossroad",
+            },
         ],
     },
     "archer_ridgewatch": {
         "id": "archer_ridgewatch",
         "title": "Ridgewatch Nest",
         "text": (
-            "From the ridge, you can relay signals across the valley and redirect patrols before clashes begin."
+            "From the ridge, you can see Caldus's supply wagons crawling toward the ruin. "
+            "Lookout Fen is already here, wounded and running out of signal arrows. "
+            "Together you could coordinate the entire valley defense — or strike Caldus's "
+            "logistics directly with a few well-placed shots."
         ),
         "dialogue": [
-            {"speaker": "Lookout Fen", "line": "One arrow in the right place saves ten swords from being drawn."}
+            {"speaker": "Lookout Fen", "line": "I've been marking their wagons for days. One coordinated volley could cripple his supply line."},
+            {"speaker": "Your Instinct", "line": "The ridge sees everything. The question is what you choose to do with the view."},
         ],
         "choices": [
             {
-                "label": "Mark safe lanes and hostile routes",
+                "label": "Mark safe lanes and hostile routes for allied patrols",
                 "effects": {
-                    "trait_delta": {"trust": 2, "reputation": 1},
+                    "trait_delta": {"trust": 2, "reputation": 1, "ember_tide": 1},
                     "faction_delta": {"dawnwardens": 1, "oakrest": 1},
-                    "set_flags": {"archer_routes_marked": True},
+                    "set_flags": {"archer_routes_marked": True, "archer_ridge_method": "signals"},
                     "seen_events": ["archer_ridge_signals"],
-                    "log": "Your signal work prevents an ambush and keeps both civilians and scouts moving.",
+                    "log": "Your signal work prevents an ambush and keeps both civilians and scouts moving safely.",
                 },
                 "next": "forest_crossroad",
-            }
+            },
+            {
+                "label": "Target Caldus's supply wagons with precision shots (Dexterity 4)",
+                "requirements": {"min_dexterity": 4},
+                "effects": {
+                    "dexterity": 1,
+                    "trait_delta": {"reputation": 2, "ember_tide": 1},
+                    "set_flags": {"archer_routes_marked": True, "archer_ridge_method": "strike", "ruin_supply_line_cut": True},
+                    "seen_events": ["archer_supply_strike"],
+                    "log": "Three arrows, three burning wagons. Caldus's supply line to the ruin frays overnight.",
+                },
+                "next": "forest_crossroad",
+            },
+            {
+                "label": "Coordinate a combined signal-and-strike operation with Fen",
+                "requirements": {"min_dexterity": 4, "items": ["Signal Arrows"]},
+                "effects": {
+                    "hp": -1,
+                    "trait_delta": {"trust": 1, "reputation": 2, "ember_tide": 1},
+                    "faction_delta": {"dawnwardens": 2, "oakrest": 1},
+                    "set_flags": {"archer_routes_marked": True, "archer_ridge_method": "combined", "ruin_supply_line_cut": True},
+                    "seen_events": ["archer_ridge_signals", "archer_supply_strike"],
+                    "log": "You and Fen orchestrate a devastating combination of intelligence and firepower across the valley.",
+                },
+                "next": "forest_crossroad",
+            },
         ],
     },
     "dawnwarden_outpost": {
         "id": "dawnwarden_outpost",
         "title": "Ranger Outpost",
         "text": (
-            "Captain Serin of the Rangers studies maps pinned by dagger points. Archivist Pell and "
-            "shield-bearer Nima argue about whether to assault the ruin now or save trapped villagers first. "
-            "Every minute of debate is measured against distant screams from the valley road."
+            "Captain Serin pins maps by dagger point, her jaw tight with fury. Caldus was her commander "
+            "before he stole the Dawn Emblem and vanished. She built the Dawnwardens to bring him to "
+            "justice. Archivist Pell knows the Emblem's history, and shield-bearer Nima wants a plan "
+            "that doesn't end in speeches. Every minute of debate is measured against Caldus's ritual."
         ),
         "dialogue": [
-            {"speaker": "Captain Serin", "line": "My first patrol died buying this map. Don't waste what they paid for."},
-            {"speaker": "Archivist Pell", "line": "The Emblem is not a relic now; it is a lit fuse, and I know who lit it."},
-            {"speaker": "Shield-Bearer Nima", "line": "Give me a plan with spine, not poetry."},
+            {"speaker": "Captain Serin", "line": "Caldus trained half my Rangers. He knows our signals, our routes, our weaknesses. But I know his pride."},
+            {"speaker": "Archivist Pell", "line": "The Dawn Emblem was a warding seal, not a weapon. Caldus is forcing it to burn what it was meant to protect."},
+            {"speaker": "Shield-Bearer Nima", "line": "Give me a plan with spine, not poetry. Caldus won't wait for us to finish arguing."},
         ],
         "choices": [
             {
-                "label": "Swear temporary alliance with Captain Serin",
+                "label": "Swear alliance with Serin to bring Caldus to justice",
                 "effects": {
                     "trait_delta": {"trust": 2, "reputation": 1, "alignment": 1},
                     "set_flags": {"dawnwarden_allied": True, "mercy_reputation": True},
                     "add_items": ["Warden Token"],
-                    "log": "Serin clasps your forearm and grants a Warden Token recognized by local patrols.",
+                    "log": "Serin clasps your forearm and grants a Warden Token. She wants Caldus alive to answer for his betrayal.",
                 },
                 "next": "war_council_hub",
             },
             {
-                "label": "Ask Archivist Pell for enemy intelligence",
+                "label": "Ask Pell for intelligence on Caldus's defenses",
                 "effects": {
                     "trait_delta": {"trust": 1},
                     "set_flags": {"knows_enemy_roster": True},
                     "seen_events": ["learned_enemy_roster"],
-                    "log": "Pell briefs you on raider ranks: Ember Troopers, Bonebreakers, and the Emblem Warden.",
+                    "log": "Pell briefs you on Caldus's inner circle: Vorga the alchemist, Sir Edrin the corrupted knight, and the ember zealots.",
                 },
                 "next": "war_council_hub",
             },
             {
-                "label": "Challenge Nima in a spar to earn respect (Strength 4)",
+                "label": "Challenge Nima in a spar to earn the wardens' respect (Strength 4)",
                 "requirements": {"min_strength": 4},
                 "effects": {
                     "trait_delta": {"reputation": 2},
                     "set_flags": {"earned_dawnwarden_respect": True},
-                    "log": "After a brutal spar, Nima salutes you and marks a safer approach to the gate.",
+                    "log": "After a brutal spar, Nima salutes you and marks a safer approach to Caldus's gate.",
                 },
                 "next": "war_council_hub",
             },
@@ -543,17 +638,19 @@ STORY_NODES_ACT1: Dict[str, Dict[str, Any]] = {
         "id": "ashfang_hunt",
         "title": "Ashfang Hunting Grounds",
         "text": (
-            "Warchief Drogath leads the Ashfangs with scout Yara and beast-handler Korr. They stalk a raider "
-            "convoy guarded by ember-hounds and masked zealots. The warband invites you to prove yourself before moonrise."
+            "Warchief Drogath leads the Ashfangs through bramble valleys, tracking a raider convoy. "
+            "He despises Caldus — not for the betrayal, but for the weakness of hiding behind a relic "
+            "instead of fighting with steel. Scout Yara and beast-handler Korr test every outsider "
+            "who enters the hunting grounds."
         ),
         "dialogue": [
-            {"speaker": "Warchief Drogath", "line": "In our lands, words are wind. Deeds are law."},
-            {"speaker": "Scout Yara", "line": "Show me clean hands in a dirty war, outsider. Mine stopped being clean years ago."},
+            {"speaker": "Warchief Drogath", "line": "Caldus hides behind old magic instead of facing his enemies. I'll teach him what real fire looks like."},
+            {"speaker": "Scout Yara", "line": "Show me clean hands in a dirty war, outsider. Caldus's deserters said the same before we buried them."},
             {"speaker": "Beast-Handler Korr", "line": "My hounds remember fear. Feed them confidence or feed them meat."},
         ],
         "choices": [
             {
-                "label": "Join the ambush and crush the convoy (Strength 4)",
+                "label": "Join the ambush and crush Caldus's convoy (Strength 4)",
                 "requirements": {"min_strength": 4},
                 "effects": {
                     "hp": -1,
@@ -561,7 +658,7 @@ STORY_NODES_ACT1: Dict[str, Dict[str, Any]] = {
                     "trait_delta": {"trust": -1, "reputation": 2, "alignment": -1},
                     "set_flags": {"ashfang_allied": True, "cruel_reputation": True},
                     "seen_events": ["ashfang_convoy_slain"],
-                    "log": "You and Drogath tear through raiders and scatter ember-hounds into the dark.",
+                    "log": "You and Drogath tear through Caldus's supply escort. Fast, brutal, and effective.",
                 },
                 "next": "war_council_hub",
             },
@@ -572,16 +669,16 @@ STORY_NODES_ACT1: Dict[str, Dict[str, Any]] = {
                     "trait_delta": {"trust": 1, "reputation": 1},
                     "set_flags": {"ashfang_respect": True},
                     "add_items": ["Ashfang Charm"],
-                    "log": "Yara yields and gifts you an Ashfang Charm that frightens lesser convoy beasts.",
+                    "log": "Yara yields and gifts you an Ashfang Charm. Drogath nods — speed earns respect too.",
                 },
                 "next": "war_council_hub",
             },
             {
-                "label": "Refuse bloodshed and guide prisoners to safety",
+                "label": "Refuse bloodshed and guide convoy prisoners to safety",
                 "effects": {
                     "trait_delta": {"trust": 2, "reputation": 1, "alignment": 2},
                     "set_flags": {"rescued_prisoners": True, "mercy_reputation": True},
-                    "log": "You escort shaken prisoners away while the warband fights on without you.",
+                    "log": "You escort shaken prisoners away while the warband fights on. Mercy costs speed but earns loyalty.",
                 },
                 "next": "war_council_hub",
             },
@@ -591,11 +688,12 @@ STORY_NODES_ACT1: Dict[str, Dict[str, Any]] = {
         "id": "ravine_crossing",
         "title": "Ravine Crossing",
         "text": (
-            "Halfway across, rotten planks snap. You can muscle through the final jump, "
-            "or slip and lose precious strength to the rocks below."
+            "The ravine was carved by Caldus's first experiment with the Dawn Emblem — a practice "
+            "channeling that split the earth and killed two of his own followers. Halfway across, "
+            "rotten planks snap beneath your feet. The ember-scarred stone hums faintly below."
         ),
         "dialogue": [
-            {"speaker": "Your Instinct", "line": "Move now. The bridge won't offer a second warning."},
+            {"speaker": "Your Instinct", "line": "Caldus cracked this ground open. The Emblem's power is real — and growing."},
             {"speaker": "Wind Over Stone", "line": "One mistake, and the ravine keeps what it takes."},
         ],
         "choices": [
@@ -616,7 +714,7 @@ STORY_NODES_ACT1: Dict[str, Dict[str, Any]] = {
                     "hp": -3,
                     "trait_delta": {"trust": -1},
                     "set_flags": {"ravine_injured": True},
-                    "log": "You hit the ravine floor hard before scrambling back up.",
+                    "log": "You hit the ember-scarred ravine floor hard before scrambling back up.",
                 },
                 "next": "war_council_hub",
             },
@@ -624,14 +722,16 @@ STORY_NODES_ACT1: Dict[str, Dict[str, Any]] = {
     },
     "bandit_camp": {
         "id": "bandit_camp",
-        "title": "Bandit Camp",
+        "title": "Bandit Camp — Caldus's Deserters",
         "text": (
-            "Three bandits surround a bound scout from Oakrest. Their leader, Kest, kicks a broken lantern into the mud "
-            "and offers a bargain: leave the scout and walk away with coin, or interfere and spill blood."
+            "Three of Caldus's former soldiers surround a bound Oakrest scout. Their leader, Kest, "
+            "was Caldus's chief scout before he saw what the Dawn Emblem did to Sir Edrin and lost "
+            "his nerve. He deserted, taking a handful of troops with him. Now he survives by raiding "
+            "the people he once swore to protect."
         ),
         "dialogue": [
-            {"speaker": "Kest", "line": "This one dies either way. Only question is whether you get paid."},
-            {"speaker": "Bound Scout", "line": "Don't buy his lie. The ruin is ready to burn Oakrest."},
+            {"speaker": "Kest", "line": "I ran because I saw what the Emblem does to people. Caldus doesn't care anymore — he's not even human near that thing."},
+            {"speaker": "Bound Scout", "line": "Don't buy his pity. These raiders burned the eastern mill."},
         ],
         "choices": [
             {
@@ -644,7 +744,7 @@ STORY_NODES_ACT1: Dict[str, Dict[str, Any]] = {
                     "trait_delta": {"trust": 1, "reputation": -1, "alignment": -2},
                     "seen_events": ["bandits_slain"],
                     "set_flags": {"rescued_scout": True, "spared_bandit": False, "cruel_reputation": True, "morality": "ruthless"},
-                    "log": "You defeat the bandits brutally and free the scout.",
+                    "log": "You defeat the deserters brutally and free the scout. Kest's intel dies with him.",
                 },
                 "next": "scout_report",
             },
@@ -656,7 +756,18 @@ STORY_NODES_ACT1: Dict[str, Dict[str, Any]] = {
                     "trait_delta": {"trust": 2, "reputation": 2, "alignment": 2},
                     "seen_events": ["scout_saved_silently"],
                     "set_flags": {"rescued_scout": True, "spared_bandit": True, "mercy_reputation": True, "morality": "merciful"},
-                    "log": "You free the scout without a fight; the bandits flee into darkness.",
+                    "log": "You free the scout without a fight. Kest flees, but his fear of Caldus tells you everything.",
+                },
+                "next": "scout_report",
+            },
+            {
+                "label": "Convince Kest to turn informant against Caldus",
+                "requirements": {"flag_true": ["class_intro_done"]},
+                "effects": {
+                    "trait_delta": {"trust": 1, "reputation": 1, "alignment": 1},
+                    "seen_events": ["kest_turned_informant"],
+                    "set_flags": {"rescued_scout": True, "spared_bandit": True, "kest_informant": True, "mercy_reputation": True, "morality": "merciful"},
+                    "log": "Kest agrees to share what he knows about Caldus's defenses in exchange for a chance at redemption.",
                 },
                 "next": "scout_report",
             },
@@ -667,7 +778,7 @@ STORY_NODES_ACT1: Dict[str, Dict[str, Any]] = {
                     "trait_delta": {"trust": -3, "reputation": -2, "alignment": -3},
                     "seen_events": ["scout_abandoned"],
                     "set_flags": {"abandoned_scout": True, "cruel_reputation": True, "morality": "ruthless"},
-                    "log": "You pocket the bribe and leave the scout to fate.",
+                    "log": "You pocket the bribe and leave the scout to fate. Quick, cold, and efficient.",
                 },
                 "next": "war_council_hub",
             },
