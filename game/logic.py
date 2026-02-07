@@ -30,7 +30,11 @@ def transition_to_failure(failure_type: str) -> None:
 
 
 def execute_choice(node_id: str, label: str, choice: Dict[str, Any]) -> None:
-    """Apply a selected choice and transition to its next node."""
+    """Apply a selected choice and transition to its next node.
+
+    Uses a single resolution path via ``_resolve_transition_node`` to avoid
+    divergent fallback logic between resolution and ``transition_to``.
+    """
     st.session_state.pending_choice_confirmation = None
     st.session_state.history.append(snapshot_state())
     st.session_state.decision_history.append({"node": node_id, "choice": label})
@@ -39,17 +43,21 @@ def execute_choice(node_id: str, label: str, choice: Dict[str, Any]) -> None:
     st.session_state.last_outcome_summary = summary
     if summary:
         add_log(f"Recent changes: {format_outcome_summary(summary)}")
-    actual_next = _resolve_transition_node(resolved_next, choice.get("instant_death", False))
-    _record_visit(node_id, actual_next)
+
     if choice.get("irreversible"):
         st.session_state.history = []
         add_log("This decision is irreversible. You cannot undo beyond this point.")
 
     if choice.get("instant_death"):
+        _record_visit(node_id, "death")
         st.session_state.current_node = "death"
         add_log("This choice proves fatal. Your journey ends immediately.")
         return
 
+    actual_next = _resolve_transition_node(resolved_next)
+    _record_visit(node_id, actual_next)
+    if actual_next != resolved_next:
+        add_log(f"Broken path detected for '{resolved_next}'. You are rerouted to a fallback failure arc.")
     transition_to(actual_next)
 
 
@@ -87,11 +95,14 @@ def check_requirements(requirements: Dict[str, Any] | None) -> tuple[bool, str]:
         return True, ""
 
     if "any_of" in requirements:
+        failed_reasons: List[str] = []
         for option in requirements["any_of"]:
-            ok, _ = check_requirements(option)
+            ok, reason = check_requirements(option)
             if ok:
                 return True, ""
-        return False, "Requires one of multiple conditions"
+            failed_reasons.append(reason)
+        detail = " | ".join(failed_reasons)
+        return False, f"Requires one of: {detail}"
 
     stats = st.session_state.stats
     inventory = st.session_state.inventory
@@ -307,9 +318,8 @@ def transition_to(next_node_id: str) -> None:
     st.session_state.current_node = next_node_id
 
 
-def _resolve_transition_node(next_node_id: str, instant_death: bool) -> str:
-    if instant_death:
-        return "death"
+def _resolve_transition_node(next_node_id: str) -> str:
+    """Determine the actual destination node, falling back for missing nodes or death."""
     if st.session_state.stats["hp"] <= 0:
         return "death"
     if next_node_id not in STORY_NODES:
