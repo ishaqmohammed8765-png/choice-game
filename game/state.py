@@ -127,6 +127,16 @@ def validate_snapshot(snapshot: Dict[str, Any]) -> tuple[bool, list[str]]:
     if "visited_edges" in snapshot and not isinstance(snapshot["visited_edges"], list):
         errors.append("Visited edges payload must be a list.")
 
+    if "meta_state" in snapshot:
+        meta = snapshot["meta_state"]
+        if not isinstance(meta, dict):
+            errors.append("Meta state payload must be an object.")
+        else:
+            if "unlocked_items" in meta and not isinstance(meta["unlocked_items"], list):
+                errors.append("Meta state unlocked_items must be a list.")
+            if "removed_nodes" in meta and not isinstance(meta["removed_nodes"], list):
+                errors.append("Meta state removed_nodes must be a list.")
+
     return not errors, errors
 
 def add_log(message: str) -> None:
@@ -154,6 +164,7 @@ def snapshot_state() -> Dict[str, Any]:
         "pending_choice_confirmation": copy.deepcopy(st.session_state.pending_choice_confirmation),
         "visited_nodes": copy.deepcopy(st.session_state.visited_nodes),
         "visited_edges": copy.deepcopy(st.session_state.visited_edges),
+        "meta_state": copy.deepcopy(st.session_state.get("meta_state", {"unlocked_items": [], "removed_nodes": []})),
     }
 
 def load_snapshot(snapshot: Dict[str, Any]) -> None:
@@ -175,6 +186,12 @@ def load_snapshot(snapshot: Dict[str, Any]) -> None:
     st.session_state.pending_choice_confirmation = snapshot.get("pending_choice_confirmation")
     st.session_state.visited_nodes = snapshot.get("visited_nodes", [snapshot["current_node"]])
     st.session_state.visited_edges = snapshot.get("visited_edges", [])
+    if "meta_state" in snapshot:
+        existing_meta = st.session_state.get("meta_state", {"unlocked_items": [], "removed_nodes": []})
+        incoming_meta = snapshot["meta_state"]
+        merged_items = list(dict.fromkeys(existing_meta.get("unlocked_items", []) + incoming_meta.get("unlocked_items", [])))
+        merged_nodes = list(dict.fromkeys(existing_meta.get("removed_nodes", []) + incoming_meta.get("removed_nodes", [])))
+        st.session_state.meta_state = {"unlocked_items": merged_items, "removed_nodes": merged_nodes}
 
 def ensure_session_state() -> None:
     """Initialize session state keys on first load."""

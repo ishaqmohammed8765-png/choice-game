@@ -78,8 +78,13 @@ def render_sidebar() -> None:
 
         st.subheader("Inventory")
         if st.session_state.inventory:
+            meta_state = st.session_state.get("meta_state", {"unlocked_items": [], "removed_nodes": []})
+            legacy_items = set(meta_state.get("unlocked_items", []))
             for item in st.session_state.inventory:
-                st.write(f"- {item}")
+                if item in legacy_items:
+                    st.markdown(f"- **{item}** _(legacy)_")
+                else:
+                    st.write(f"- {item}")
         else:
             st.caption("(empty)")
 

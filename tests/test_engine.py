@@ -666,5 +666,265 @@ class IsPublicFlagTests(unittest.TestCase):
         self.assertTrue(_is_public_flag("dawnwarden_allied"))
 
 
+class CarryoverItemsTests(unittest.TestCase):
+    """Tests for the cross-playthrough carryover (meta) items system."""
+
+    def setUp(self):
+        ensure_session_state()
+        reset_game_state()
+        st.session_state.player_class = "Warrior"
+        st.session_state.current_node = "village_square"
+        st.session_state.stats = {"hp": 10, "gold": 8, "strength": 4, "dexterity": 2}
+        st.session_state.inventory = ["Rusty Sword"]
+        st.session_state.flags = {"class": "Warrior"}
+        st.session_state.traits = {"trust": 0, "reputation": 0, "alignment": 0, "ember_tide": 0}
+        st.session_state.factions = {"oakrest": 0, "dawnwardens": 0, "ashfang": 0, "bandits": 0}
+        st.session_state.seen_events = []
+        st.session_state.event_log = []
+        st.session_state.meta_state = {"unlocked_items": [], "removed_nodes": []}
+
+    def test_unlock_meta_item_adds_to_meta_state(self):
+        apply_effects({
+            "add_items": ["Echo Locket"],
+            "unlock_meta_items": ["Echo Locket"],
+            "remove_meta_nodes": ["echo_shrine"],
+            "log": "You claim the locket.",
+        })
+        self.assertIn("Echo Locket", st.session_state.inventory)
+        self.assertIn("Echo Locket", st.session_state.meta_state["unlocked_items"])
+        self.assertIn("echo_shrine", st.session_state.meta_state["removed_nodes"])
+
+    def test_meta_state_persists_across_reset(self):
+        st.session_state.meta_state = {"unlocked_items": ["Echo Locket"], "removed_nodes": ["echo_shrine"]}
+        reset_game_state()
+        self.assertEqual(st.session_state.meta_state["unlocked_items"], ["Echo Locket"])
+        self.assertEqual(st.session_state.meta_state["removed_nodes"], ["echo_shrine"])
+
+    def test_start_game_adds_meta_items_to_inventory(self):
+        st.session_state.meta_state = {"unlocked_items": ["Echo Locket", "Ember Sigil"], "removed_nodes": []}
+        start_game("Rogue")
+        self.assertIn("Echo Locket", st.session_state.inventory)
+        self.assertIn("Ember Sigil", st.session_state.inventory)
+        self.assertIn("Lockpicks", st.session_state.inventory)
+
+    def test_start_game_logs_legacy_items(self):
+        st.session_state.meta_state = {"unlocked_items": ["Echo Locket"], "removed_nodes": []}
+        start_game("Warrior")
+        self.assertTrue(any("Legacy items" in entry for entry in st.session_state.event_log))
+
+    def test_start_game_no_duplicate_meta_items(self):
+        st.session_state.meta_state = {"unlocked_items": ["Lockpicks"], "removed_nodes": []}
+        start_game("Rogue")
+        count = st.session_state.inventory.count("Lockpicks")
+        self.assertEqual(count, 1)
+
+    def test_meta_items_requirement_passes(self):
+        st.session_state.meta_state = {"unlocked_items": ["Echo Locket"], "removed_nodes": []}
+        ok, reason = check_requirements({"meta_items": ["Echo Locket"]})
+        self.assertTrue(ok)
+
+    def test_meta_items_requirement_fails(self):
+        st.session_state.meta_state = {"unlocked_items": [], "removed_nodes": []}
+        ok, reason = check_requirements({"meta_items": ["Echo Locket"]})
+        self.assertFalse(ok)
+        self.assertIn("legacy", reason.lower())
+
+    def test_meta_missing_items_requirement_passes(self):
+        st.session_state.meta_state = {"unlocked_items": [], "removed_nodes": []}
+        ok, reason = check_requirements({"meta_missing_items": ["Echo Locket"]})
+        self.assertTrue(ok)
+
+    def test_meta_missing_items_requirement_fails(self):
+        st.session_state.meta_state = {"unlocked_items": ["Echo Locket"], "removed_nodes": []}
+        ok, reason = check_requirements({"meta_missing_items": ["Echo Locket"]})
+        self.assertFalse(ok)
+
+    def test_meta_nodes_present_passes_when_not_removed(self):
+        st.session_state.meta_state = {"unlocked_items": [], "removed_nodes": []}
+        ok, reason = check_requirements({"meta_nodes_present": ["echo_shrine"]})
+        self.assertTrue(ok)
+
+    def test_meta_nodes_present_fails_when_removed(self):
+        st.session_state.meta_state = {"unlocked_items": [], "removed_nodes": ["echo_shrine"]}
+        ok, reason = check_requirements({"meta_nodes_present": ["echo_shrine"]})
+        self.assertFalse(ok)
+        self.assertIn("vanished", reason.lower())
+
+    def test_snapshot_includes_meta_state(self):
+        st.session_state.meta_state = {"unlocked_items": ["Echo Locket"], "removed_nodes": ["echo_shrine"]}
+        snap = snapshot_state()
+        self.assertIn("meta_state", snap)
+        self.assertEqual(snap["meta_state"]["unlocked_items"], ["Echo Locket"])
+        self.assertEqual(snap["meta_state"]["removed_nodes"], ["echo_shrine"])
+
+    def test_snapshot_meta_state_is_deep_copy(self):
+        st.session_state.meta_state = {"unlocked_items": ["Echo Locket"], "removed_nodes": []}
+        snap = snapshot_state()
+        st.session_state.meta_state["unlocked_items"].append("Ember Sigil")
+        self.assertEqual(snap["meta_state"]["unlocked_items"], ["Echo Locket"])
+
+    def test_load_snapshot_merges_meta_state(self):
+        st.session_state.meta_state = {"unlocked_items": ["Ember Sigil"], "removed_nodes": ["ember_reliquary"]}
+        start_game("Warrior")
+        snap = snapshot_state()
+        snap["meta_state"] = {"unlocked_items": ["Echo Locket"], "removed_nodes": ["echo_shrine"]}
+        load_snapshot(snap)
+        self.assertIn("Echo Locket", st.session_state.meta_state["unlocked_items"])
+        self.assertIn("Ember Sigil", st.session_state.meta_state["unlocked_items"])
+        self.assertIn("echo_shrine", st.session_state.meta_state["removed_nodes"])
+        self.assertIn("ember_reliquary", st.session_state.meta_state["removed_nodes"])
+
+    def test_load_snapshot_without_meta_state_preserves_existing(self):
+        st.session_state.meta_state = {"unlocked_items": ["Echo Locket"], "removed_nodes": ["echo_shrine"]}
+        start_game("Warrior")
+        snap = snapshot_state()
+        del snap["meta_state"]
+        load_snapshot(snap)
+        self.assertIn("Echo Locket", st.session_state.meta_state["unlocked_items"])
+
+    def test_validate_snapshot_accepts_valid_meta_state(self):
+        start_game("Warrior")
+        snap = snapshot_state()
+        snap["meta_state"] = {"unlocked_items": ["Echo Locket"], "removed_nodes": ["echo_shrine"]}
+        ok, errors = validate_snapshot(snap)
+        self.assertTrue(ok)
+
+    def test_validate_snapshot_rejects_bad_meta_state_type(self):
+        start_game("Warrior")
+        snap = snapshot_state()
+        snap["meta_state"] = "not a dict"
+        ok, errors = validate_snapshot(snap)
+        self.assertFalse(ok)
+        self.assertTrue(any("meta state" in e.lower() for e in errors))
+
+    def test_validate_snapshot_rejects_bad_unlocked_items_type(self):
+        start_game("Warrior")
+        snap = snapshot_state()
+        snap["meta_state"] = {"unlocked_items": "not a list", "removed_nodes": []}
+        ok, errors = validate_snapshot(snap)
+        self.assertFalse(ok)
+
+    def test_validate_snapshot_rejects_bad_removed_nodes_type(self):
+        start_game("Warrior")
+        snap = snapshot_state()
+        snap["meta_state"] = {"unlocked_items": [], "removed_nodes": "not a list"}
+        ok, errors = validate_snapshot(snap)
+        self.assertFalse(ok)
+
+    def test_full_carryover_chain_echo_locket(self):
+        """Simulate finding the Echo Locket and verifying it carries over."""
+        # Playthrough 1: find the Echo Locket
+        apply_effects({
+            "add_items": ["Echo Locket"],
+            "unlock_meta_items": ["Echo Locket"],
+            "remove_meta_nodes": ["echo_shrine"],
+            "set_flags": {"echo_locket_claimed": True},
+            "log": "The locket hums.",
+        })
+        self.assertIn("Echo Locket", st.session_state.meta_state["unlocked_items"])
+
+        # Start playthrough 2
+        start_game("Rogue")
+        self.assertIn("Echo Locket", st.session_state.inventory)
+        # Echo shrine should be gone
+        ok, _ = check_requirements({"meta_nodes_present": ["echo_shrine"]})
+        self.assertFalse(ok)
+        # Can use the locket for the reliquary
+        st.session_state.inventory.append("Bronze Seal")
+        ok, _ = check_requirements({
+            "items": ["Bronze Seal"],
+            "meta_items": ["Echo Locket"],
+            "meta_nodes_present": ["ember_reliquary"],
+        })
+        self.assertTrue(ok)
+
+    def test_full_carryover_chain_three_relics(self):
+        """Simulate the full 3-playthrough relic progression chain."""
+        # Playthrough 1: Echo Locket
+        apply_effects({
+            "unlock_meta_items": ["Echo Locket"],
+            "remove_meta_nodes": ["echo_shrine"],
+        })
+
+        # Playthrough 2: Ember Sigil
+        start_game("Warrior")
+        apply_effects({
+            "unlock_meta_items": ["Ember Sigil"],
+            "remove_meta_nodes": ["ember_reliquary"],
+        })
+
+        # Playthrough 3: Dawn Relic
+        start_game("Archer")
+        apply_effects({
+            "unlock_meta_items": ["Dawn Relic"],
+            "remove_meta_nodes": ["dawn_vault"],
+        })
+
+        # Playthrough 4: should have all three relics
+        start_game("Warrior")
+        self.assertIn("Echo Locket", st.session_state.inventory)
+        self.assertIn("Ember Sigil", st.session_state.inventory)
+        self.assertIn("Dawn Relic", st.session_state.inventory)
+
+        # All shrines/vaults should be gone
+        ok, _ = check_requirements({"meta_nodes_present": ["echo_shrine"]})
+        self.assertFalse(ok)
+        ok, _ = check_requirements({"meta_nodes_present": ["ember_reliquary"]})
+        self.assertFalse(ok)
+        ok, _ = check_requirements({"meta_nodes_present": ["dawn_vault"]})
+        self.assertFalse(ok)
+
+        # Dawn Relic should unlock the legacy ending
+        ok, _ = check_requirements({"items": ["Dawn Relic"]})
+        self.assertTrue(ok)
+
+    def test_unlock_meta_item_idempotent(self):
+        """Unlocking the same meta item twice should not create duplicates."""
+        apply_effects({"unlock_meta_items": ["Echo Locket"]})
+        apply_effects({"unlock_meta_items": ["Echo Locket"]})
+        count = st.session_state.meta_state["unlocked_items"].count("Echo Locket")
+        self.assertEqual(count, 1)
+
+    def test_remove_meta_node_idempotent(self):
+        """Removing the same meta node twice should not create duplicates."""
+        apply_effects({"remove_meta_nodes": ["echo_shrine"]})
+        apply_effects({"remove_meta_nodes": ["echo_shrine"]})
+        count = st.session_state.meta_state["removed_nodes"].count("echo_shrine")
+        self.assertEqual(count, 1)
+
+
+class CarryoverEpilogueTests(unittest.TestCase):
+    """Tests that carryover item flags appear in the epilogue."""
+
+    def setUp(self):
+        ensure_session_state()
+        reset_game_state()
+        start_game("Warrior")
+
+    def test_echo_locket_epilogue(self):
+        from game.ui_components.epilogue import get_epilogue_aftermath_lines
+        st.session_state.flags["echo_locket_claimed"] = True
+        lines = get_epilogue_aftermath_lines(max_lines=None)
+        self.assertTrue(any("locket" in line.lower() for line in lines))
+
+    def test_ember_sigil_epilogue(self):
+        from game.ui_components.epilogue import get_epilogue_aftermath_lines
+        st.session_state.flags["ember_sigil_claimed"] = True
+        lines = get_epilogue_aftermath_lines(max_lines=None)
+        self.assertTrue(any("sigil" in line.lower() for line in lines))
+
+    def test_dawn_relic_epilogue(self):
+        from game.ui_components.epilogue import get_epilogue_aftermath_lines
+        st.session_state.flags["dawn_relic_claimed"] = True
+        lines = get_epilogue_aftermath_lines(max_lines=None)
+        self.assertTrue(any("relic" in line.lower() for line in lines))
+
+    def test_legacy_ending_epilogue(self):
+        from game.ui_components.epilogue import get_epilogue_aftermath_lines
+        st.session_state.flags["legacy_ending"] = True
+        lines = get_epilogue_aftermath_lines(max_lines=None)
+        self.assertTrue(any("relic" in line.lower() or "lifetime" in line.lower() for line in lines))
+
+
 if __name__ == "__main__":
     unittest.main()

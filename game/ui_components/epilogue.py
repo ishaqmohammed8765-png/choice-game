@@ -37,6 +37,15 @@ def get_epilogue_aftermath_lines(*, max_lines: int | None = 9) -> List[str]:
     if flags.get("archer_oath_taken"):
         lines.append("Archers carve your opening signal into their bow grips as a charm against surprise.")
 
+    if flags.get("echo_locket_claimed"):
+        lines.append("The Echo Locket hums in your pack, a thread connecting this journey to every one that follows.")
+    if flags.get("ember_sigil_claimed"):
+        lines.append("The Ember Sigil's warmth lingers on your skin, a brand that marks you across lifetimes.")
+    if flags.get("dawn_relic_claimed"):
+        lines.append("The Dawn Relic's light steadies in your hands — the uncorrupted heart of the old kingdom now travels with you.")
+    if flags.get("legacy_ending"):
+        lines.append("You carried relics across lifetimes to undo Caldus's corruption from within. The valley will not forget the weight of that persistence.")
+
     if flags.get("morality") == "merciful" or flags.get("mercy_reputation"):
         lines.append("Families you protected petition Elder Mara to create a standing refuge network.")
     if flags.get("morality") == "ruthless" or flags.get("cruel_reputation"):
