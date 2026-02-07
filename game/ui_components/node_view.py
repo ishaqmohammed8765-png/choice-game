@@ -68,12 +68,20 @@ def _render_outcome_summary() -> None:
 
     with st.container(border=True):
         st.caption("Outcome Summary")
-        col_hp, col_gold, col_str, col_dex = st.columns(4)
-        hp_value = max(0, st.session_state.stats["hp"])
-        col_hp.metric("HP", hp_value, _format_delta(stats_delta.get("hp", 0)))
-        col_gold.metric("Gold", st.session_state.stats["gold"], _format_delta(stats_delta.get("gold", 0)))
-        col_str.metric("STR", st.session_state.stats["strength"], _format_delta(stats_delta.get("strength", 0)))
-        col_dex.metric("DEX", st.session_state.stats["dexterity"], _format_delta(stats_delta.get("dexterity", 0)))
+        stat_definitions = [
+            ("HP", "hp"),
+            ("Gold", "gold"),
+            ("STR", "strength"),
+            ("DEX", "dexterity"),
+        ]
+        changed_stats = [(label, key) for label, key in stat_definitions if key in stats_delta]
+        if changed_stats:
+            columns = st.columns(len(changed_stats))
+            for col, (label, key) in zip(columns, changed_stats):
+                value = max(0, st.session_state.stats[key]) if key == "hp" else st.session_state.stats[key]
+                col.metric(label, value, _format_delta(stats_delta.get(key, 0)))
+        else:
+            st.caption("No stat changes.")
 
         if items_gained or items_lost or flags_set:
             if items_gained:

@@ -398,7 +398,11 @@ def _build_outcome_summary(
     after_inventory = st.session_state.inventory
     after_flags = st.session_state.flags
 
-    stats_delta = {stat: after_stats[stat] - before_stats.get(stat, 0) for stat in STAT_KEYS}
+    stats_delta = {
+        stat: delta
+        for stat in STAT_KEYS
+        if (delta := after_stats[stat] - before_stats.get(stat, 0)) != 0
+    }
     items_gained = [item for item in after_inventory if item not in before_inventory]
     items_lost = [item for item in before_inventory if item not in after_inventory]
     flags_set: List[tuple[str, Any]] = []
