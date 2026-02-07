@@ -11,6 +11,8 @@ ALLOWED_REQUIREMENT_KEYS = {
     "min_gold",
     "min_strength",
     "min_dexterity",
+    "min_reputation",
+    "max_reputation",
     "items",
     "missing_items",
     "flag_true",

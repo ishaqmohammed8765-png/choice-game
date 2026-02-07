@@ -124,6 +124,10 @@ def check_requirements(requirements: Dict[str, Any] | None) -> tuple[bool, str]:
         return False, f"Requires strength >= {requirements['min_strength']}"
     if "min_dexterity" in requirements and stats["dexterity"] < requirements["min_dexterity"]:
         return False, f"Requires dexterity >= {requirements['min_dexterity']}"
+    if "min_reputation" in requirements and st.session_state.traits.get("reputation", 0) < requirements["min_reputation"]:
+        return False, f"Requires reputation >= {requirements['min_reputation']}"
+    if "max_reputation" in requirements and st.session_state.traits.get("reputation", 0) > requirements["max_reputation"]:
+        return False, f"Requires reputation <= {requirements['max_reputation']}"
 
     for item in requirements.get("items", []):
         if item not in inventory:
@@ -176,6 +180,10 @@ def _summarize_requirements(requirements: Dict[str, Any] | None) -> str:
         parts.append(f"Strength {requirements['min_strength']}")
     if "min_dexterity" in requirements:
         parts.append(f"Dexterity {requirements['min_dexterity']}")
+    if "min_reputation" in requirements:
+        parts.append(f"Reputation >= {requirements['min_reputation']}")
+    if "max_reputation" in requirements:
+        parts.append(f"Reputation <= {requirements['max_reputation']}")
 
     for item in requirements.get("items", []):
         parts.append(item)
