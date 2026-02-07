@@ -95,14 +95,14 @@ def check_requirements(requirements: Dict[str, Any] | None) -> tuple[bool, str]:
         return True, ""
 
     if "any_of" in requirements:
-        failed_reasons: List[str] = []
+        failed_summaries: List[str] = []
         for option in requirements["any_of"]:
-            ok, reason = check_requirements(option)
+            ok, _ = check_requirements(option)
             if ok:
                 return True, ""
-            failed_reasons.append(reason)
-        detail = " | ".join(failed_reasons)
-        return False, f"Requires one of: {detail}"
+            failed_summaries.append(_summarize_requirements(option))
+        detail = " or ".join(summary for summary in failed_summaries if summary)
+        return False, f"Requires one of: {detail or 'multiple conditions'}"
 
     stats = st.session_state.stats
     inventory = st.session_state.inventory
@@ -153,6 +153,51 @@ def check_requirements(requirements: Dict[str, Any] | None) -> tuple[bool, str]:
             return False, "That legacy site has already vanished."
 
     return True, ""
+
+
+def _summarize_requirements(requirements: Dict[str, Any] | None) -> str:
+    if not requirements:
+        return ""
+
+    if "any_of" in requirements:
+        return " or ".join(
+            summary for summary in (_summarize_requirements(option) for option in requirements["any_of"]) if summary
+        )
+
+    parts: List[str] = []
+    if "class" in requirements:
+        parts.append(f"Class {', '.join(requirements['class'])}")
+    if "min_hp" in requirements:
+        parts.append(f"HP {requirements['min_hp']}")
+    if "min_gold" in requirements:
+        parts.append(f"Gold {requirements['min_gold']}")
+    if "min_strength" in requirements:
+        parts.append(f"STR {requirements['min_strength']}")
+    if "min_dexterity" in requirements:
+        parts.append(f"DEX {requirements['min_dexterity']}")
+
+    for item in requirements.get("items", []):
+        parts.append(item)
+    for item in requirements.get("missing_items", []):
+        parts.append(f"Without {item}")
+
+    for flag in requirements.get("flag_true", []):
+        parts.append(_humanize_flag(flag))
+    for flag in requirements.get("flag_false", []):
+        parts.append(f"Not {_humanize_flag(flag)}")
+
+    for item in requirements.get("meta_items", []):
+        parts.append(f"{item} (legacy)")
+    for item in requirements.get("meta_missing_items", []):
+        parts.append(f"No {item} (legacy)")
+    for node_id in requirements.get("meta_nodes_present", []):
+        parts.append(f"Legacy site {node_id}")
+
+    return " and ".join(parts)
+
+
+def _humanize_flag(flag: str) -> str:
+    return flag.replace("_", " ").strip().title()
 
 
 def resolve_choice_outcome(choice: Dict[str, Any]) -> tuple[Dict[str, Any], str]:

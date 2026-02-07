@@ -3,7 +3,7 @@ from typing import List
 from game.streamlit_compat import st
 
 
-def get_epilogue_aftermath_lines() -> List[str]:
+def get_epilogue_aftermath_lines(*, max_lines: int | None = 9) -> List[str]:
     """Build ending aftermath details from key flags, events, and trait outcomes."""
     flags = st.session_state.flags
     traits = st.session_state.traits
@@ -87,4 +87,6 @@ def get_epilogue_aftermath_lines() -> List[str]:
     elif traits.get("alignment", 0) <= -3:
         lines.append("Your brutal efficiency ends the immediate threat, but hardens future conflicts across the frontier.")
 
-    return lines[:9]
+    if max_lines is None:
+        return lines
+    return lines[:max_lines]

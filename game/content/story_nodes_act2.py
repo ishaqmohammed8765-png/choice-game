@@ -362,9 +362,27 @@ STORY_NODES_ACT2: Dict[str, Dict[str, Any]] = {
             {"speaker": "Your Instinct", "line": "This ridge is a ledger. Every spared enemy and ignored threat gets collected tonight."},
             {"speaker": "Elder Mara", "line": "How you fought matters as much as whether you win. Oakrest will remember both."},
         ],
+        "auto_choices": [
+            {
+                "label": "Council cites the captives you freed",
+                "requirements": {"flag_true": ["rescued_prisoners"]},
+                "effects": {"log": "Tams points out the freed prisoners already lighting diversion fires by your order."},
+            },
+            {
+                "label": "Council references the causeway victory",
+                "requirements": {"flag_true": ["tidebound_knight_defeated"]},
+                "effects": {"log": "Scouts remind the council that your causeway win opened a flank the raiders still fear."},
+            },
+            {
+                "label": "Council recalls the foundry sabotage",
+                "requirements": {"flag_true": ["pyre_alchemist_defeated"]},
+                "effects": {"log": "Elder Mara notes the foundry sabotage that blunted Vorga's firebomb supply."},
+            },
+        ],
         "choices": [
             {
                 "label": "Return to the forest crossroads and resolve more unfinished threats",
+                "group": "Recon & Reassessment",
                 "requirements": {"flag_false": ["returned_for_more_branches"]},
                 "effects": {
                     "hp": -1,
@@ -376,6 +394,7 @@ STORY_NODES_ACT2: Dict[str, Dict[str, Any]] = {
             },
             {
                 "label": "Delay again despite mounting losses",
+                "group": "Recon & Reassessment",
                 "requirements": {"flag_true": ["returned_for_more_branches"]},
                 "effects": {
                     "hp": -2,
@@ -386,7 +405,18 @@ STORY_NODES_ACT2: Dict[str, Dict[str, Any]] = {
                 "next": "forest_crossroad",
             },
             {
+                "label": "Review assault plans with the council (unlocks assault options)",
+                "group": "Council Briefing",
+                "requirements": {"flag_false": ["war_council_briefed"]},
+                "effects": {
+                    "set_flags": {"war_council_briefed": True},
+                    "log": "You walk the council through the battlefield intel, narrowing the assault options.",
+                },
+                "next": "war_council_hub",
+            },
+            {
                 "label": "Hear Serin's judgment of your command",
+                "group": "Council Briefing",
                 "requirements": {"flag_true": ["mercy_reputation"]},
                 "auto_apply": True,
                 "effects": {
@@ -398,6 +428,7 @@ STORY_NODES_ACT2: Dict[str, Dict[str, Any]] = {
             },
             {
                 "label": "Hear Drogath's judgment of your command",
+                "group": "Council Briefing",
                 "requirements": {"flag_true": ["cruel_reputation"]},
                 "auto_apply": True,
                 "effects": {
@@ -409,6 +440,7 @@ STORY_NODES_ACT2: Dict[str, Dict[str, Any]] = {
             },
             {
                 "label": "Hold a quiet vigil before the assault",
+                "group": "Council Briefing",
                 "requirements": {"flag_false": ["ember_ridge_vigil_taken"]},
                 "effects": {
                     "hp": 1,
@@ -420,6 +452,7 @@ STORY_NODES_ACT2: Dict[str, Dict[str, Any]] = {
             },
             {
                 "label": "Use the Echo Locket and Bronze Seal to unseal a reliquary",
+                "group": "Relics & Secrets",
                 "requirements": {
                     "items": ["Bronze Seal"],
                     "meta_items": ["Echo Locket"],
@@ -432,7 +465,11 @@ STORY_NODES_ACT2: Dict[str, Dict[str, Any]] = {
             },
             {
                 "label": "Lead an allied breach (Dawnwarden or Ashfang veterans)",
-                "requirements": {"any_of": [{"flag_true": ["dawnwarden_allied"]}, {"flag_true": ["ashfang_allied"]}]},
+                "group": "Assault Plans",
+                "requirements": {
+                    "flag_true": ["war_council_briefed"],
+                    "any_of": [{"flag_true": ["dawnwarden_allied"]}, {"flag_true": ["ashfang_allied"]}],
+                },
                 "conditional_effects": [
                     {
                         "requirements": {"flag_true": ["dawnwarden_allied"]},
@@ -456,7 +493,11 @@ STORY_NODES_ACT2: Dict[str, Dict[str, Any]] = {
             },
             {
                 "label": "Use scout intelligence to approach through the hidden tunnel",
-                "requirements": {"flag_true": ["knows_hidden_route"], "min_dexterity": 4},
+                "group": "Assault Plans",
+                "requirements": {
+                    "flag_true": ["war_council_briefed", "knows_hidden_route"],
+                    "min_dexterity": 4,
+                },
                 "effects": {
                     "trait_delta": {"trust": 1},
                     "set_flags": {"hub_plan": "hidden_route"},
@@ -466,7 +507,8 @@ STORY_NODES_ACT2: Dict[str, Dict[str, Any]] = {
             },
             {
                 "label": "Rally survivors you rescued to create a diversion",
-                "requirements": {"flag_true": ["rescued_prisoners"]},
+                "group": "Assault Plans",
+                "requirements": {"flag_true": ["war_council_briefed", "rescued_prisoners"]},
                 "effects": {
                     "trait_delta": {"trust": 1, "alignment": 1},
                     "set_flags": {"mercy_reputation": True, "hub_plan": "survivor_diversion"},
@@ -476,7 +518,9 @@ STORY_NODES_ACT2: Dict[str, Dict[str, Any]] = {
             },
             {
                 "label": "Exploit your battlefield advantage (causeway or supply denial)",
+                "group": "Assault Plans",
                 "requirements": {
+                    "flag_true": ["war_council_briefed"],
                     "any_of": [
                         {"flag_true": ["tidebound_knight_defeated"]},
                         {"flag_true": ["ruin_supply_line_cut"], "min_strength": 4},
@@ -504,7 +548,8 @@ STORY_NODES_ACT2: Dict[str, Dict[str, Any]] = {
             },
             {
                 "label": "Advance alone before reinforcements arrive (Strength 4, Dexterity 4)",
-                "requirements": {"min_strength": 4, "min_dexterity": 4},
+                "group": "Assault Plans",
+                "requirements": {"flag_true": ["war_council_briefed"], "min_strength": 4, "min_dexterity": 4},
                 "effects": {
                     "trait_delta": {"reputation": -1, "trust": -1},
                     "set_flags": {"hub_plan": "solo_push"},
