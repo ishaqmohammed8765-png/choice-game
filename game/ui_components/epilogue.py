@@ -42,6 +42,13 @@ def get_epilogue_aftermath_lines(*, max_lines: int | None = 9) -> List[str]:
     if flags.get("morality") == "ruthless" or flags.get("cruel_reputation"):
         lines.append("Several border hamlets accept your protection, but only behind locked doors and wary silence.")
 
+    if flags.get("kest_informant"):
+        lines.append("Kest's intelligence on Caldus's network helps dismantle sleeper cells throughout the valley.")
+    if flags.get("kest_intel_available") and flags.get("spared_bandit"):
+        lines.append("Kest settles quietly in Oakrest, offering counsel on old kingdom ruins to any who ask.")
+    if flags.get("council_cowed"):
+        lines.append("The war council never fully recovers from being forced into a reckless push under your command.")
+
     if flags.get("opened_cleanly"):
         lines.append("The ruin gate breach leaves fewer graves, and survivors cite your careful approach.")
     if flags.get("tunnel_collapsed"):
@@ -63,9 +70,13 @@ def get_epilogue_aftermath_lines(*, max_lines: int | None = 9) -> List[str]:
     if flags.get("drogath_endorsement"):
         lines.append("Drogath's backing keeps the most ruthless fighters in line, if only barely.")
     if flags.get("tidebound_knight_defeated"):
-        lines.append("The cleared causeway becomes a safer trade lane, reducing coastal raids for a season.")
+        lines.append("With Sir Edrin freed from Caldus's warding, the causeway becomes a safer trade lane.")
     if flags.get("pyre_alchemist_defeated"):
-        lines.append("Without Vorga's forge, raider firebombs vanish from the valley's battle reports.")
+        lines.append("Without Vorga's forge, Caldus's firebomb stockpile vanishes from battle reports.")
+    if flags.get("skipped_causeway_boss_returned"):
+        lines.append("Sir Edrin's unresolved corruption haunts the valley — sightings near the causeway persist for months.")
+    if flags.get("skipped_mill_boss_returned"):
+        lines.append("Vorga's survival means Caldus's bomb recipes persist. Border villages invest in firebreaks.")
 
     if traits.get("trust", 0) >= 4:
         lines.append("High trust earned you a seat at future war councils, not just a hero's farewell.")
@@ -86,6 +97,16 @@ def get_epilogue_aftermath_lines(*, max_lines: int | None = 9) -> List[str]:
         lines.append("Your restraint becomes the measure younger scouts are taught to emulate.")
     elif traits.get("alignment", 0) <= -3:
         lines.append("Your brutal efficiency ends the immediate threat, but hardens future conflicts across the frontier.")
+
+    ember_tide = traits.get("ember_tide", 0)
+    if ember_tide >= 7:
+        lines.append("The Ember Tide rose unchecked for too long. Outer farms remain scarred for years, and refugees settle uneasily in Oakrest proper.")
+    elif ember_tide >= 5:
+        lines.append("The Ember Tide burned hot before you stopped it. Several farmsteads must be rebuilt from ash.")
+    elif ember_tide >= 3:
+        lines.append("The Ember Tide left its mark, but early action spared Oakrest's outer settlements the worst.")
+    elif ember_tide <= 1:
+        lines.append("Your swift action kept the Ember Tide from ever truly threatening the valley.")
 
     if max_lines is None:
         return lines

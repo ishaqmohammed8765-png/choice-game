@@ -13,6 +13,8 @@ ALLOWED_REQUIREMENT_KEYS = {
     "min_dexterity",
     "min_reputation",
     "max_reputation",
+    "min_ember_tide",
+    "max_ember_tide",
     "items",
     "missing_items",
     "flag_true",

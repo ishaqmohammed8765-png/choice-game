@@ -128,6 +128,10 @@ def check_requirements(requirements: Dict[str, Any] | None) -> tuple[bool, str]:
         return False, f"Requires reputation >= {requirements['min_reputation']}"
     if "max_reputation" in requirements and st.session_state.traits.get("reputation", 0) > requirements["max_reputation"]:
         return False, f"Requires reputation <= {requirements['max_reputation']}"
+    if "min_ember_tide" in requirements and st.session_state.traits.get("ember_tide", 0) < requirements["min_ember_tide"]:
+        return False, f"Requires ember tide >= {requirements['min_ember_tide']}"
+    if "max_ember_tide" in requirements and st.session_state.traits.get("ember_tide", 0) > requirements["max_ember_tide"]:
+        return False, f"Requires ember tide <= {requirements['max_ember_tide']}"
 
     for item in requirements.get("items", []):
         if item not in inventory:
@@ -184,6 +188,10 @@ def _summarize_requirements(requirements: Dict[str, Any] | None) -> str:
         parts.append(f"Reputation >= {requirements['min_reputation']}")
     if "max_reputation" in requirements:
         parts.append(f"Reputation <= {requirements['max_reputation']}")
+    if "min_ember_tide" in requirements:
+        parts.append(f"Ember Tide >= {requirements['min_ember_tide']}")
+    if "max_ember_tide" in requirements:
+        parts.append(f"Ember Tide <= {requirements['max_ember_tide']}")
 
     for item in requirements.get("items", []):
         parts.append(item)
@@ -372,6 +380,7 @@ def apply_effects(
 def _apply_surprise_events() -> List[Dict[str, Any]]:
     summaries: List[Dict[str, Any]] = []
     reputation = st.session_state.traits.get("reputation", 0)
+    ember_tide = st.session_state.traits.get("ember_tide", 0)
     for event in SURPRISE_EVENTS:
         if event["id"] in st.session_state.seen_events:
             continue
@@ -380,6 +389,12 @@ def _apply_surprise_events() -> List[Dict[str, Any]]:
         if min_rep is not None and reputation < min_rep:
             continue
         if max_rep is not None and reputation > max_rep:
+            continue
+        min_et = event.get("min_ember_tide")
+        max_et = event.get("max_ember_tide")
+        if min_et is not None and ember_tide < min_et:
+            continue
+        if max_et is not None and ember_tide > max_et:
             continue
         event_effects = dict(event["effects"])
         seen_events = list(event_effects.get("seen_events", []))

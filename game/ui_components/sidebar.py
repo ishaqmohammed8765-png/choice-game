@@ -85,8 +85,15 @@ def render_sidebar() -> None:
 
         with st.expander("Reputation & Factions", expanded=False):
             st.subheader("Traits")
+            _trait_labels = {
+                "trust": "Trust",
+                "reputation": "Reputation",
+                "alignment": "Alignment",
+                "ember_tide": "Ember Tide",
+            }
             for trait in TRAIT_KEYS:
-                st.write(f"{trait.title()}: {st.session_state.traits[trait]}")
+                label = _trait_labels.get(trait, trait.replace("_", " ").title())
+                st.write(f"{label}: {st.session_state.traits[trait]}")
 
             st.subheader("Faction Standing")
             for faction in FACTION_KEYS:
