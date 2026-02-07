@@ -150,6 +150,62 @@ def _any_choice_possible_for_class(
     return False
 
 
+def _find_sccs_iterative(edges: dict[str, set[str]], nodes: set[str]) -> list[set[str]]:
+    """Tarjan's SCC algorithm, fully iterative (no recursion limit needed).
+
+    Returns SCCs with more than one node (multi-node cycles).
+    """
+    index_counter = 0
+    stack: list[str] = []
+    on_stack: set[str] = set()
+    index_map: dict[str, int] = {}
+    lowlink: dict[str, int] = {}
+    sccs: list[set[str]] = []
+
+    for root in nodes:
+        if root in index_map:
+            continue
+        # Iterative DFS using an explicit call stack.
+        # Each frame is (node, iterator_over_neighbors, is_initial_visit).
+        call_stack: list[tuple[str, list[str], int]] = []
+        index_map[root] = lowlink[root] = index_counter
+        index_counter += 1
+        stack.append(root)
+        on_stack.add(root)
+        call_stack.append((root, list(edges.get(root, set())), 0))
+
+        while call_stack:
+            v, neighbors, ni = call_stack[-1]
+            if ni < len(neighbors):
+                call_stack[-1] = (v, neighbors, ni + 1)
+                w = neighbors[ni]
+                if w not in index_map:
+                    index_map[w] = lowlink[w] = index_counter
+                    index_counter += 1
+                    stack.append(w)
+                    on_stack.add(w)
+                    call_stack.append((w, list(edges.get(w, set())), 0))
+                elif w in on_stack:
+                    lowlink[v] = min(lowlink[v], index_map[w])
+            else:
+                if lowlink[v] == index_map[v]:
+                    scc: set[str] = set()
+                    while True:
+                        w = stack.pop()
+                        on_stack.discard(w)
+                        scc.add(w)
+                        if w == v:
+                            break
+                    if len(scc) > 1:
+                        sccs.append(scc)
+                call_stack.pop()
+                if call_stack:
+                    parent = call_stack[-1][0]
+                    lowlink[parent] = min(lowlink[parent], lowlink[v])
+
+    return sccs
+
+
 def validate_story_nodes() -> List[str]:
     """Run strict validation over story structure, links, and choice schemas."""
     warnings: List[str] = []
@@ -298,57 +354,14 @@ def validate_story_nodes() -> List[str]:
                 targets.add(next_id)
         all_edges[nid] = targets
 
-    # Tarjan's SCC algorithm (iterative to avoid deep recursion).
-    index_counter = [0]
-    stack: list[str] = []
-    on_stack: set[str] = set()
-    index_map: dict[str, int] = {}
-    lowlink: dict[str, int] = {}
-    sccs: list[set[str]] = []
-
-    def _strongconnect(v: str) -> None:
-        index_map[v] = lowlink[v] = index_counter[0]
-        index_counter[0] += 1
-        stack.append(v)
-        on_stack.add(v)
-
-        for w in all_edges.get(v, set()):
-            if w not in index_map:
-                _strongconnect(w)
-                lowlink[v] = min(lowlink[v], lowlink[w])
-            elif w in on_stack:
-                lowlink[v] = min(lowlink[v], index_map[w])
-
-        if lowlink[v] == index_map[v]:
-            scc: set[str] = set()
-            while True:
-                w = stack.pop()
-                on_stack.discard(w)
-                scc.add(w)
-                if w == v:
-                    break
-            if len(scc) > 1:
-                sccs.append(scc)
-
-    import sys
-    old_limit = sys.getrecursionlimit()
-    sys.setrecursionlimit(max(old_limit, len(STORY_NODES) * 3))
-    try:
-        for nid in STORY_NODES:
-            if nid not in index_map:
-                _strongconnect(nid)
-    finally:
-        sys.setrecursionlimit(old_limit)
+    sccs = _find_sccs_iterative(all_edges, set(STORY_NODES))
 
     for scc in sccs:
-        has_exit = False
-        for nid in scc:
-            for target in all_edges.get(nid, set()):
-                if target not in scc:
-                    has_exit = True
-                    break
-            if has_exit:
-                break
+        has_exit = any(
+            target not in scc
+            for nid in scc
+            for target in all_edges.get(nid, set())
+        )
         if not has_exit:
             for nid in sorted(scc):
                 if not _node_is_terminal(nid, STORY_NODES[nid]):
