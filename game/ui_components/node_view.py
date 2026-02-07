@@ -305,7 +305,12 @@ def render_node() -> None:
     if not choices:
         st.success("The story has reached an ending. Restart to explore another path.")
         if node_id.startswith("ending_"):
-            aftermath = get_epilogue_aftermath_lines()
+            show_full_epilogue = st.toggle(
+                "Show full epilogue",
+                key="show_full_epilogue",
+                help="Expand the epilogue with extra reminders of your earlier choices.",
+            )
+            aftermath = get_epilogue_aftermath_lines(max_lines=None if show_full_epilogue else 9)
             if aftermath:
                 with st.container(border=True):
                     st.subheader("Epilogue Aftermath")
