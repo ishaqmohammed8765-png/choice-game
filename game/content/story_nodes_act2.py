@@ -369,6 +369,14 @@ STORY_NODES_ACT2: Dict[str, Dict[str, Any]] = {
                 "effects": {"log": "Tams points out the freed prisoners already lighting diversion fires by your order."},
             },
             {
+                "label": "Council murmurs about your brutal reputation",
+                "requirements": {"max_reputation": -2},
+                "effects": {
+                    "set_flags": {"council_fearful": True},
+                    "log": "Whispers ripple through the ridge; some commanders avert their eyes, fearing what follows your victories.",
+                },
+            },
+            {
                 "label": "Council references the causeway victory",
                 "requirements": {"flag_true": ["tidebound_knight_defeated"]},
                 "effects": {"log": "Scouts remind the council that your causeway win opened a flank the raiders still fear."},
@@ -449,6 +457,17 @@ STORY_NODES_ACT2: Dict[str, Dict[str, Any]] = {
                     "log": "You take a measured pause at the ridge, letting the silence reset the war council's nerves.",
                 },
                 "next": "ember_ridge_vigil",
+            },
+            {
+                "label": "Intimidate the council into a reckless push",
+                "group": "Council Briefing",
+                "requirements": {"flag_true": ["war_council_briefed"], "max_reputation": -2},
+                "effects": {
+                    "trait_delta": {"trust": -2, "reputation": -1, "alignment": -1},
+                    "set_flags": {"hub_plan": "fear_push", "council_cowed": True},
+                    "log": "Fear replaces strategy as you force the council into a headlong assault.",
+                },
+                "next": "ruin_gate",
             },
             {
                 "label": "Use the Echo Locket and Bronze Seal to unseal a reliquary",
