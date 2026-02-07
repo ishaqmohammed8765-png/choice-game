@@ -59,6 +59,14 @@ class LogicTests(unittest.TestCase):
         self.assertIn("scout_meeting", st.session_state.seen_events)
         self.assertIn("Test event", st.session_state.event_log)
 
+    def test_reputation_surprise_event_triggers_once(self):
+        st.session_state.auto_event_summary = []
+        apply_effects({"trait_delta": {"reputation": 3}})
+        self.assertIn("rep_rising", st.session_state.seen_events)
+        self.assertTrue(st.session_state.auto_event_summary)
+        st.session_state.auto_event_summary = []
+        apply_effects({"trait_delta": {"reputation": 0}})
+        self.assertFalse(st.session_state.auto_event_summary)
 
     def test_apply_effects_updates_factions(self):
         apply_effects({"faction_delta": {"oakrest": 2, "bandits": -1}})

@@ -3,6 +3,7 @@ from typing import Any, Dict, List
 from game.streamlit_compat import st
 
 from game.data import FACTION_KEYS, HIGH_COST_GOLD_LOSS, HIGH_COST_HP_LOSS, STAT_KEYS, STORY_NODES, TRAIT_KEYS
+from game.content.surprise_events import SURPRISE_EVENTS
 from game.state import add_log, snapshot_state
 from game.validation import validate_story_nodes
 
@@ -172,9 +173,9 @@ def _summarize_requirements(requirements: Dict[str, Any] | None) -> str:
     if "min_gold" in requirements:
         parts.append(f"Gold {requirements['min_gold']}")
     if "min_strength" in requirements:
-        parts.append(f"STR {requirements['min_strength']}")
+        parts.append(f"Strength {requirements['min_strength']}")
     if "min_dexterity" in requirements:
-        parts.append(f"DEX {requirements['min_dexterity']}")
+        parts.append(f"Dexterity {requirements['min_dexterity']}")
 
     for item in requirements.get("items", []):
         parts.append(item)
@@ -264,7 +265,12 @@ def merge_effects(base: Dict[str, Any], incoming: Dict[str, Any]) -> Dict[str, A
     return merged
 
 
-def apply_effects(effects: Dict[str, Any] | None, *, label: str | None = None) -> Dict[str, Any]:
+def apply_effects(
+    effects: Dict[str, Any] | None,
+    *,
+    label: str | None = None,
+    trigger_surprises: bool = True,
+) -> Dict[str, Any]:
     """Apply deterministic choice outcomes to player state."""
     if not effects:
         return {}
@@ -335,6 +341,13 @@ def apply_effects(effects: Dict[str, Any] | None, *, label: str | None = None) -
 
     apply_morality_flags(flags)
 
+    if trigger_surprises:
+        if "auto_event_summary" not in st.session_state:
+            st.session_state.auto_event_summary = []
+        surprise_summaries = _apply_surprise_events()
+        if surprise_summaries:
+            st.session_state.auto_event_summary.extend(surprise_summaries)
+
     if effects.get("log"):
         add_log(effects["log"])
 
@@ -346,6 +359,31 @@ def apply_effects(effects: Dict[str, Any] | None, *, label: str | None = None) -
         label=label,
         effects=effects,
     )
+
+
+def _apply_surprise_events() -> List[Dict[str, Any]]:
+    summaries: List[Dict[str, Any]] = []
+    reputation = st.session_state.traits.get("reputation", 0)
+    for event in SURPRISE_EVENTS:
+        if event["id"] in st.session_state.seen_events:
+            continue
+        min_rep = event.get("min_reputation")
+        max_rep = event.get("max_reputation")
+        if min_rep is not None and reputation < min_rep:
+            continue
+        if max_rep is not None and reputation > max_rep:
+            continue
+        event_effects = dict(event["effects"])
+        seen_events = list(event_effects.get("seen_events", []))
+        seen_events.append(event["id"])
+        event_effects["seen_events"] = seen_events
+        summary = apply_effects(event_effects, label=event["label"], trigger_surprises=False)
+        if summary:
+            summaries.append(summary)
+            add_log(f"Surprise event ({event['label']}): {format_outcome_summary(summary)}")
+        else:
+            add_log(f"Surprise event ({event['label']}): {event_effects.get('log', 'An unexpected turn unfolds.')}")
+    return summaries
 
 
 def transition_to(next_node_id: str) -> None:
