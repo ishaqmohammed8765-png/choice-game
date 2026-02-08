@@ -8,7 +8,7 @@ STORY_NODES_ACT3: Dict[str, Dict[str, Any]] = {
             "A hush settles over the ridge as the last light fades. The orange pulse above Caldus's ruin "
             "beats slower now, like a heart gathering strength. Fires are banked low and even the drummers "
             "pause, giving you a moment to listen to the wind, the breathing of allies, and the distant hum "
-            "of the Dawn Emblem consuming everything Caldus feeds it."
+            "of the Ember Core consuming everything Caldus feeds it."
         ),
         "dialogue": [
             {"speaker": "Signal Runner Tams", "line": "Quiet now means fewer mistakes once we move. Caldus won't give us a second chance."},
@@ -40,8 +40,8 @@ STORY_NODES_ACT3: Dict[str, Dict[str, Any]] = {
         "title": "Hidden Route Counterstrike",
         "text": (
             "The service tunnel forks beneath Caldus's ruin into a powder store and a prisoner corridor. "
-            "Caldus's zealots use the left fork to arm the Emblem pylons; the right holds villagers taken "
-            "as labor for the ritual. You can gut his reserves or free the captives, but not both quietly."
+            "Caldus's loyalists use the left fork to arm the Core pylons; the right holds villagers taken "
+            "as labor for the operation. You can gut his reserves or free the captives, but not both quietly."
         ),
         "dialogue": [
             {"speaker": "Scout's Markings", "line": "Blue chalk means Caldus's stores. White chalk means survivors."},
@@ -129,7 +129,7 @@ STORY_NODES_ACT3: Dict[str, Dict[str, Any]] = {
                 "label": "Fake surrender, then bolt when they open the cage",
                 "effects": {
                     "trait_delta": {"alignment": -1},
-                    "log": "The ploy nearly works, but a branded zealot recognizes your face from Caldus's bounty.",
+                    "log": "The ploy nearly works, but a branded loyalist recognizes your face from Caldus's bounty.",
                 },
                 "next": "failure_captured",
             },
@@ -139,9 +139,9 @@ STORY_NODES_ACT3: Dict[str, Dict[str, Any]] = {
         "id": "ruin_gate",
         "title": "Caldus's Ruin — The Outer Gate",
         "text": (
-            "Cracked stone doors loom beneath ivy and Caldus's burnt sigils. The Dawn Emblem's pulse "
+            "Cracked stone doors loom beneath ivy and Caldus's burnt sigils. The Ember Core's pulse "
             "is audible here — a low throb that vibrates through the masonry. A collapsed side breach "
-            "leads downward, while the main gate bears Caldus's warding lock, forged from old kingdom seals."
+            "leads downward, while the main gate bears Caldus's containment lock, forged from old kingdom seals."
         ),
         "dialogue": [
             {"speaker": "Caldus's Voice (amplified)", "line": "I can feel you at my threshold. You are too late to stop the dawn I am building."},
@@ -193,13 +193,13 @@ STORY_NODES_ACT3: Dict[str, Dict[str, Any]] = {
             {
                 "label": "Call for surrender and safe passage (merciful path)",
                 "requirements": {"flag_true": ["mercy_reputation"]},
-                "effects": {"log": "Your reputation for mercy persuades a frightened zealot to unbar a side door. Not all of Caldus's followers believe."},
+                "effects": {"log": "Your reputation for mercy persuades a frightened loyalist to unbar a side door. Not all of Caldus's followers believe."},
                 "next": "inner_hall",
             },
             {
                 "label": "Threaten the lookouts into opening a side gate (ruthless path)",
                 "requirements": {"flag_true": ["cruel_reputation"]},
-                "effects": {"hp": -1, "log": "They obey out of terror, but one zealot stabs you before fleeing Caldus's ruin."},
+                "effects": {"hp": -1, "log": "They obey out of terror, but one loyalist stabs you before fleeing Caldus's ruin."},
                 "next": "inner_hall",
             },
         ],
@@ -209,13 +209,13 @@ STORY_NODES_ACT3: Dict[str, Dict[str, Any]] = {
         "title": "Inner Hall of Echoes",
         "text": (
             "Torchlight reveals two routes through Caldus's occupied ruin: a trapped gallery leading "
-            "to his ritual chamber, and an armory vault sealed behind rusted bars. The walls are carved "
-            "with scenes of the old kingdom — Caldus has annotated them in charcoal, circling the Dawn "
-            "Emblem in every panel."
+            "to his channeling chamber, and an armory vault sealed behind rusted bars. The walls are carved "
+            "with scenes of the old kingdom — Caldus has annotated them in charcoal, circling the Ember "
+            "Core in every panel."
         ),
         "dialogue": [
             {"speaker": "Ancient Inscription", "line": "Only the careful walk twice these halls."},
-            {"speaker": "Caldus's Zealot (distant)", "line": "Check the gallery again! Someone breached the gate!"},
+            {"speaker": "Caldus's Loyalist (distant)", "line": "Check the gallery again! Someone breached the gate!"},
         ],
         "choices": [
             {
@@ -272,24 +272,24 @@ STORY_NODES_ACT3: Dict[str, Dict[str, Any]] = {
     },
     "dawn_vault": {
         "id": "dawn_vault",
-        "title": "Vault of the First Dawn",
+        "title": "Vault of the First Age",
         "text": (
-            "The vault air is warm and still. A crystal reliquary holds a shard of the Dawn Emblem — "
+            "The vault air is warm and still. A crystal reliquary holds a shard of the Ember Core — "
             "the uncorrupted original that Caldus has been trying to replicate. It pulses with light "
             "that does not burn. It feels like it has been waiting for someone who would not misuse it."
         ),
         "dialogue": [
-            {"speaker": "Vault Whisper", "line": "Carry the dawn, and the ruin will remember you — not Caldus."},
-            {"speaker": "Your Instinct", "line": "This is what the Emblem was before Caldus twisted it. This is the weight of every replay you survived."},
+            {"speaker": "Vault Whisper", "line": "Carry the relic, and the ruin will remember you — not Caldus."},
+            {"speaker": "Your Instinct", "line": "This is what the Core was before Caldus twisted it. This is the weight of every replay you survived."},
         ],
         "requirements": {"meta_nodes_present": ["dawn_vault"]},
         "choices": [
             {
-                "label": "Take the Dawn Relic and seal the vault behind you",
-                "requirements": {"meta_missing_items": ["Dawn Relic"]},
+                "label": "Take the First Age Relic and seal the vault behind you",
+                "requirements": {"meta_missing_items": ["First Age Relic"]},
                 "effects": {
-                    "add_items": ["Dawn Relic"],
-                    "unlock_meta_items": ["Dawn Relic"],
+                    "add_items": ["First Age Relic"],
+                    "unlock_meta_items": ["First Age Relic"],
                     "remove_meta_nodes": ["dawn_vault"],
                     "set_flags": {"dawn_relic_claimed": True},
                     "log": "Light pools around your hands as the relic binds itself to your future journeys — a counterweight to Caldus's corruption.",
@@ -298,7 +298,7 @@ STORY_NODES_ACT3: Dict[str, Dict[str, Any]] = {
             },
             {
                 "label": "Close the vault and return to the hall",
-                "effects": {"log": "You leave the dawn sealed and step back into Caldus's echoing hall."},
+                "effects": {"log": "You leave the relic sealed and step back into Caldus's echoing hall."},
                 "next": "inner_hall",
             },
         ],
@@ -307,14 +307,14 @@ STORY_NODES_ACT3: Dict[str, Dict[str, Any]] = {
         "id": "core_approach",
         "title": "Antechamber — Kest's Last Stand",
         "text": (
-            "At the threshold of Caldus's ritual chamber kneels Kest, wounded and desperate. Once "
-            "Caldus's most trusted scout, Kest deserted when he realized the Dawn Emblem would consume "
+            "At the threshold of Caldus's channeling chamber kneels Kest, wounded and desperate. Once "
+            "Caldus's most trusted scout, Kest deserted when he realized the Ember Core would consume "
             "Oakrest — not restore it. He begs for mercy, offering what he knows about Caldus's defenses."
         ),
         "dialogue": [
-            {"speaker": "Kest", "line": "I ran messages for Caldus. I believed in the old kingdom. But he's burning living people to resurrect dead ones."},
+            {"speaker": "Kest", "line": "I ran messages for Caldus. I believed in the old kingdom. But he's burning living people to rebuild a dead empire."},
             {"speaker": "Kest", "line": "Spare me and I'll tell you where his ward array is weakest. Kill me and walk in blind."},
-            {"speaker": "Your Instinct", "line": "Caldus threw this man away. Mercy can save a soul, or sharpen a knife in your back."},
+            {"speaker": "Your Instinct", "line": "Caldus threw this man away. Mercy can change a mind, or sharpen a knife in your back."},
         ],
         "choices": [
             {
@@ -353,7 +353,7 @@ STORY_NODES_ACT3: Dict[str, Dict[str, Any]] = {
         "id": "ember_ridge_quiet",
         "title": "Quiet Beat — The Threshold",
         "text": (
-            "Before Caldus's core door, the battle noise fades into dripping water and the Emblem's "
+            "Before Caldus's core door, the battle noise fades into dripping water and the Core's "
             "deep pulse. For one measured moment, you can center yourself, rally your allies, or "
             "crash through before fear catches up. Beyond this door, Caldus waits."
         ),
@@ -397,24 +397,24 @@ STORY_NODES_ACT3: Dict[str, Dict[str, Any]] = {
         "id": "final_confrontation",
         "title": "Final Confrontation: Warden Caldus",
         "text": (
-            "In the heart of the ruin, Caldus stands before the Dawn Emblem with his arms raised, "
-            "channeling molten light through a lattice of old kingdom warding stones. Cracks of fire "
+            "In the heart of the ruin, Caldus stands before the Ember Core with his arms raised, "
+            "channeling molten light through a lattice of old kingdom containment stones. Cracks of fire "
             "spread across the ceiling. He turns to face you — not with rage, but with the absolute "
             "certainty of a man who believes he is saving the world by burning it."
         ),
         "dialogue": [
-            {"speaker": "Caldus", "line": "You see destruction. I see rebirth. The old kingdom sleeps inside this fire, and every village I burn is fuel for its return."},
-            {"speaker": "Caldus", "line": "Edrin understood, before the Emblem broke him. Vorga understood. Even Kest understood, once. You will too — when Oakrest becomes the pyre."},
+            {"speaker": "Caldus", "line": "You see destruction. I see reconstruction. The old kingdom's power burns within this fire, and every village I burn is fuel for its return."},
+            {"speaker": "Caldus", "line": "Edrin understood, before the Core broke him. Vorga understood. Even Kest understood, once. You will too — when Oakrest becomes the pyre."},
             {"speaker": "You", "line": "Oakrest is people, Caldus. Not fuel. It ends here."},
-            {"speaker": "Caldus", "line": "Then let the Emblem decide which of us is right."},
+            {"speaker": "Caldus", "line": "Then let the Core decide which of us is right."},
         ],
         "choices": [
             {
-                "label": "Invoke the Dawn Relic to stabilize the Emblem (legacy path)",
-                "requirements": {"items": ["Dawn Relic"]},
+                "label": "Invoke the First Age Relic to stabilize the Core (legacy path)",
+                "requirements": {"items": ["First Age Relic"]},
                 "effects": {
                     "set_flags": {"warden_defeated": True, "ending_quality": "best", "legacy_ending": True},
-                    "log": "The relic's uncorrupted light steadies the Emblem, unraveling Caldus's ritual without destroying the chamber.",
+                    "log": "The relic's uncorrupted light steadies the Core, unraveling Caldus's channeling without destroying the chamber.",
                 },
                 "next": "ending_legacy",
             },
@@ -433,7 +433,7 @@ STORY_NODES_ACT3: Dict[str, Dict[str, Any]] = {
                         "effects": {
                             "hp": -2,
                             "set_flags": {"warden_defeated": True, "ending_quality": "best", "warrior_best_ending": True},
-                            "log": "You brace the collapsing arch with raw strength, then land the decisive blow on Caldus while he channels the Emblem.",
+                            "log": "You brace the collapsing arch with raw strength, then land the decisive blow on Caldus while he channels the Core.",
                         },
                         "next": "ending_best_warrior",
                     },
@@ -442,7 +442,7 @@ STORY_NODES_ACT3: Dict[str, Dict[str, Any]] = {
                         "effects": {
                             "hp": -1,
                             "set_flags": {"warden_defeated": True, "ending_quality": "best", "rogue_best_ending": True},
-                            "log": "You ghost through Caldus's ward lattice and sever the Emblem conduit before the surge can reach Oakrest.",
+                            "log": "You ghost through Caldus's ward lattice and sever the Core conduit before the surge can reach Oakrest.",
                         },
                         "next": "ending_best_rogue",
                     },
@@ -451,7 +451,7 @@ STORY_NODES_ACT3: Dict[str, Dict[str, Any]] = {
                         "effects": {
                             "hp": -1,
                             "set_flags": {"warden_defeated": True, "ending_quality": "best", "archer_best_ending": True},
-                            "log": "Your impossible shot severs the vent lattice and collapses Caldus's ritual before the fire reaches Oakrest.",
+                            "log": "Your impossible shot severs the vent lattice and collapses Caldus's channeling before the fire reaches Oakrest.",
                         },
                         "next": "ending_best_archer",
                     },
@@ -469,12 +469,12 @@ STORY_NODES_ACT3: Dict[str, Dict[str, Any]] = {
                 "next": "ending_good",
             },
             {
-                "label": "Strike from shadows at the Emblem core (Dexterity 6)",
+                "label": "Strike from shadows at the Core (Dexterity 6)",
                 "requirements": {"min_dexterity": 6},
                 "effects": {
                     "hp": -1,
                     "set_flags": {"warden_defeated": True, "ending_quality": "mixed"},
-                    "log": "You collapse the Emblem core, but the backlash crushes part of the chamber and Caldus escapes into the rubble.",
+                    "log": "You collapse the Ember Core, but the backlash crushes part of the chamber and Caldus escapes into the rubble.",
                 },
                 "next": "ending_mixed",
             },
@@ -489,7 +489,7 @@ STORY_NODES_ACT3: Dict[str, Dict[str, Any]] = {
                 "effects": {
                     "hp": -8,
                     "set_flags": {"warden_defeated": False, "ending_quality": "bad"},
-                    "log": "You rush in blindly. Caldus redirects the Emblem's fire and you are consumed.",
+                    "log": "You rush in blindly. Caldus redirects the Core's fire and you are consumed.",
                 },
                 "next": "ending_bad",
             },
@@ -499,7 +499,7 @@ STORY_NODES_ACT3: Dict[str, Dict[str, Any]] = {
         "id": "final_confrontation_tactics",
         "title": "Final Confrontation — Contingency Plans",
         "text": (
-            "Caldus's ritual falters as you exploit chaos in the chamber. The relationships you built "
+            "Caldus's channeling falters as you exploit chaos in the chamber. The relationships you built "
             "and the choices you made against his circle — Edrin, Vorga, Kest — now converge into "
             "backup plans that can tip the balance."
         ),
@@ -513,7 +513,7 @@ STORY_NODES_ACT3: Dict[str, Dict[str, Any]] = {
                 "requirements": {"flag_true": ["spared_bandit"], "min_dexterity": 4},
                 "effects": {
                     "set_flags": {"warden_defeated": True, "ending_quality": "good"},
-                    "log": "Using Kest's insider knowledge, you disable the Emblem conduit and Caldus's ritual collapses.",
+                    "log": "Using Kest's insider knowledge, you disable the Core conduit and Caldus's channeling collapses.",
                 },
                 "next": "ending_good",
             },
@@ -528,13 +528,13 @@ STORY_NODES_ACT3: Dict[str, Dict[str, Any]] = {
                 "next": "ending_mixed",
             },
             {
-                "label": "Intimidate Caldus's remaining zealots into deserting (ruthless path)",
+                "label": "Intimidate Caldus's remaining loyalists into deserting (ruthless path)",
                 "requirements": {"flag_true": ["cruel_reputation"], "min_strength": 4},
                 "effects": {
                     "hp": -1,
                     "trait_delta": {"trust": -1},
                     "set_flags": {"warden_defeated": True, "ending_quality": "mixed"},
-                    "log": "Your ruthless reputation shatters the last of Caldus's support. Alone, he cannot maintain the ritual.",
+                    "log": "Your ruthless reputation shatters the last of Caldus's support. Alone, he cannot maintain the channeling.",
                 },
                 "next": "ending_mixed",
             },
@@ -564,12 +564,12 @@ STORY_NODES_ACT3: Dict[str, Dict[str, Any]] = {
         "id": "final_confrontation_fallbacks",
         "title": "Final Confrontation — Volatile Fallbacks",
         "text": (
-            "The chamber destabilizes as Caldus's ritual strains the Emblem. Old enemies and "
+            "The chamber destabilizes as Caldus's channeling strains the Core. Old enemies and "
             "improvised tools become your last-resort finishers — each carrying the consequences "
             "of paths you chose or abandoned."
         ),
         "dialogue": [
-            {"speaker": "Caldus", "line": "Break me if you can. The Emblem will finish what I started."},
+            {"speaker": "Caldus", "line": "Break me if you can. The Core will finish what I started."},
         ],
         "choices": [
             {
@@ -588,17 +588,17 @@ STORY_NODES_ACT3: Dict[str, Dict[str, Any]] = {
                 "effects": {
                     "hp": -3,
                     "set_flags": {"warden_defeated": True, "ending_quality": "mixed", "skipped_causeway_boss_returned": True},
-                    "log": "Edrin — Caldus's corrupted mentor — answers the Emblem's call. You survive a two-front duel, but the chamber collapses.",
+                    "log": "Edrin — Caldus's corrupted mentor — answers the Core's call. You survive a two-front duel, but the chamber collapses.",
                 },
                 "next": "ending_mixed",
             },
             {
-                "label": "Turn Vorga's seized firebombs against Caldus's Emblem pylons",
+                "label": "Turn Vorga's seized firebombs against Caldus's Core pylons",
                 "requirements": {"flag_true": ["pyre_alchemist_defeated"], "min_dexterity": 4},
                 "effects": {
                     "hp": -2,
                     "set_flags": {"warden_defeated": True, "ending_quality": "mixed"},
-                    "log": "Vorga's own firebombs collapse two pylons, ending Caldus's ritual in violent ruin.",
+                    "log": "Vorga's own firebombs collapse two pylons, ending Caldus's channeling in violent ruin.",
                 },
                 "next": "ending_mixed",
             },
@@ -608,17 +608,17 @@ STORY_NODES_ACT3: Dict[str, Dict[str, Any]] = {
                 "effects": {
                     "hp": -3,
                     "set_flags": {"warden_defeated": True, "ending_quality": "mixed", "skipped_mill_boss_returned": True},
-                    "log": "Vorga storms in with fresh bombs to defend Caldus. A brutal running fight follows before you can reach the Emblem.",
+                    "log": "Vorga storms in with fresh bombs to defend Caldus. A brutal running fight follows before you can reach the Core.",
                 },
                 "next": "ending_mixed",
             },
             {
-                "label": "Raise the Ancient Shield and endure the Emblem's backlash",
+                "label": "Raise the Ancient Shield and endure the Core's backlash",
                 "requirements": {"items": ["Ancient Shield"], "min_strength": 4},
                 "effects": {
                     "hp": -3,
                     "set_flags": {"warden_defeated": True, "ending_quality": "mixed"},
-                    "log": "The shield saves you as you push through the Emblem's backlash and fell Caldus.",
+                    "log": "The shield saves you as you push through the Core's backlash and fell Caldus.",
                 },
                 "next": "ending_mixed",
             },
@@ -634,7 +634,7 @@ STORY_NODES_ACT3: Dict[str, Dict[str, Any]] = {
         "id": "ending_good",
         "title": "Ending — Dawn Over Oakrest",
         "text": (
-            "Caldus falls, and the Dawn Emblem dims to a low ember, its destructive cycle broken. "
+            "Caldus falls, and the Ember Core dims to a low ember, its destructive cycle broken. "
             "The ruin sighs as ancient stones settle. Outside, the orange glow fades from the sky and "
             "Oakrest's watchtowers signal the all-clear for the first time in days.\n\n"
             "If your path was merciful, Oakrest hails you as a guardian of both lives and honor — "
@@ -655,18 +655,18 @@ STORY_NODES_ACT3: Dict[str, Dict[str, Any]] = {
         "id": "ending_legacy",
         "title": "Ending — Legacy Dawn",
         "text": (
-            "The Dawn Relic steadies the Emblem without destroying it, purging Caldus's corruption "
-            "from the warding lattice. Caldus staggers backward, watching his life's work unravel — "
-            "not in fire, but in calm light. The old kingdom he tried to resurrect speaks through the "
-            "relic, and its voice is not the voice of fire. It says: let them live.\n\n"
+            "The First Age Relic steadies the Core without destroying it, purging Caldus's corruption "
+            "from the containment lattice. Caldus staggers backward, watching his life's work unravel — "
+            "not in fire, but in calm light. The old kingdom he tried to reconstruct fades from the "
+            "relic's light, and its uncorrupted power calms the destruction.\n\n"
             "Oakrest inherits a calm sunrise and a relic that answers only to your lineage of choices. "
-            "The valley's leaders seal a new oath: no future warden can wield the Emblem without "
+            "The valley's leaders seal a new oath: no future warden can wield the Core without "
             "the trust earned by those who carried it across more than one life."
         ),
         "dialogue": [
-            {"speaker": "Caldus (broken)", "line": "The kingdom... it was supposed to return in fire. Why does it forgive them?"},
+            {"speaker": "Caldus (broken)", "line": "The kingdom... it was supposed to return in fire. Why does it reject me?"},
             {"speaker": "Elder Mara", "line": "You've done what no single journey could. Oakrest will remember every return."},
-            {"speaker": "Signal Runner Tams", "line": "It's like the valley knows your footsteps now. Even the Emblem trusts you."},
+            {"speaker": "Signal Runner Tams", "line": "It's like the valley knows your footsteps now. Even the Core trusts you."},
         ],
         "choices": [],
     },
@@ -674,9 +674,9 @@ STORY_NODES_ACT3: Dict[str, Dict[str, Any]] = {
         "id": "ending_best_warrior",
         "title": "Best Ending — Iron Dawn of Oakrest",
         "text": (
-            "Your warrior's stand saves both the Dawn Emblem and the trapped villagers. You hold "
-            "a collapsing arch with raw strength while Caldus's ritual unravels around him. He "
-            "reaches for the Emblem one last time, but you are between him and everyone he would burn.\n\n"
+            "Your warrior's stand saves both the Ember Core and the trapped villagers. You hold "
+            "a collapsing arch with raw strength while Caldus's channeling unravels around him. He "
+            "reaches for the Core one last time, but you are between him and everyone he would burn.\n\n"
             "Caldus trained soldiers to hold lines. You hold one against him.\n\n"
             "Word spreads that you held a collapsing ruin with your bare strength, and Oakrest "
             "names you Shield of the Valley. Children trace chalk outlines of your stance on the "
@@ -694,7 +694,7 @@ STORY_NODES_ACT3: Dict[str, Dict[str, Any]] = {
         "text": (
             "Your rogue precision prevents the surge before anyone else sees the danger. You ghost "
             "through Caldus's ward lattice — the same coded network you once ran messages through — "
-            "and sever the Emblem conduit with a lockpick where a sword would fail.\n\n"
+            "and sever the Core conduit with a lockpick where a sword would fail.\n\n"
             "Caldus built a fortress of secrets. You unmade it in silence.\n\n"
             "The Rangers record the night as a flawless victory, and Oakrest entrusts you with "
             "its hidden defenses. Whisper networks keep your name off the lips of raiders, but "
@@ -711,9 +711,9 @@ STORY_NODES_ACT3: Dict[str, Dict[str, Any]] = {
         "title": "Best Ending — Skyfire Dawn of Oakrest",
         "text": (
             "Your final arrow strikes true through storming heat and falling stone, collapsing "
-            "Caldus's ritual surge without shattering the chamber. You read the smoke signals one "
+            "Caldus's channeling surge without shattering the chamber. You read the smoke signals one "
             "last time — the same signals you decoded from Caldus's scout corps — and thread your "
-            "shot through the only gap in the Emblem's fire.\n\n"
+            "shot through the only gap in the Core's fire.\n\n"
             "Caldus built a pyre that could reach the sky. You shot it down from the ridgeline.\n\n"
             "Oakrest's watchtowers adopt your signal code, and every border village sleeps easier "
             "under your marked sky-lanterns. The belltower keeps your arrow notches carved into "
@@ -729,12 +729,12 @@ STORY_NODES_ACT3: Dict[str, Dict[str, Any]] = {
         "id": "ending_mixed",
         "title": "Ending — Victory at a Cost",
         "text": (
-            "Caldus falls, but the Emblem's backlash tears through the ruin and the surrounding farms. "
+            "Caldus falls, but the Core's backlash tears through the ruin and the surrounding farms. "
             "Oakrest survives, though your name is spoken with equal gratitude and regret. The Ember Tide "
             "scarred the valley before you could stop it — fields that burned will take years to recover.\n\n"
             "Caldus's body is never recovered from the rubble. Some believe he survived. Serin posts "
-            "sentries at the ruin for months. Drogath argues it doesn't matter — the ritual is broken.\n\n"
-            "Dawnwarden medics and Ashfang labor crews rebuild side by side, but every repaired wall "
+            "sentries at the ruin for months. Drogath argues it doesn't matter — the channeling is broken.\n\n"
+            "Ironwarden medics and Ashfang labor crews rebuild side by side, but every repaired wall "
             "carries the memory of what was sacrificed. Peace returns, cautious and conditional."
         ),
         "dialogue": [
@@ -748,8 +748,8 @@ STORY_NODES_ACT3: Dict[str, Dict[str, Any]] = {
         "id": "ending_bad",
         "title": "Ending — Nightfall Over Oakrest",
         "text": (
-            "Your final gamble fails. The Dawn Emblem surges to full power and the forest burns with "
-            "unnatural fire — Caldus's vision of rebirth consuming everything in its path. He stands "
+            "Your final gamble fails. The Ember Core surges to full power and the forest burns with "
+            "unnatural fire — Caldus's vision of reconstruction consuming everything in its path. He stands "
             "in the flames, arms raised, laughing and weeping as the old kingdom's phantom streets "
             "shimmer in the heat haze for one terrible moment before collapsing into ash.\n\n"
             "Oakrest is abandoned by sunrise. Caldus dies in the fire he started, but his victory "
@@ -782,7 +782,7 @@ STORY_NODES_ACT3: Dict[str, Dict[str, Any]] = {
                     "hp": 4,
                     "trait_delta": {"ember_tide": 1},
                     "set_flags": {"recovered_from_injury": True},
-                    "log": "Days pass in recovery. You return with fewer scars than rage, but Caldus's ritual has advanced.",
+                    "log": "Days pass in recovery. You return with fewer scars than rage, but Caldus's channeling has advanced.",
                 },
                 "next": "camp_shop",
             },
@@ -799,14 +799,14 @@ STORY_NODES_ACT3: Dict[str, Dict[str, Any]] = {
     },
     "failure_captured": {
         "id": "failure_captured",
-        "title": "Setback — Captured by Caldus's Zealots",
+        "title": "Setback — Captured by Caldus's Loyalists",
         "text": (
-            "Caldus's zealots drag you into a holding pit beneath the ruin. Ember-branded guards "
+            "Caldus's loyalists drag you into a holding pit beneath the ruin. Ember-branded guards "
             "pace above. A loose grate and a distracted sentry offer dangerous chances to break free "
             "before Caldus decides what to do with you."
         ),
         "dialogue": [
-            {"speaker": "Zealot Guard", "line": "Caldus says you're either fuel or a convert. Pick one."},
+            {"speaker": "Loyalist Guard", "line": "Caldus says you're either fuel or a convert. Pick one."},
             {"speaker": "Prisoner", "line": "If you're planning something, make it count. They feed the pyre at dawn."},
         ],
         "choices": [
@@ -816,7 +816,7 @@ STORY_NODES_ACT3: Dict[str, Dict[str, Any]] = {
                 "effects": {
                     "gold": -3,
                     "set_flags": {"escaped_capture": True},
-                    "log": "A guard pockets your coin and leaves the latch unfastened. Even zealots have a price.",
+                    "log": "A guard pockets your coin and leaves the latch unfastened. Even loyalists have a price.",
                 },
                 "next": "inner_hall",
             },
@@ -836,7 +836,7 @@ STORY_NODES_ACT3: Dict[str, Dict[str, Any]] = {
                 "effects": {
                     "set_flags": {"marked_suspect": True},
                     "trait_delta": {"alignment": -1},
-                    "log": "Your deception is exposed. Caldus's zealots do not forgive pretenders.",
+                    "log": "Your deception is exposed. Caldus's loyalists do not forgive pretenders.",
                 },
                 "next": "core_approach",
             },
@@ -890,7 +890,7 @@ STORY_NODES_ACT3: Dict[str, Dict[str, Any]] = {
                     "gold": -2,
                     "hp": 2,
                     "trait_delta": {"ember_tide": 1},
-                    "log": "You rebuild your kit from scraps. The delay costs Oakrest time as Caldus's ritual advances.",
+                    "log": "You rebuild your kit from scraps. The delay costs Oakrest time as Caldus's channeling advances.",
                 },
                 "next": "camp_shop",
             },
@@ -910,7 +910,7 @@ STORY_NODES_ACT3: Dict[str, Dict[str, Any]] = {
         "title": "You Have Fallen",
         "text": (
             "Your wounds are too severe. The quest ends here, and the fate of Oakrest passes to "
-            "another soul. Caldus's ritual continues unchallenged. The Ember Tide rises."
+            "another soul. Caldus's channeling continues unchallenged. The Ember Tide rises."
         ),
         "dialogue": [
             {"speaker": "Final Thought", "line": "If dawn comes, let it find Oakrest standing — even without me."},

@@ -172,7 +172,7 @@ def _render_faction_bars() -> None:
     st.subheader("Faction Standing")
     _faction_colors = {
         "oakrest": "#22c55e",
-        "dawnwardens": "#3b82f6",
+        "ironwardens": "#3b82f6",
         "ashfang": "#f97316",
         "bandits": "#ef4444",
     }

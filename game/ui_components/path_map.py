@@ -557,44 +557,48 @@ def render_path_map() -> None:
         </svg>
     """
 
-    st.markdown(svg, unsafe_allow_html=True)
-
-    # -- Legend --
-    st.markdown(
-        """
-        <div style="
-            display: flex; flex-wrap: wrap; gap: 1rem; justify-content: center;
-            margin-top: 0.5rem; padding: 0.5rem 0.75rem;
-            border: 1px solid #1e293b; border-radius: 8px;
-            background: rgba(10,10,20,0.5);
-            font-family: 'Crimson Text', Georgia, serif;
-            font-size: 0.8rem; color: #94a3b8;
-        ">
-            <span style="display:flex;align-items:center;gap:0.3rem;">
-                <svg width="14" height="14"><circle cx="7" cy="7" r="5"
-                    fill="#1e293b" stroke="#c9a54e" stroke-width="2"/></svg>
-                Available
-            </span>
-            <span style="display:flex;align-items:center;gap:0.3rem;">
-                <svg width="14" height="14"><circle cx="7" cy="7" r="5"
-                    fill="#0c2d48" stroke="#38bdf8" stroke-width="2"/></svg>
-                Visited
-            </span>
-            <span style="display:flex;align-items:center;gap:0.3rem;">
-                <svg width="14" height="14"><circle cx="7" cy="7" r="5"
-                    fill="#0f172a" stroke="#475569" stroke-width="1.5"
-                    stroke-dasharray="2 2" opacity="0.5"/></svg>
-                Locked
-            </span>
-            <span style="display:flex;align-items:center;gap:0.3rem;">
-                <svg width="14" height="14"><circle cx="7" cy="7" r="6"
-                    fill="#0a0f1a" stroke="#facc15" stroke-width="2"/></svg>
-                Current
-            </span>
+    # Use components.html to bypass Streamlit's SVG sanitization
+    try:
+        import streamlit.components.v1 as components
+        full_html = f"""
+        <div style="background:transparent;padding:0;margin:0;">
+            {svg}
+            <div style="
+                display: flex; flex-wrap: wrap; gap: 1rem; justify-content: center;
+                margin-top: 0.5rem; padding: 0.5rem 0.75rem;
+                border: 1px solid #1e293b; border-radius: 8px;
+                background: rgba(10,10,20,0.5);
+                font-family: 'Crimson Text', Georgia, serif;
+                font-size: 0.8rem; color: #94a3b8;
+            ">
+                <span style="display:flex;align-items:center;gap:0.3rem;">
+                    <svg width="14" height="14"><circle cx="7" cy="7" r="5"
+                        fill="#1e293b" stroke="#c9a54e" stroke-width="2"/></svg>
+                    Available
+                </span>
+                <span style="display:flex;align-items:center;gap:0.3rem;">
+                    <svg width="14" height="14"><circle cx="7" cy="7" r="5"
+                        fill="#0c2d48" stroke="#38bdf8" stroke-width="2"/></svg>
+                    Visited
+                </span>
+                <span style="display:flex;align-items:center;gap:0.3rem;">
+                    <svg width="14" height="14"><circle cx="7" cy="7" r="5"
+                        fill="#0f172a" stroke="#475569" stroke-width="1.5"
+                        stroke-dasharray="2 2" opacity="0.5"/></svg>
+                    Locked
+                </span>
+                <span style="display:flex;align-items:center;gap:0.3rem;">
+                    <svg width="14" height="14"><circle cx="7" cy="7" r="6"
+                        fill="#0a0f1a" stroke="#facc15" stroke-width="2"/></svg>
+                    Current
+                </span>
+            </div>
         </div>
-        """,
-        unsafe_allow_html=True,
-    )
+        """
+        components.html(full_html, height=int(height) + 80, scrolling=False)
+    except (ImportError, Exception):
+        # Fallback: render via st.markdown if components unavailable
+        st.markdown(svg, unsafe_allow_html=True)
 
 
 def _format_requirement_lines(

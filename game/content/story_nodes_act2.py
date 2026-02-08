@@ -6,13 +6,13 @@ STORY_NODES_ACT2: Dict[str, Dict[str, Any]] = {
         "title": "Scout's Warning",
         "text": (
             "The rescued scout gasps out details about Caldus's operation. The ruin is not just occupied — "
-            "Caldus is channeling the Dawn Emblem through a ritual array. His old mentor Sir Edrin guards "
-            "the causeway approach, corrupted by the Emblem's overflow. Vorga, his alchemist, forges "
-            "incendiary weapons at a mill nearby. The scout offers a bronze seal taken from a dead zealot."
+            "Caldus is channeling the Ember Core through a channeling array. His old mentor Sir Edrin guards "
+            "the causeway approach, corrupted by the Core's overflow. Vorga, his alchemist, forges "
+            "incendiary weapons at a mill nearby. The scout offers a bronze seal taken from a dead loyalist."
         ),
         "dialogue": [
-            {"speaker": "Rescued Scout", "line": "Caldus talks to the Emblem like it's alive. He says the old kingdom speaks through it."},
-            {"speaker": "Rescued Scout", "line": "Take this seal. It opens doors his zealots use. Older than fear, and twice as stubborn."},
+            {"speaker": "Rescued Scout", "line": "Caldus talks to the Core like it's alive. He says the old kingdom's power resonates through it."},
+            {"speaker": "Rescued Scout", "line": "Take this seal. It opens doors his loyalists use. Older than fear, and twice as stubborn."},
         ],
         "requirements": {"flag_true": ["rescued_scout"]},
         "choices": [
@@ -24,7 +24,7 @@ STORY_NODES_ACT2: Dict[str, Dict[str, Any]] = {
                     "trait_delta": {"trust": 1},
                     "seen_events": ["accepted_seal"],
                     "set_flags": {"has_seal": True},
-                    "log": "You take the bronze seal; old markings glow faintly, resonating with the Emblem's distant pulse.",
+                    "log": "You take the bronze seal; old markings glow faintly, resonating with the Core's distant pulse.",
                 },
                 "next": "war_council_hub",
             },
@@ -54,7 +54,7 @@ STORY_NODES_ACT2: Dict[str, Dict[str, Any]] = {
         "title": "Forgotten Service Tunnel",
         "text": (
             "The scout's map leads you into a collapsed maintenance tunnel beneath Caldus's ruin. "
-            "Fresh boot prints and ember residue tell you Caldus's zealots use this route too. "
+            "Fresh boot prints and ember residue tell you Caldus's loyalists use this route too. "
             "You can sabotage the signal braziers to blind his sentries, but the collapse will trap "
             "anyone still inside."
         ),
@@ -92,12 +92,12 @@ STORY_NODES_ACT2: Dict[str, Dict[str, Any]] = {
         "text": (
             "Half-sunken statues line a cracked causeway while cold water swirls around your knees. "
             "Sir Edrin, Caldus's former mentor and the captain who trained him, was the first person "
-            "Caldus tested the Dawn Emblem on. The experiment went wrong — Edrin survived but was "
-            "transformed, bound to the causeway by the Emblem's warding power, neither alive nor dead."
+            "Caldus tested the Ember Core on. The experiment went wrong — Edrin survived but was "
+            "transformed, bound to the causeway by the Core's containment power, neither alive nor dead."
         ),
         "dialogue": [
             {"speaker": "Broken Causeway Bell", "line": "Dong... dong... each toll comes from beneath the water, keeping Edrin tethered."},
-            {"speaker": "Your Instinct", "line": "Caldus did this to his own teacher. Understanding Edrin means understanding what the Emblem does to people."},
+            {"speaker": "Your Instinct", "line": "Caldus did this to his own teacher. Understanding Edrin means understanding what the Core does to people."},
         ],
         "choices": [
             {
@@ -132,12 +132,12 @@ STORY_NODES_ACT2: Dict[str, Dict[str, Any]] = {
         "id": "causeway_depths",
         "title": "Undervault Chamber",
         "text": (
-            "Below the altar, a rusted floodgate seals a vault of old warding engines — the same "
-            "kind Caldus repurposed for his ritual array. You can reactivate the pumps to drain the "
+            "Below the altar, a rusted floodgate seals a vault of old containment engines — the same "
+            "kind Caldus repurposed for his channeling array. You can reactivate the pumps to drain the "
             "road and expose a safer assault lane, but Edrin's chain-bound form stirs in the dark water."
         ),
         "dialogue": [
-            {"speaker": "Ancient Inscription", "line": "When waters rise, the guardian wakes. When the Emblem burns, the guardian weeps."},
+            {"speaker": "Ancient Inscription", "line": "When waters rise, the guardian wakes. When the Core burns, the guardian weeps."},
             {"speaker": "Your Instinct", "line": "Edrin was Caldus's first victim. Whatever is chained down there was once a good man."},
         ],
         "choices": [
@@ -210,14 +210,14 @@ STORY_NODES_ACT2: Dict[str, Dict[str, Any]] = {
         "title": "Mini-Boss: Sir Edrin, the Tidebound Knight",
         "text": (
             "A barnacled knight rises from the reservoir in chained plate, dragging a bell-hammer. "
-            "Once Caldus's mentor and the finest captain in the Dawnwardens, Sir Edrin was the Emblem's "
-            "first test subject. The corruption fused him to the causeway's warding stones. He fights "
+            "Once Caldus's mentor and the finest captain in the Ironwardens, Sir Edrin was the Core's "
+            "first test subject. The corruption fused him to the causeway's containment stones. He fights "
             "not from malice but from the compulsion Caldus burned into him. Defeating Edrin opens a "
             "protected assault route to the ruin."
         ),
         "dialogue": [
-            {"speaker": "Sir Edrin", "line": "Caldus... forgive... I cannot stop... the Emblem commands..."},
-            {"speaker": "Your Instinct", "line": "This is what the Dawn Emblem does. This is what Caldus will do to Oakrest."},
+            {"speaker": "Sir Edrin", "line": "Caldus... release me... I cannot stop... the Core commands..."},
+            {"speaker": "Your Instinct", "line": "This is what the Ember Core does. This is what Caldus will do to Oakrest."},
         ],
         "choices": [
             {
@@ -254,8 +254,8 @@ STORY_NODES_ACT2: Dict[str, Dict[str, Any]] = {
         "title": "Charred Mill Trail — Vorga's Foundry",
         "text": (
             "The old grain mill still turns despite having no river, its wheel driven by ember gusts "
-            "channeled from the Dawn Emblem. Vorga, Caldus's apprentice alchemist, has converted it "
-            "into a bomb forge. She shares Caldus's vision of a purifying fire but lacks his restraint — "
+            "channeled from the Ember Core. Vorga, Caldus's apprentice alchemist, has converted it "
+            "into a bomb forge. She shares Caldus's vision of a cleansing fire but lacks his restraint — "
             "if he has any left. The firebombs she makes here will burn Oakrest to cinders."
         ),
         "dialogue": [
@@ -299,7 +299,7 @@ STORY_NODES_ACT2: Dict[str, Dict[str, Any]] = {
             "before confronting her, or push straight into the foundry where she chants over volatile resin."
         ),
         "dialogue": [
-            {"speaker": "Ashfang Prisoner", "line": "Vorga said Caldus promised her a new kingdom. She believes every word."},
+            {"speaker": "Ashfang Prisoner", "line": "Vorga said Caldus promised her a new order. She believes every word."},
             {"speaker": "Your Instinct", "line": "These bombs are meant for Oakrest. Every rack you destroy is a street that survives."},
         ],
         "choices": [
@@ -329,11 +329,11 @@ STORY_NODES_ACT2: Dict[str, Dict[str, Any]] = {
         "text": (
             "Vorga hurls flask-bombs while furnace vents spew white fire. She is Caldus's true believer — "
             "convinced that burning the valley will fertilize a new golden age. Unlike Caldus, who has "
-            "the cold logic of a zealot, Vorga fights with the passion of a fanatic. Defeating her "
+            "the cold logic of a loyalist, Vorga fights with the passion of a fanatic. Defeating her "
             "cripples Caldus's incendiary stockpile."
         ),
         "dialogue": [
-            {"speaker": "Vorga", "line": "Caldus showed me the old kingdom in the Emblem's fire. It was beautiful. You'll see it too — when Oakrest burns."},
+            {"speaker": "Vorga", "line": "Caldus showed me the old kingdom's power in the Core's fire. It was beautiful. You'll see it too — when Oakrest burns."},
             {"speaker": "Your Instinct", "line": "She's not evil. She's convinced. That makes her more dangerous."},
         ],
         "choices": [
@@ -437,7 +437,7 @@ STORY_NODES_ACT2: Dict[str, Dict[str, Any]] = {
                     "hp": -2,
                     "trait_delta": {"trust": -1, "reputation": -1, "ember_tide": 3},
                     "set_flags": {"repeated_delay": True},
-                    "log": "Tams reports burned wagons and missing scouts as you postpone the assault a second time. Caldus's ritual accelerates.",
+                    "log": "Tams reports burned wagons and missing scouts as you postpone the assault a second time. Caldus's channeling accelerates.",
                 },
                 "next": "forest_crossroad",
             },
@@ -512,7 +512,7 @@ STORY_NODES_ACT2: Dict[str, Dict[str, Any]] = {
                 "next": "ember_reliquary",
             },
             {
-                "label": "Lead an allied breach (Dawnwarden or Ashfang veterans)",
+                "label": "Lead an allied breach (Ironwarden or Ashfang veterans)",
                 "group": "Assault Plans",
                 "requirements": {
                     "flag_true": ["war_council_briefed"],
@@ -524,7 +524,7 @@ STORY_NODES_ACT2: Dict[str, Dict[str, Any]] = {
                         "effects": {
                             "trait_delta": {"trust": 1, "reputation": 1},
                             "set_flags": {"opened_cleanly": True, "hub_plan": "dawnwarden_breach"},
-                            "log": "Serin's rangers secure the perimeter. They want Caldus alive — the Dawnwardens demand justice.",
+                            "log": "Serin's rangers secure the perimeter. They want Caldus alive — the Ironwardens demand justice.",
                         },
                     },
                     {
@@ -611,8 +611,8 @@ STORY_NODES_ACT2: Dict[str, Dict[str, Any]] = {
         "id": "ember_reliquary",
         "title": "Ember Reliquary",
         "text": (
-            "Below Ember Ridge, a reliquary chamber hums with old warding lines — the same energy "
-            "Caldus corrupted for his ritual. The Bronze Seal presses into a socket, and the Echo "
+            "Below Ember Ridge, a reliquary chamber hums with old containment lines — the same energy "
+            "Caldus corrupted for his channeling array. The Bronze Seal presses into a socket, and the Echo "
             "Locket vibrates in your palm as if the ruin itself remembers you."
         ),
         "dialogue": [
@@ -635,7 +635,7 @@ STORY_NODES_ACT2: Dict[str, Dict[str, Any]] = {
             },
             {
                 "label": "Back away from the reliquary while it sleeps",
-                "effects": {"log": "You let the warding lines dim and return to the war council."},
+                "effects": {"log": "You let the containment lines dim and return to the war council."},
                 "next": "war_council_hub",
             },
         ],

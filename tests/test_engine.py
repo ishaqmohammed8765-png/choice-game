@@ -141,7 +141,7 @@ class ExecuteChoiceTests(unittest.TestCase):
         st.session_state.inventory = ["Rusty Sword"]
         st.session_state.flags = {"class": "Warrior"}
         st.session_state.traits = {"trust": 0, "reputation": 0, "alignment": 0}
-        st.session_state.factions = {"oakrest": 0, "dawnwardens": 0, "ashfang": 0, "bandits": 0}
+        st.session_state.factions = {"oakrest": 0, "ironwardens": 0, "ashfang": 0, "bandits": 0}
         st.session_state.seen_events = []
         st.session_state.event_log = []
         st.session_state.decision_history = []
@@ -205,7 +205,7 @@ class GoldClampingTests(unittest.TestCase):
         st.session_state.inventory = []
         st.session_state.flags = {}
         st.session_state.traits = {"trust": 0, "reputation": 0, "alignment": 0}
-        st.session_state.factions = {"oakrest": 0, "dawnwardens": 0, "ashfang": 0, "bandits": 0}
+        st.session_state.factions = {"oakrest": 0, "ironwardens": 0, "ashfang": 0, "bandits": 0}
         st.session_state.seen_events = []
         st.session_state.event_log = []
 
@@ -228,7 +228,7 @@ class AutoChoiceSummaryTests(unittest.TestCase):
         st.session_state.inventory = []
         st.session_state.flags = {}
         st.session_state.traits = {"trust": 0, "reputation": 0, "alignment": 0}
-        st.session_state.factions = {"oakrest": 0, "dawnwardens": 0, "ashfang": 0, "bandits": 0}
+        st.session_state.factions = {"oakrest": 0, "ironwardens": 0, "ashfang": 0, "bandits": 0}
         st.session_state.seen_events = []
         st.session_state.event_log = []
         st.session_state.auto_event_summary = []
@@ -257,7 +257,7 @@ class AutoChoiceTests(unittest.TestCase):
         st.session_state.inventory = []
         st.session_state.flags = {"class": "Warrior"}
         st.session_state.traits = {"trust": 0, "reputation": 0, "alignment": 0}
-        st.session_state.factions = {"oakrest": 0, "dawnwardens": 0, "ashfang": 0, "bandits": 0}
+        st.session_state.factions = {"oakrest": 0, "ironwardens": 0, "ashfang": 0, "bandits": 0}
         st.session_state.seen_events = []
         st.session_state.event_log = []
 
@@ -437,7 +437,7 @@ class AutoChoiceDeathTests(unittest.TestCase):
         st.session_state.inventory = []
         st.session_state.flags = {}
         st.session_state.traits = {"trust": 0, "reputation": 0, "alignment": 0}
-        st.session_state.factions = {"oakrest": 0, "dawnwardens": 0, "ashfang": 0, "bandits": 0}
+        st.session_state.factions = {"oakrest": 0, "ironwardens": 0, "ashfang": 0, "bandits": 0}
         st.session_state.seen_events = []
         st.session_state.event_log = []
         st.session_state.auto_event_summary = []
@@ -478,7 +478,7 @@ class ExecuteChoiceHPDeathTests(unittest.TestCase):
         st.session_state.inventory = ["Rusty Sword"]
         st.session_state.flags = {"class": "Warrior"}
         st.session_state.traits = {"trust": 0, "reputation": 0, "alignment": 0}
-        st.session_state.factions = {"oakrest": 0, "dawnwardens": 0, "ashfang": 0, "bandits": 0}
+        st.session_state.factions = {"oakrest": 0, "ironwardens": 0, "ashfang": 0, "bandits": 0}
         st.session_state.seen_events = []
         st.session_state.event_log = []
         st.session_state.decision_history = []
@@ -678,7 +678,7 @@ class CarryoverItemsTests(unittest.TestCase):
         st.session_state.inventory = ["Rusty Sword"]
         st.session_state.flags = {"class": "Warrior"}
         st.session_state.traits = {"trust": 0, "reputation": 0, "alignment": 0, "ember_tide": 0}
-        st.session_state.factions = {"oakrest": 0, "dawnwardens": 0, "ashfang": 0, "bandits": 0}
+        st.session_state.factions = {"oakrest": 0, "ironwardens": 0, "ashfang": 0, "bandits": 0}
         st.session_state.seen_events = []
         st.session_state.event_log = []
         st.session_state.meta_state = {"unlocked_items": [], "removed_nodes": []}
@@ -853,10 +853,10 @@ class CarryoverItemsTests(unittest.TestCase):
             "remove_meta_nodes": ["ember_reliquary"],
         })
 
-        # Playthrough 3: Dawn Relic
+        # Playthrough 3: First Age Relic
         start_game("Archer")
         apply_effects({
-            "unlock_meta_items": ["Dawn Relic"],
+            "unlock_meta_items": ["First Age Relic"],
             "remove_meta_nodes": ["dawn_vault"],
         })
 
@@ -864,7 +864,7 @@ class CarryoverItemsTests(unittest.TestCase):
         start_game("Warrior")
         self.assertIn("Echo Locket", st.session_state.inventory)
         self.assertIn("Ember Sigil", st.session_state.inventory)
-        self.assertIn("Dawn Relic", st.session_state.inventory)
+        self.assertIn("First Age Relic", st.session_state.inventory)
 
         # All shrines/vaults should be gone
         ok, _ = check_requirements({"meta_nodes_present": ["echo_shrine"]})
@@ -874,8 +874,8 @@ class CarryoverItemsTests(unittest.TestCase):
         ok, _ = check_requirements({"meta_nodes_present": ["dawn_vault"]})
         self.assertFalse(ok)
 
-        # Dawn Relic should unlock the legacy ending
-        ok, _ = check_requirements({"items": ["Dawn Relic"]})
+        # First Age Relic should unlock the legacy ending
+        ok, _ = check_requirements({"items": ["First Age Relic"]})
         self.assertTrue(ok)
 
     def test_unlock_meta_item_idempotent(self):

@@ -63,7 +63,7 @@ SURPRISE_EVENTS: List[SurpriseEvent] = [
             "set_flags": {"bounty_notice": True},
         },
     },
-    # --- Ember Tide events (time pressure from Caldus's ritual) ---
+    # --- Ember Tide events (time pressure from Caldus's channeling) ---
     {
         "id": "ember_tide_rising",
         "label": "Outer farms ignite",
@@ -72,7 +72,7 @@ SURPRISE_EVENTS: List[SurpriseEvent] = [
         "min_ember_tide": 3,
         "max_ember_tide": None,
         "effects": {
-            "log": "Orange light blooms on the horizon. Caldus's ritual feeds on every hour you spend away from the ruin.",
+            "log": "Orange light blooms on the horizon. Caldus's channeling feeds on every hour you spend away from the ruin.",
             "set_flags": {"ember_tide_rising": True},
         },
     },
@@ -84,20 +84,20 @@ SURPRISE_EVENTS: List[SurpriseEvent] = [
         "min_ember_tide": 5,
         "max_ember_tide": None,
         "effects": {
-            "log": "Ash clouds blot the stars. Scouts report villagers fleeing Oakrest. Caldus is close to completing the ritual.",
+            "log": "Ash clouds blot the stars. Scouts report villagers fleeing Oakrest. Caldus is close to completing the channeling.",
             "set_flags": {"ember_tide_critical": True},
             "trait_delta": {"trust": -1},
         },
     },
     {
         "id": "ember_tide_desperate",
-        "label": "The Emblem pulses",
+        "label": "The Core pulses",
         "min_reputation": None,
         "max_reputation": None,
         "min_ember_tide": 7,
         "max_ember_tide": None,
         "effects": {
-            "log": "A deep throb rolls through the earth. The Dawn Emblem's corruption is nearly complete.",
+            "log": "A deep throb rolls through the earth. The Ember Core's corruption is nearly complete.",
             "set_flags": {"ember_tide_desperate": True},
             "trait_delta": {"trust": -1, "reputation": -1},
         },

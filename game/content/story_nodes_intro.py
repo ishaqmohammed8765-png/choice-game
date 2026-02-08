@@ -7,8 +7,8 @@ STORY_NODES_INTRO: Dict[str, Dict[str, Any]] = {
         "text": (
             "You arrive at Oakrest as dusk falls, the palisade groaning under desperate hands. "
             "A bloodstained proclamation nailed to the gate bears the seal of Warden Caldus, "
-            "a former Dawnwarden captain who vanished three winters ago. His message is clear: "
-            "surrender the Dawn Emblem or watch the valley burn. Blacksmith Tor recognizes your "
+            "a former Ironwarden captain who vanished three winters ago. His message is clear: "
+            "surrender the Ember Core or watch the valley burn. Blacksmith Tor recognizes your "
             "old regiment insignia and shoves a shield into your hands."
         ),
         "dialogue": [
