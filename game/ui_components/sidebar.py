@@ -1,4 +1,5 @@
 import json
+from html import escape
 
 from game.streamlit_compat import st
 
@@ -118,13 +119,14 @@ def _render_inventory_with_sprites() -> None:
         is_legacy = item_name in legacy_items
         legacy_tag = ' <span style="color:#c9a54e;font-size:0.7rem;font-family:\'Cinzel\',serif;">(legacy)</span>' if is_legacy else ""
         border_color = "#c9a54e40" if is_legacy else "#1e293b"
+        safe_item_name = escape(str(item_name), quote=True)
         items_html.append(
             f'<div style="display:flex;align-items:center;gap:8px;padding:4px 8px;'
             f'border:1px solid {border_color};border-radius:6px;margin-bottom:3px;'
             f'background:rgba(15,15,30,0.5);">'
             f'{sprite}'
             f'<span style="font-family:\'Crimson Text\',Georgia,serif;color:#d4d4dc;font-size:0.9rem;">'
-            f'{item_name}{legacy_tag}</span>'
+            f'{safe_item_name}{legacy_tag}</span>'
             f'</div>'
         )
 
@@ -233,12 +235,13 @@ def _render_save_load_controls() -> None:
 
 def _render_player_panel_body(*, button_prefix: str) -> None:
     player_class = st.session_state.player_class or "Warrior"
+    safe_player_class = escape(player_class, quote=True)
     icon = class_icon_svg(player_class, size=24)
     st.markdown(
         f"""
         <div style="display:flex;align-items:center;gap:8px;margin-bottom:0.3rem;">
             {icon}
-            <span style="font-family:'Cinzel',serif;color:#e8d5b0;font-size:1.1rem;font-weight:600;">{player_class}</span>
+            <span style="font-family:'Cinzel',serif;color:#e8d5b0;font-size:1.1rem;font-weight:600;">{safe_player_class}</span>
         </div>
         """,
         unsafe_allow_html=True,
@@ -318,6 +321,7 @@ def render_main_panel() -> None:
 def render_utility_bar() -> None:
     """Render the compact top utility bar used during active gameplay."""
     player_class = st.session_state.player_class or "Warrior"
+    safe_player_class = escape(player_class, quote=True)
     icon = class_icon_svg(player_class, size=22)
     current_node = st.session_state.current_node or ""
     phase = get_phase(current_node)
@@ -332,7 +336,7 @@ def render_utility_bar() -> None:
                 <div style="display:flex;align-items:center;justify-content:space-between;gap:10px;margin-bottom:6px;">
                     <div style="display:flex;align-items:center;gap:8px;">
                         {icon}
-                        <span style="font-family:'Cinzel',serif;color:#e8d5b0;font-size:1.05rem;">{player_class}</span>
+                        <span style="font-family:'Cinzel',serif;color:#e8d5b0;font-size:1.05rem;">{safe_player_class}</span>
                     </div>
                     <span style="
                         border:1px solid {phase_color}60;

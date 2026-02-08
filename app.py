@@ -1,3 +1,5 @@
+from html import escape
+
 from game.streamlit_compat import st
 
 from game.data import init_story_nodes
@@ -188,7 +190,7 @@ def inject_game_theme() -> None:
 
 
 def inject_fixed_game_layout() -> None:
-    """Keep gameplay in a fixed, non-scrolling viewport with three stacked sections."""
+    """Use a compact fixed layout on desktop while preserving mobile scroll behavior."""
     st.markdown(
         """
         <style>
@@ -212,6 +214,23 @@ def inject_fixed_game_layout() -> None:
 
         [data-testid="stMainBlockContainer"] > div {
             width: 100%;
+        }
+
+        @media (max-width: 900px) {
+            [data-testid="stAppViewContainer"],
+            [data-testid="stAppViewContainer"] > .main,
+            .stApp {
+                height: auto !important;
+                overflow: auto !important;
+            }
+
+            [data-testid="stMainBlockContainer"] {
+                height: auto !important;
+                overflow: visible !important;
+                padding-top: 0.6rem !important;
+                padding-bottom: 0.9rem !important;
+                gap: 0.7rem !important;
+            }
         }
         </style>
         """,
@@ -289,6 +308,7 @@ def _render_class_selection() -> None:
     meta_state = st.session_state.get("meta_state", {"unlocked_items": [], "removed_nodes": []})
     unlocked = meta_state.get("unlocked_items", [])
     if unlocked:
+        unlocked_text = ", ".join(escape(str(item), quote=True) for item in unlocked)
         st.markdown(
             f"""
             <div style="
@@ -305,7 +325,7 @@ def _render_class_selection() -> None:
                     font-family: 'Cinzel', serif;
                     font-size: 0.85rem;
                     letter-spacing: 0.04em;
-                ">Legacy items carried forward: <strong>{', '.join(unlocked)}</strong></p>
+                ">Legacy items carried forward: <strong>{unlocked_text}</strong></p>
                 <p style="
                     margin: 0.2rem 0 0 0;
                     color: #8b7355;
@@ -374,11 +394,17 @@ def _render_class_selection() -> None:
 
 
 def _render_validation_warnings() -> None:
-    warnings = validate_story_nodes()
+    if "story_validation_warnings" not in st.session_state:
+        st.session_state.story_validation_warnings = validate_story_nodes()
+
+    warnings = st.session_state.story_validation_warnings
     if not warnings:
         return
 
     with st.expander("Story validation warnings", expanded=False):
+        if st.button("Re-run validator", key="refresh_story_validation"):
+            st.session_state.story_validation_warnings = validate_story_nodes()
+            st.rerun()
         st.warning("Validation found issues with story data. Review before publishing.")
         for warning in warnings:
             st.write(f"- {warning}")

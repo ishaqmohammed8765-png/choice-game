@@ -140,6 +140,18 @@ _MERGE_LIST_KEYS = ("add_items", "remove_items", "seen_events", "unlock_meta_ite
 _MERGE_ADDITIVE_DICT_KEYS = ("trait_delta", "faction_delta")
 
 
+def _merge_unique_list_preserve_order(existing: List[Any], incoming: List[Any]) -> List[Any]:
+    """Merge two lists while preserving first-seen order."""
+    merged = list(existing)
+    seen = set(existing)
+    for value in incoming:
+        if value in seen:
+            continue
+        merged.append(value)
+        seen.add(value)
+    return merged
+
+
 def merge_effects(base: Dict[str, Any], incoming: Dict[str, Any]) -> Dict[str, Any]:
     """Merge two effect dicts deterministically, favoring incoming for log text."""
     merged = dict(base)
@@ -150,7 +162,7 @@ def merge_effects(base: Dict[str, Any], incoming: Dict[str, Any]) -> Dict[str, A
     for key in _MERGE_LIST_KEYS:
         if incoming.get(key):
             merged.setdefault(key, [])
-            merged[key] = list({*merged[key], *incoming[key]})
+            merged[key] = _merge_unique_list_preserve_order(merged[key], incoming[key])
 
     if incoming.get("set_flags"):
         merged.setdefault("set_flags", {})

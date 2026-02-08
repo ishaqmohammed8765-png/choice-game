@@ -40,6 +40,7 @@ class MergeEffectsTests(unittest.TestCase):
         incoming = {"add_items": ["Rope", "Shield"]}
         merged = merge_effects(base, incoming)
         self.assertEqual(sorted(merged["add_items"]), ["Rope", "Shield", "Torch"])
+        self.assertEqual(merged["add_items"], ["Torch", "Rope", "Shield"])
 
     def test_flag_override(self):
         base = {"set_flags": {"met_scout": True}}
@@ -73,6 +74,7 @@ class MergeEffectsTests(unittest.TestCase):
         incoming = {"seen_events": ["event_a", "event_b"]}
         merged = merge_effects(base, incoming)
         self.assertEqual(sorted(merged["seen_events"]), ["event_a", "event_b"])
+        self.assertEqual(merged["seen_events"], ["event_a", "event_b"])
 
 
 class MoralityFlagsTests(unittest.TestCase):
@@ -344,6 +346,22 @@ class SnapshotIntegrationTests(unittest.TestCase):
         snap["player_class"] = "Mage"
         ok, errors = validate_snapshot(snap)
         self.assertFalse(ok)
+
+    def test_validate_rejects_invalid_visited_edge_shape(self):
+        start_game("Warrior")
+        snap = snapshot_state()
+        snap["visited_edges"] = [{"source": "a", "target": "b"}]
+        ok, errors = validate_snapshot(snap)
+        self.assertFalse(ok)
+        self.assertTrue(any("visited edges" in error.lower() for error in errors))
+
+    def test_validate_rejects_invalid_pending_choice_confirmation(self):
+        start_game("Warrior")
+        snap = snapshot_state()
+        snap["pending_choice_confirmation"] = {"choice_index": "bad"}
+        ok, errors = validate_snapshot(snap)
+        self.assertFalse(ok)
+        self.assertTrue(any("pending choice" in error.lower() for error in errors))
 
     def test_snapshot_isolation(self):
         """Snapshots must be deep copies — mutating state must not affect the snapshot."""

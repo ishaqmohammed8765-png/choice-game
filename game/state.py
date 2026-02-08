@@ -220,6 +220,42 @@ def validate_snapshot(snapshot: Dict[str, Any]) -> tuple[bool, list[str]]:
         errors.append("Visited nodes payload must be a list.")
     if "visited_edges" in snapshot and not isinstance(snapshot["visited_edges"], list):
         errors.append("Visited edges payload must be a list.")
+    if isinstance(snapshot.get("visited_edges"), list):
+        for edge in snapshot["visited_edges"]:
+            if not isinstance(edge, dict):
+                errors.append("Visited edges entries must be objects.")
+                break
+            if "from" not in edge or "to" not in edge:
+                errors.append("Visited edges entries must include 'from' and 'to'.")
+                break
+            if not isinstance(edge["from"], str) or not isinstance(edge["to"], str):
+                errors.append("Visited edge endpoints must be strings.")
+                break
+
+    if "history" in snapshot and not isinstance(snapshot["history"], list):
+        errors.append("History payload must be a list.")
+
+    if "pending_choice_confirmation" in snapshot:
+        pending = snapshot["pending_choice_confirmation"]
+        if pending is not None and not isinstance(pending, dict):
+            errors.append("Pending choice confirmation must be an object or null.")
+        elif isinstance(pending, dict):
+            if "node" in pending and not isinstance(pending["node"], str):
+                errors.append("Pending choice confirmation node must be a string.")
+            if "choice_index" in pending and not isinstance(pending["choice_index"], int):
+                errors.append("Pending choice confirmation choice_index must be an integer.")
+            if "label" in pending and not isinstance(pending["label"], str):
+                errors.append("Pending choice confirmation label must be a string.")
+            if "warnings" in pending and not isinstance(pending["warnings"], list):
+                errors.append("Pending choice confirmation warnings must be a list.")
+
+    if "auto_event_summary" in snapshot and not isinstance(snapshot["auto_event_summary"], list):
+        errors.append("Auto event summary payload must be a list.")
+
+    if "last_outcome_summary" in snapshot:
+        summary = snapshot["last_outcome_summary"]
+        if summary is not None and not isinstance(summary, dict):
+            errors.append("Last outcome summary payload must be an object or null.")
 
     if "meta_state" in snapshot:
         meta = snapshot["meta_state"]

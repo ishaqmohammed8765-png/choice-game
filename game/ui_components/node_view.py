@@ -1,3 +1,4 @@
+from html import escape
 from typing import Any, Dict, List
 
 from game.streamlit_compat import st
@@ -15,12 +16,18 @@ from game.logic import (
     transition_to_failure,
 )
 from game.ui_components.epilogue import get_epilogue_aftermath_lines
+from game.ui_components.log_view import render_log
 from game.ui_components.sprites import item_sprite, stat_icon_svg
 
 
 def should_force_injury_redirect(node_id: str, hp: int) -> bool:
     """Return whether the current state should auto-redirect into the injured setback."""
     return hp <= 0 and not node_id.startswith("failure_") and node_id != "death"
+
+
+def _escape_html(text: Any) -> str:
+    """Escape arbitrary text for safe insertion into HTML blocks."""
+    return escape(str(text), quote=True).replace("\n", "<br/>")
 
 
 def _render_pending_confirmation(node_id: str, available_choices: List[Dict[str, Any]]) -> None:
@@ -75,11 +82,13 @@ def _render_locked_choices(choices: List[Dict[str, Any]]) -> None:
     if locked_choices:
         with st.expander("Locked paths", expanded=False):
             for choice, reason in locked_choices:
+                label_text = _escape_html(choice.get("label", "Unknown choice"))
+                reason_text = _escape_html(reason)
                 st.markdown(
                     f'<div style="padding:4px 8px;margin-bottom:4px;border:1px solid #334155;'
                     f'border-radius:6px;background:rgba(15,15,30,0.4);">'
-                    f'<span style="color:#64748b;font-family:\'Crimson Text\',serif;">**{choice["label"]}**</span>'
-                    f' - <span style="color:#94a3b8;font-style:italic;font-size:0.85rem;">{reason}</span></div>',
+                    f'<span style="color:#64748b;font-family:\'Crimson Text\',serif;"><strong>{label_text}</strong></span>'
+                    f' - <span style="color:#94a3b8;font-style:italic;font-size:0.85rem;">{reason_text}</span></div>',
                     unsafe_allow_html=True,
                 )
 
@@ -179,15 +188,16 @@ def _get_choice_cost_preview(choice: Dict[str, Any]) -> str:
             color = "#6ee7b7" if delta > 0 else "#fca5a5"
             parts.append(f'<span style="color:{color};font-size:0.75rem;">{sign}{delta} {label}</span>')
     for item in effects.get("add_items", []):
-        parts.append(f'<span style="color:#6ee7b7;font-size:0.75rem;">+{item}</span>')
+        parts.append(f'<span style="color:#6ee7b7;font-size:0.75rem;">+{_escape_html(item)}</span>')
     for item in effects.get("remove_items", []):
-        parts.append(f'<span style="color:#fca5a5;font-size:0.75rem;">-{item}</span>')
+        parts.append(f'<span style="color:#fca5a5;font-size:0.75rem;">-{_escape_html(item)}</span>')
     return " ".join(parts)
 
 
 def _render_choice_card(node_id: str, index: int, choice: Dict[str, Any], *, key_prefix: str = "choice") -> None:
     """Render a single choice as a styled card with preview info."""
     label = choice["label"]
+    safe_label = _escape_html(label)
     warnings = get_choice_warnings(choice)
     cost_preview = _get_choice_cost_preview(choice)
 
@@ -210,7 +220,7 @@ def _render_choice_card(node_id: str, index: int, choice: Dict[str, Any], *, key
             color: #e2d5c1;
             font-size: 0.95rem;
             line-height: 1.3;
-        ">{warning_icon}{label}</div>
+        ">{warning_icon}{safe_label}</div>
         {f'<div style="margin-top:3px;">{cost_preview}</div>' if cost_preview else ''}
     </div>
     """
@@ -229,6 +239,15 @@ def _render_choice_card(node_id: str, index: int, choice: Dict[str, Any], *, key
         st.rerun()
 
 
+def _should_group_by_destination(node_id: str, indexed_choices: List[tuple[int, Dict[str, Any]]], *, overflow: bool) -> bool:
+    if overflow:
+        return True
+    if len(indexed_choices) < 5:
+        return False
+    self_loop_count = sum(1 for _, choice in indexed_choices if choice.get("next") == node_id)
+    return self_loop_count >= 3
+
+
 def _render_grouped_choices(
     node_id: str,
     indexed_choices: List[tuple[int, Dict[str, Any]]],
@@ -236,14 +255,19 @@ def _render_grouped_choices(
     overflow: bool,
 ) -> None:
     has_explicit_groups = any(choice.get("group") for _, choice in indexed_choices)
+    group_by_destination = _should_group_by_destination(node_id, indexed_choices, overflow=overflow)
 
-    if not overflow and not has_explicit_groups:
+    if not group_by_destination and not has_explicit_groups:
         # Render choices as styled cards in a clean list
         for index, choice in indexed_choices:
             _render_choice_card(node_id, index, choice)
         return
 
-    groups = _group_choices(indexed_choices, group_by_destination=overflow)
+    groups = _group_choices(
+        indexed_choices,
+        group_by_destination=group_by_destination,
+        current_node_id=node_id,
+    )
     if not overflow:
         for group in groups:
             if len(group["choices"]) == 1 and not group["label"]:
@@ -292,6 +316,7 @@ def _group_choices(
     indexed_choices: List[tuple[int, Dict[str, Any]]],
     *,
     group_by_destination: bool,
+    current_node_id: str | None = None,
 ) -> List[Dict[str, Any]]:
     groups: List[Dict[str, Any]] = []
     seen: Dict[str, Dict[str, Any]] = {}
@@ -308,8 +333,11 @@ def _group_choices(
         if key not in seen:
             display_label = group_label
             if not display_label and group_by_destination:
-                next_title = STORY_NODES.get(destination, {}).get("title", destination or "Unknown")
-                display_label = f"More options \u2192 {next_title}"
+                if destination == current_node_id:
+                    display_label = "Preparation options"
+                else:
+                    next_title = STORY_NODES.get(destination, {}).get("title", destination or "Unknown")
+                    display_label = f"More options \u2192 {next_title}"
             groups.append(
                 {
                     "key": key,
@@ -363,24 +391,25 @@ def render_node() -> None:
                 font-size: 1.3rem;
                 letter-spacing: 0.04em;
                 text-shadow: 0 1px 4px rgba(0,0,0,0.4);
-            ">{node['title']}</h3>
+            ">{_escape_html(node['title'])}</h3>
             <span style="
                 color: #4a3728;
                 font-family: 'Cinzel', serif;
                 font-size: 0.65rem;
                 letter-spacing: 0.08em;
                 text-transform: uppercase;
-            ">{node_id}</span>
+            ">{_escape_html(node_id)}</span>
         </div>
         """,
         unsafe_allow_html=True,
     )
     _render_outcome_summary()
     _render_auto_events()
+    render_log()
 
     # Build narrative text with dialogue woven in
     dialogue = node.get("dialogue", [])
-    narrative_text = node["text"]
+    narrative_text = _escape_html(node["text"])
     ending_aftermath = []
     if node_id.startswith("ending_"):
         ending_aftermath = get_epilogue_aftermath_lines(max_lines=None)
@@ -403,8 +432,8 @@ def render_node() -> None:
 
     if dialogue:
         for line in dialogue:
-            speaker = line.get("speaker", "Unknown")
-            quote = line.get("line", "")
+            speaker = _escape_html(line.get("speaker", "Unknown"))
+            quote = _escape_html(line.get("line", ""))
             narrative_html += (
                 f'<div style="margin:0.5rem 0;padding:4px 0 4px 12px;border-left:2px solid #c9a54e40;">'
                 f'<span style="color:#c9a54e;font-family:\'Cinzel\',serif;font-size:0.85rem;font-weight:600;">{speaker}:</span> '
@@ -418,9 +447,10 @@ def render_node() -> None:
             '<p style="margin:0 0 0.35rem 0;color:#c9a54e;font-family:\'Cinzel\',serif;font-size:0.9rem;">Aftermath</p>'
         )
         for detail in ending_aftermath:
+            safe_detail = _escape_html(detail)
             narrative_html += (
                 f'<div style="margin:0.3rem 0;padding-left:12px;border-left:2px solid #c9a54e25;">'
-                f'<span style="color:#d4d4dc;">{detail}</span>'
+                f'<span style="color:#d4d4dc;">{safe_detail}</span>'
                 f'</div>'
             )
         narrative_html += "</div>"
