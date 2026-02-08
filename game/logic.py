@@ -206,7 +206,7 @@ def apply_effects(
 
     for key, value in effects.get("set_flags", {}).items():
         flags[key] = value
-        feedback.append(f"World state changed: {key} → {value}")
+        feedback.append(f"World state changed: {key} -> {value}")
 
     completed_branches = [
         flag_name

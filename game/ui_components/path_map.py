@@ -1,4 +1,3 @@
-import math
 from typing import Any, Dict, Iterable, List
 
 from game.streamlit_compat import st
@@ -213,7 +212,7 @@ def _build_choice_node_svg(
 
 
 def render_path_map() -> None:
-    """Render an upgraded fantasy-themed path map of the current node and outgoing choices."""
+    """Render a compact tactical map with readable destination cards."""
     node_id = st.session_state.current_node
     node = STORY_NODES.get(node_id)
     if not node:
@@ -221,429 +220,104 @@ def render_path_map() -> None:
         return
 
     choices = node.get("choices", [])
+    phase = get_phase(node_id)
+    phase_color = _PHASE_FILL_COLORS.get(phase, "#94a3b8")
 
-    # Header
-    current_phase = get_phase(node_id)
-    phase_color = _PHASE_FILL_COLORS.get(current_phase, "#c9a54e")
     st.markdown(
         f"""
-        <div style="display:flex;align-items:center;gap:0.5rem;margin-bottom:0.2rem;">
-            <h3 style="font-family:'Cinzel',serif;color:#c9a54e !important;letter-spacing:0.05em;margin:0;">
-                Path Map
-            </h3>
-            <span style="
-                display:inline-block;padding:1px 8px;border:1px solid {phase_color}60;
-                border-radius:10px;background:{phase_color}15;
-                font-family:'Cinzel',serif;font-size:0.65rem;color:{phase_color};
-                letter-spacing:0.05em;text-transform:uppercase;
-            ">{current_phase}</span>
+        <div style="
+            padding: 0.55rem 0.8rem;
+            border: 1px solid #1e293b;
+            border-radius: 10px;
+            background: linear-gradient(135deg, rgba(20,15,10,0.55), rgba(10,10,20,0.5));
+            margin-bottom: 0.5rem;
+        ">
+            <div style="display:flex;justify-content:space-between;align-items:center;gap:10px;">
+                <div>
+                    <div style="font-family:'Cinzel',serif;color:#facc15;font-size:0.95rem;letter-spacing:0.05em;">
+                        Tactical Path Map
+                    </div>
+                    <div style="font-family:'Crimson Text',serif;color:#94a3b8;font-size:0.82rem;">
+                        Current scene: {_escape_svg_text(node.get("title", node_id))}
+                    </div>
+                </div>
+                <span style="
+                    border:1px solid {phase_color}65;
+                    background:{phase_color}18;
+                    color:{phase_color};
+                    border-radius:999px;
+                    padding:2px 10px;
+                    font-family:'Cinzel',serif;
+                    font-size:0.66rem;
+                    letter-spacing:0.04em;
+                    text-transform:uppercase;
+                ">{phase}</span>
+            </div>
         </div>
         """,
         unsafe_allow_html=True,
     )
-    st.caption(
-        "Current node centered \u2022 Available paths glow \u2022 "
-        "Locked paths are dimmed \u2022 Visited paths highlighted"
-    )
-    show_two_hop = st.toggle(
-        "Show 2-hop view",
-        value=False,
-        key="show_two_hop_map",
-        help="Include the next layer of choices to preview upcoming paths.",
-    )
+
     if not choices:
-        st.info("This node has no outgoing choices.")
+        st.info("No outgoing paths from this scene.")
         return
 
     visited_nodes = set(st.session_state.visited_nodes)
-    visited_edges = {
-        (edge.get("from"), edge.get("to")) for edge in st.session_state.visited_edges
-    }
+    visited_edges = {(edge.get("from"), edge.get("to")) for edge in st.session_state.visited_edges}
 
-    # Adaptive sizing based on number of choices
-    count = len(choices)
-    base_size = 580
-    if show_two_hop:
-        # Need more room for secondary nodes
-        width = max(base_size, min(800, base_size + count * 20))
-        height = width
-    else:
-        width = base_size
-        height = base_size
+    columns_per_row = 3 if len(choices) >= 6 else 2
+    choice_columns = st.columns(columns_per_row)
+    for index, choice in enumerate(choices):
+        is_unlocked, locked_reason = check_requirements(choice.get("requirements"))
+        _, next_node_id = resolve_choice_outcome(choice)
+        destination = STORY_NODES.get(next_node_id, {}).get("title", next_node_id or "Unknown")
+        is_visited = next_node_id in visited_nodes
+        edge_visited = (node_id, next_node_id) in visited_edges
 
-    center_x = width / 2
-    center_y = height / 2
-    radius = min(width, height) * 0.28
+        status_text = "AVAILABLE"
+        status_color = "#22c55e"
+        if not is_unlocked:
+            status_text = "LOCKED"
+            status_color = "#94a3b8"
+        elif edge_visited or is_visited:
+            status_text = "VISITED"
+            status_color = "#38bdf8"
 
-    # Increase radius for many choices to prevent overlap
-    if count > 6:
-        radius = min(width, height) * 0.32
-
-    # -- Collect all rendering layers --
-    line_elements: List[str] = []
-    node_elements: List[str] = []
-    first_hop_positions: List[tuple[float, float, float, str]] = []
-
-    for idx, choice in enumerate(choices):
-        angle = (2 * math.pi * idx) / count - math.pi / 2
-        x = center_x + radius * math.cos(angle)
-        y = center_y + radius * math.sin(angle)
-
-        line_svg, node_svg, next_node = _build_choice_node_svg(
-            choice,
-            x=x, y=y,
-            origin_x=center_x, origin_y=center_y,
-            origin_node_id=node_id,
-            visited_nodes=visited_nodes,
-            visited_edges=visited_edges,
-            node_radius=22,
-            label_offset=38,
-            label_class="choice-label",
-        )
-        line_elements.append(line_svg)
-        node_elements.append(node_svg)
-        first_hop_positions.append((x, y, angle, next_node))
-
-    # -- 2-hop secondary nodes --
-    secondary_line_elements: List[str] = []
-    secondary_node_elements: List[str] = []
-    if show_two_hop:
-        secondary_radius = radius * 1.75
-        for x, y, angle, next_node in first_hop_positions:
-            next_node_data = STORY_NODES.get(next_node, {})
-            secondary_choices = next_node_data.get("choices", [])
-            if not secondary_choices:
-                continue
-            # Limit secondary nodes to prevent clutter
-            max_secondary = 4
-            secondary_choices = secondary_choices[:max_secondary]
-            spread = 0.5
-            count_secondary = len(secondary_choices)
-            for idx, secondary_choice in enumerate(secondary_choices):
-                if count_secondary == 1:
-                    offset = 0
-                else:
-                    offset = (idx - (count_secondary - 1) / 2) * (
-                        spread / max(count_secondary - 1, 1)
-                    )
-                angle_secondary = angle + offset
-                x2 = center_x + secondary_radius * math.cos(angle_secondary)
-                y2 = center_y + secondary_radius * math.sin(angle_secondary)
-
-                line_svg, node_svg, _ = _build_choice_node_svg(
-                    secondary_choice,
-                    x=x2, y=y2,
-                    origin_x=x, origin_y=y,
-                    origin_node_id=next_node,
-                    visited_nodes=visited_nodes,
-                    visited_edges=visited_edges,
-                    node_radius=14,
-                    label_offset=28,
-                    label_class="choice-label secondary-label",
-                    extra_group_classes=["secondary-node"],
-                    extra_line_classes=["secondary"],
-                    icon_y_offset=4,
-                    show_available_icon=False,
-                )
-                secondary_line_elements.append(line_svg)
-                secondary_node_elements.append(node_svg)
-
-    # -- Center node --
-    center_lines = _wrap_svg_label(_escape_svg_text(node.get("title", node_id)), max_chars=14)
-    center_label = _render_svg_text_raw(
-        center_lines, x=center_x, y=center_y + 5, class_name="center-label"
-    )
-    center_tooltip = f"<title>{_escape_svg_text(node_id)}</title>"
-
-    # -- SVG CSS styles --
-    svg_style = """
-        /* --- Path lines --- */
-        .path-line {
-            stroke: #475569;
-            stroke-width: 2;
-            stroke-linecap: round;
-        }
-        .path-line.available {
-            stroke: url(#lineGradient);
-            stroke-width: 2.5;
-            filter: url(#softGlow);
-        }
-        .path-line.locked {
-            stroke: #334155;
-            stroke-width: 1.5;
-            stroke-dasharray: 5 4;
-            opacity: 0.5;
-        }
-        .path-line.visited {
-            stroke: #38bdf8;
-            stroke-width: 2;
-            opacity: 0.85;
-        }
-        .path-line.secondary {
-            stroke-width: 1.2;
-            opacity: 0.5;
-        }
-        .path-line.secondary.visited {
-            stroke: #38bdf8;
-            opacity: 0.6;
-        }
-
-        /* --- Choice nodes --- */
-        .choice-node circle {
-            fill: url(#nodeFill);
-            stroke: #64748b;
-            stroke-width: 2;
-            transition: all 0.2s ease;
-        }
-        .choice-node.available circle {
-            stroke: #c9a54e;
-            stroke-width: 2.5;
-            filter: url(#nodeGlow);
-        }
-        .choice-node.visited circle {
-            stroke: #38bdf8;
-            fill: url(#visitedFill);
-        }
-        .choice-node.locked {
-            opacity: 0.35;
-        }
-        .choice-node.locked circle {
-            stroke: #475569;
-            stroke-dasharray: 3 3;
-            fill: #0f172a;
-        }
-
-        /* --- Choice labels --- */
-        .choice-label {
-            fill: #cbd5e1;
-            font-size: 11px;
-            font-family: 'Crimson Text', Georgia, serif;
-        }
-        .secondary-label {
-            font-size: 9px;
-            fill: #94a3b8;
-        }
-        .choice-node.available .choice-label {
-            fill: #fef3c7;
-        }
-        .choice-node.locked .choice-label {
-            fill: #64748b;
-        }
-        .choice-node.visited .choice-label {
-            fill: #7dd3fc;
-        }
-
-        /* --- Pixel sprite markers --- */
-        .status-sprite {
-            pointer-events: none;
-        }
-        .status-sprite.available rect {
-            fill: #facc15;
-            stroke: #fef3c7;
-            stroke-width: 0.25;
-        }
-        .status-sprite.visited rect {
-            fill: #38bdf8;
-            stroke: #bae6fd;
-            stroke-width: 0.25;
-        }
-        .status-sprite.locked rect {
-            fill: #94a3b8;
-            opacity: 0.8;
-        }
-        .status-sprite.secondary rect {
-            opacity: 0.85;
-        }
-
-        /* --- Secondary nodes --- */
-        .secondary-node circle {
-            stroke-width: 1.5;
-            fill: url(#secondaryFill);
-        }
-        .secondary-node.available circle {
-            stroke: #c9a54e;
-            stroke-width: 1.5;
-            filter: url(#softGlow);
-        }
-
-        /* --- Center node --- */
-        .center-node circle.outer {
-            fill: url(#centerFill);
-            stroke: #facc15;
-            stroke-width: 3;
-            filter: url(#centerGlow);
-        }
-        .center-node circle.phase-ring {
-            fill: none;
-            stroke-width: 1.5;
-            stroke-dasharray: 4 3;
-        }
-        .center-label {
-            fill: #fef9c3;
-            font-size: 12px;
-            font-weight: 600;
-            font-family: 'Cinzel', 'Times New Roman', serif;
-        }
-
-        /* --- Pulse animation for available nodes --- */
-        @keyframes pulse {
-            0%, 100% { opacity: 1; }
-            50% { opacity: 0.65; }
-        }
-        .choice-node.available circle {
-            animation: pulse 2.5s ease-in-out infinite;
-        }
-
-        /* --- Hover effects --- */
-        .choice-node:hover circle {
-            stroke-width: 3;
-            filter: url(#hoverGlow);
-        }
-        .choice-node:hover .choice-label {
-            fill: #ffffff;
-        }
-    """
-
-    # -- SVG defs (gradients and filters) --
-    svg_defs = """
-        <defs>
-            <filter id="centerGlow" x="-50%" y="-50%" width="200%" height="200%">
-                <feGaussianBlur stdDeviation="6" result="blur"/>
-                <feFlood flood-color="#facc15" flood-opacity="0.3"/>
-                <feComposite in2="blur" operator="in"/>
-                <feMerge><feMergeNode/><feMergeNode in="SourceGraphic"/></feMerge>
-            </filter>
-            <filter id="nodeGlow" x="-50%" y="-50%" width="200%" height="200%">
-                <feGaussianBlur stdDeviation="3" result="blur"/>
-                <feFlood flood-color="#c9a54e" flood-opacity="0.35"/>
-                <feComposite in2="blur" operator="in"/>
-                <feMerge><feMergeNode/><feMergeNode in="SourceGraphic"/></feMerge>
-            </filter>
-            <filter id="softGlow" x="-50%" y="-50%" width="200%" height="200%">
-                <feGaussianBlur stdDeviation="2" result="blur"/>
-                <feFlood flood-color="#c9a54e" flood-opacity="0.2"/>
-                <feComposite in2="blur" operator="in"/>
-                <feMerge><feMergeNode/><feMergeNode in="SourceGraphic"/></feMerge>
-            </filter>
-            <filter id="hoverGlow" x="-50%" y="-50%" width="200%" height="200%">
-                <feGaussianBlur stdDeviation="4" result="blur"/>
-                <feFlood flood-color="#ffffff" flood-opacity="0.25"/>
-                <feComposite in2="blur" operator="in"/>
-                <feMerge><feMergeNode/><feMergeNode in="SourceGraphic"/></feMerge>
-            </filter>
-            <linearGradient id="lineGradient" x1="0%" y1="0%" x2="100%" y2="0%">
-                <stop offset="0%" stop-color="#c9a54e" stop-opacity="0.6"/>
-                <stop offset="100%" stop-color="#facc15" stop-opacity="0.9"/>
-            </linearGradient>
-            <radialGradient id="centerFill" cx="40%" cy="35%">
-                <stop offset="0%" stop-color="#1e293b"/>
-                <stop offset="100%" stop-color="#0a0f1a"/>
-            </radialGradient>
-            <radialGradient id="nodeFill" cx="40%" cy="35%">
-                <stop offset="0%" stop-color="#1e293b"/>
-                <stop offset="100%" stop-color="#111827"/>
-            </radialGradient>
-            <radialGradient id="visitedFill" cx="40%" cy="35%">
-                <stop offset="0%" stop-color="#0c2d48"/>
-                <stop offset="100%" stop-color="#0a1628"/>
-            </radialGradient>
-            <radialGradient id="secondaryFill" cx="40%" cy="35%">
-                <stop offset="0%" stop-color="#171f2e"/>
-                <stop offset="100%" stop-color="#0d1117"/>
-            </radialGradient>
-        </defs>
-    """
-
-    # -- Assemble SVG --
-    svg = f"""
-        <svg viewBox="0 0 {width} {height}" width="100%" height="{height}px"
-             style="max-width:{width}px; display:block; margin:0 auto;
-                    background: radial-gradient(ellipse at center, rgba(15,15,30,0.4) 0%, transparent 70%);
-                    border-radius: 12px;">
-            <style>{svg_style}</style>
-            {svg_defs}
-
-            <!-- Decorative background rings -->
-            <circle cx="{center_x}" cy="{center_y}" r="{radius + 10}"
-                    fill="none" stroke="#c9a54e" stroke-opacity="0.06" stroke-width="1"/>
-            <circle cx="{center_x}" cy="{center_y}" r="{radius - 5}"
-                    fill="none" stroke="#c9a54e" stroke-opacity="0.04"
-                    stroke-width="0.5" stroke-dasharray="3 6"/>
-
-            <!-- Layer 1: Secondary lines -->
-            {''.join(secondary_line_elements)}
-            <!-- Layer 2: Primary lines -->
-            {''.join(line_elements)}
-            <!-- Layer 3: Secondary nodes -->
-            {''.join(secondary_node_elements)}
-            <!-- Layer 4: Primary nodes -->
-            {''.join(node_elements)}
-            <!-- Layer 5: Center node (on top) -->
-            <g class="center-node">
-                {center_tooltip}
-                <circle class="phase-ring" cx="{center_x}" cy="{center_y}" r="40"
-                        stroke="{phase_color}" stroke-opacity="0.4"/>
-                <circle class="outer" cx="{center_x}" cy="{center_y}" r="34"/>
-                {center_label}
-            </g>
-        </svg>
-    """
-
-    # Use components.html to bypass Streamlit's SVG sanitization
-    try:
-        import streamlit.components.v1 as components
-        full_html = f"""
-        <div style="background:transparent;padding:0;margin:0;">
-            {svg}
-            <div style="
-                display: flex; flex-wrap: wrap; gap: 1rem; justify-content: center;
-                margin-top: 0.5rem; padding: 0.5rem 0.75rem;
-                border: 1px solid #1e293b; border-radius: 8px;
-                background: rgba(10,10,20,0.5);
-                font-family: 'Crimson Text', Georgia, serif;
-                font-size: 0.8rem; color: #94a3b8;
-            ">
-                <span style="display:flex;align-items:center;gap:0.3rem;">
-                    <svg width="16" height="16" viewBox="0 0 16 16" style="image-rendering:pixelated;">
-                        <rect x="6" y="1" width="2" height="2" fill="#facc15"/><rect x="8" y="1" width="2" height="2" fill="#facc15"/>
-                        <rect x="4" y="3" width="2" height="2" fill="#facc15"/><rect x="10" y="3" width="2" height="2" fill="#facc15"/>
-                        <rect x="4" y="5" width="2" height="2" fill="#facc15"/><rect x="8" y="5" width="2" height="2" fill="#facc15"/><rect x="10" y="5" width="2" height="2" fill="#facc15"/>
-                        <rect x="4" y="7" width="2" height="2" fill="#facc15"/><rect x="10" y="7" width="2" height="2" fill="#facc15"/>
-                        <rect x="6" y="9" width="2" height="2" fill="#facc15"/><rect x="8" y="9" width="2" height="2" fill="#facc15"/>
-                    </svg>
-                    Available
-                </span>
-                <span style="display:flex;align-items:center;gap:0.3rem;">
-                    <svg width="16" height="16" viewBox="0 0 16 16" style="image-rendering:pixelated;">
-                        <rect x="4" y="5" width="2" height="2" fill="#38bdf8"/><rect x="6" y="7" width="2" height="2" fill="#38bdf8"/>
-                        <rect x="8" y="9" width="2" height="2" fill="#38bdf8"/><rect x="10" y="7" width="2" height="2" fill="#38bdf8"/>
-                        <rect x="12" y="5" width="2" height="2" fill="#38bdf8"/><rect x="8" y="3" width="2" height="2" fill="#38bdf8"/>
-                    </svg>
-                    Visited
-                </span>
-                <span style="display:flex;align-items:center;gap:0.3rem;">
-                    <svg width="16" height="16" viewBox="0 0 16 16" style="image-rendering:pixelated;">
-                        <rect x="6" y="1" width="2" height="2" fill="#94a3b8"/><rect x="8" y="1" width="2" height="2" fill="#94a3b8"/>
-                        <rect x="6" y="3" width="2" height="2" fill="#94a3b8"/><rect x="10" y="3" width="2" height="2" fill="#94a3b8"/>
-                        <rect x="6" y="5" width="2" height="2" fill="#94a3b8"/><rect x="8" y="5" width="2" height="2" fill="#94a3b8"/><rect x="10" y="5" width="2" height="2" fill="#94a3b8"/>
-                        <rect x="6" y="7" width="2" height="2" fill="#94a3b8"/><rect x="10" y="7" width="2" height="2" fill="#94a3b8"/>
-                        <rect x="6" y="9" width="2" height="2" fill="#94a3b8"/><rect x="8" y="9" width="2" height="2" fill="#94a3b8"/>
-                    </svg>
-                    Locked
-                </span>
-                <span style="display:flex;align-items:center;gap:0.3rem;">
-                    <svg width="16" height="16" viewBox="0 0 16 16" style="image-rendering:pixelated;">
-                        <rect x="3" y="3" width="10" height="10" fill="#0a0f1a" stroke="#facc15" stroke-width="1.5"/>
-                    </svg>
-                    Current
-                </span>
+        connector = "->"
+        card_html = f"""
+        <div style="
+            height: 100%;
+            min-height: 126px;
+            padding: 0.55rem 0.65rem;
+            border: 1px solid #1e293b;
+            border-left: 3px solid {status_color}90;
+            border-radius: 8px;
+            background: rgba(8, 11, 20, 0.72);
+        ">
+            <div style="display:flex;justify-content:space-between;align-items:center;gap:8px;margin-bottom:4px;">
+                <span style="font-family:'Cinzel',serif;color:#e8d5b0;font-size:0.78rem;">Path {index + 1}</span>
+                <span style="
+                    border:1px solid {status_color}66;
+                    color:{status_color};
+                    background:{status_color}16;
+                    border-radius:999px;
+                    padding:1px 8px;
+                    font-size:0.62rem;
+                    font-family:'Cinzel',serif;
+                    letter-spacing:0.05em;
+                ">{status_text}</span>
             </div>
+            <div style="color:#d4d4dc;font-size:0.9rem;line-height:1.35;margin-bottom:4px;">
+                {_escape_svg_text(choice.get("label", "Unknown choice"))}
+            </div>
+            <div style="font-size:0.8rem;color:#94a3b8;">
+                {_escape_svg_text(node.get("title", node_id))} {connector} {_escape_svg_text(destination)}
+            </div>
+            {f'<div style="margin-top:4px;color:#fda4af;font-size:0.76rem;">Req: {_escape_svg_text(locked_reason)}</div>' if not is_unlocked and locked_reason else ''}
         </div>
         """
-        components.html(full_html, height=int(height) + 80, scrolling=False)
-    except (ImportError, Exception):
-        # Fallback: render via st.markdown if components unavailable
-        st.markdown(svg, unsafe_allow_html=True)
+        with choice_columns[index % columns_per_row]:
+            st.markdown(card_html, unsafe_allow_html=True)
 
 
 def _format_requirement_lines(

@@ -8,6 +8,7 @@ from game.ui_components import (
     render_node,
     render_path_map,
     render_sidebar,
+    render_utility_bar,
     should_force_injury_redirect,
 )
 
@@ -19,5 +20,6 @@ __all__ = [
     "render_node",
     "render_path_map",
     "render_sidebar",
+    "render_utility_bar",
     "should_force_injury_redirect",
 ]

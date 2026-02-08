@@ -35,6 +35,7 @@ _DEFAULT_STATE_FIELDS: Dict[str, Any] = {
     "save_blob": "",
     "pending_choice_confirmation": None,
     "show_locked_choices": False,
+    "show_path_map": False,
     "visited_nodes": lambda: [],
     "visited_edges": lambda: [],
     "meta_state": lambda: {"unlocked_items": [], "removed_nodes": []},
@@ -159,6 +160,7 @@ def start_game(player_class: str) -> None:
     st.session_state.history = []
     st.session_state.pending_choice_confirmation = None
     st.session_state.show_locked_choices = False
+    st.session_state.show_path_map = False
     st.session_state.visited_nodes = [st.session_state.current_node]
     st.session_state.visited_edges = []
 

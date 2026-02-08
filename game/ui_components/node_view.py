@@ -79,7 +79,7 @@ def _render_locked_choices(choices: List[Dict[str, Any]]) -> None:
                     f'<div style="padding:4px 8px;margin-bottom:4px;border:1px solid #334155;'
                     f'border-radius:6px;background:rgba(15,15,30,0.4);">'
                     f'<span style="color:#64748b;font-family:\'Crimson Text\',serif;">**{choice["label"]}**</span>'
-                    f' — <span style="color:#94a3b8;font-style:italic;font-size:0.85rem;">{reason}</span></div>',
+                    f' - <span style="color:#94a3b8;font-style:italic;font-size:0.85rem;">{reason}</span></div>',
                     unsafe_allow_html=True,
                 )
 
@@ -139,7 +139,7 @@ def _render_auto_events() -> None:
         st.caption("Auto events")
         for summary in summaries:
             label = summary.get("label") or "Auto event"
-            st.write(f"- **{label}** — {format_outcome_summary(summary)}")
+            st.write(f"- **{label}** - {format_outcome_summary(summary)}")
     st.session_state.auto_event_summary = []
 
 
@@ -499,7 +499,6 @@ def render_node() -> None:
         """,
         unsafe_allow_html=True,
     )
-    st.toggle("Show locked choices", key="show_locked_choices", help="Toggle off to hide paths you cannot currently take.")
 
     _render_pending_confirmation(node_id, available_choices)
     indexed_choices = list(enumerate(available_choices))
@@ -513,3 +512,4 @@ def render_node() -> None:
         if st.button("Take a setback and adapt", type="primary"):
             transition_to_failure("resource_loss")
             st.rerun()
+

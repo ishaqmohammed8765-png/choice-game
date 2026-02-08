@@ -3,7 +3,7 @@ from game.streamlit_compat import st
 from game.data import init_story_nodes
 from game.logic import validate_story_nodes
 from game.state import ensure_session_state, start_game
-from game.ui import render_log, render_main_panel, render_node, render_path_map
+from game.ui import render_node, render_path_map, render_utility_bar
 from game.ui_components.sprites import class_icon_svg
 
 
@@ -177,6 +177,42 @@ def inject_game_theme() -> None:
         div[data-testid="stToggle"] label span {
             font-family: 'Crimson Text', Georgia, serif !important;
         }
+
+        div[data-testid="stHorizontalBlock"] {
+            align-items: start;
+        }
+        </style>
+        """,
+        unsafe_allow_html=True,
+    )
+
+
+def inject_fixed_game_layout() -> None:
+    """Keep gameplay in a fixed, non-scrolling viewport with three stacked sections."""
+    st.markdown(
+        """
+        <style>
+        [data-testid="stAppViewContainer"],
+        [data-testid="stAppViewContainer"] > .main,
+        .stApp {
+            height: 100vh !important;
+            overflow: hidden !important;
+        }
+
+        [data-testid="stMainBlockContainer"] {
+            max-width: 1080px !important;
+            padding-top: 0.7rem !important;
+            padding-bottom: 0.7rem !important;
+            height: calc(100vh - 1.4rem) !important;
+            overflow: hidden !important;
+            display: flex !important;
+            flex-direction: column !important;
+            gap: 0.55rem !important;
+        }
+
+        [data-testid="stMainBlockContainer"] > div {
+            width: 100%;
+        }
         </style>
         """,
         unsafe_allow_html=True,
@@ -349,49 +385,22 @@ def _render_validation_warnings() -> None:
 
 
 def main() -> None:
-    st.set_page_config(page_title="Oakrest: Deterministic Adventure", page_icon="shield", layout="centered")
+    st.set_page_config(page_title="Oakrest: Deterministic Adventure", page_icon="shield", layout="wide")
     inject_game_theme()
     init_story_nodes()
     ensure_session_state()
-    render_game_header()
     _render_validation_warnings()
 
     if st.session_state.player_class is None:
+        render_game_header()
         _render_class_selection()
         return
 
-    st.markdown(
-        """
-        <div style="
-            display: flex; align-items: center; gap: 0.5rem;
-            margin-bottom: 0.25rem;
-        ">
-            <h3 style="
-                font-family: 'Cinzel', serif;
-                color: #c9a54e !important;
-                margin: 0;
-                font-size: 1.1rem;
-                letter-spacing: 0.05em;
-            ">Adventure Console</h3>
-        </div>
-        """,
-        unsafe_allow_html=True,
-    )
-
-    active_panel = st.radio(
-        "View",
-        ["Story", "Path Map"],
-        horizontal=True,
-        label_visibility="collapsed",
-    )
-
-    if active_panel == "Story":
-        render_main_panel()
-        render_node()
-        render_log()
-    else:
+    inject_fixed_game_layout()
+    render_utility_bar()
+    if st.session_state.get("show_path_map", False):
         render_path_map()
-        render_log()
+    render_node()
 
 
 if __name__ == "__main__":

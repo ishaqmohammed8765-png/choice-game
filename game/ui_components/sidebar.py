@@ -290,11 +290,6 @@ def _render_player_panel_body(*, button_prefix: str) -> None:
         st.divider()
         _render_faction_bars()
 
-    if st.session_state.decision_history:
-        with st.expander("Decision History", expanded=False):
-            for entry in reversed(st.session_state.decision_history[-10:]):
-                st.caption(f"{entry.get('node', '?')} -> {entry.get('choice', '?')}")
-
     st.divider()
     if st.button(
         "Back (undo last choice)",
@@ -316,9 +311,77 @@ def _render_player_panel_body(*, button_prefix: str) -> None:
 
 
 def render_main_panel() -> None:
-    """Render the full player dashboard in the main content area."""
-    with st.expander("Player Dashboard", expanded=True):
-        _render_player_panel_body(button_prefix="main")
+    """Render a compact top utility bar in the main content area."""
+    render_utility_bar()
+
+
+def render_utility_bar() -> None:
+    """Render the compact top utility bar used during active gameplay."""
+    player_class = st.session_state.player_class or "Warrior"
+    icon = class_icon_svg(player_class, size=22)
+    current_node = st.session_state.current_node or ""
+    phase = get_phase(current_node)
+    phase_label = _PHASE_LABELS.get(phase, phase.title())
+    phase_color = _PHASE_COLORS.get(phase, "#94a3b8")
+
+    with st.container(border=True):
+        col_status, col_controls = st.columns([2.2, 1.2])
+        with col_status:
+            st.markdown(
+                f"""
+                <div style="display:flex;align-items:center;justify-content:space-between;gap:10px;margin-bottom:6px;">
+                    <div style="display:flex;align-items:center;gap:8px;">
+                        {icon}
+                        <span style="font-family:'Cinzel',serif;color:#e8d5b0;font-size:1.05rem;">{player_class}</span>
+                    </div>
+                    <span style="
+                        border:1px solid {phase_color}60;
+                        background:{phase_color}14;
+                        color:{phase_color};
+                        border-radius:999px;
+                        padding:2px 10px;
+                        font-family:'Cinzel',serif;
+                        font-size:0.68rem;
+                        letter-spacing:0.05em;
+                        text-transform:uppercase;
+                    ">{phase_label}</span>
+                </div>
+                """,
+                unsafe_allow_html=True,
+            )
+            hp = st.session_state.stats["hp"]
+            gold = st.session_state.stats["gold"]
+            strength = st.session_state.stats["strength"]
+            dexterity = st.session_state.stats["dexterity"]
+            inventory_count = len(st.session_state.inventory)
+            st.markdown(
+                f"""
+                <div style="display:flex;flex-wrap:wrap;gap:8px;">
+                    <span style="padding:3px 8px;border:1px solid #334155;border-radius:999px;">HP {hp}</span>
+                    <span style="padding:3px 8px;border:1px solid #334155;border-radius:999px;">Gold {gold}</span>
+                    <span style="padding:3px 8px;border:1px solid #334155;border-radius:999px;">STR {strength}</span>
+                    <span style="padding:3px 8px;border:1px solid #334155;border-radius:999px;">DEX {dexterity}</span>
+                    <span style="padding:3px 8px;border:1px solid #334155;border-radius:999px;">Items {inventory_count}</span>
+                </div>
+                """,
+                unsafe_allow_html=True,
+            )
+        with col_controls:
+            st.toggle("Show map", key="show_path_map", help="Show or hide the path map panel.")
+            st.toggle(
+                "Show locked",
+                key="show_locked_choices",
+                help="Show choices that are currently unavailable.",
+            )
+            undo_disabled = not st.session_state.history
+            if st.button("Undo", key="top_undo", use_container_width=True, disabled=undo_disabled):
+                previous = st.session_state.history.pop()
+                load_snapshot(previous)
+                add_log("You retrace your steps and reconsider your decision.")
+                st.rerun()
+            if st.button("Restart", key="top_restart", use_container_width=True):
+                reset_game_state()
+                st.rerun()
 
 
 def render_sidebar() -> None:
