@@ -10,6 +10,7 @@ from game.logic import (
     format_outcome_summary,
     get_available_choices,
     get_choice_warnings,
+    resolve_choice_outcome,
     transition_to,
     transition_to_failure,
 )
@@ -90,53 +91,43 @@ def _render_outcome_summary() -> None:
     stats_delta = summary.get("stats_delta", {})
     items_gained = summary.get("items_gained", [])
     items_lost = summary.get("items_lost", [])
-    flags_set = summary.get("flags_set", [])
 
-    # Build an enhanced outcome summary with sprites
-    html_parts = ['<div style="padding:0.6rem 0.8rem;border:1px solid #2a2015;border-radius:8px;background:rgba(15,15,30,0.6);margin-bottom:0.5rem;">']
-    html_parts.append('<p style="margin:0 0 0.4rem 0;color:#a8a29e;font-family:\'Cinzel\',serif;font-size:0.75rem;text-transform:uppercase;letter-spacing:0.06em;">Outcome</p>')
-
-    # Stat deltas
-    stat_html = []
+    # Build a compact inline outcome ribbon (no flags shown to reduce clutter)
+    parts: List[str] = []
     stat_map = {"hp": "HP", "gold": "Gold", "strength": "STR", "dexterity": "DEX"}
     for stat_key, label in stat_map.items():
         delta = stats_delta.get(stat_key, 0)
         if delta != 0:
-            icon = stat_icon_svg(stat_key, size=14)
+            icon = stat_icon_svg(stat_key, size=13)
             color = "#22c55e" if delta > 0 else "#ef4444"
             sign = "+" if delta > 0 else ""
-            stat_html.append(
-                f'<span style="display:inline-flex;align-items:center;gap:3px;margin-right:12px;">'
-                f'{icon}<span style="color:{color};font-family:\'Cinzel\',serif;font-weight:600;font-size:0.9rem;">{sign}{delta} {label}</span></span>'
+            parts.append(
+                f'<span style="display:inline-flex;align-items:center;gap:2px;">'
+                f'{icon}<span style="color:{color};font-weight:600;font-size:0.85rem;">{sign}{delta} {label}</span></span>'
             )
 
-    if stat_html:
-        html_parts.append(f'<div style="margin-bottom:4px;">{"".join(stat_html)}</div>')
-
-    # Items gained/lost with sprites
     if items_gained:
-        items_html = []
         for item_name in items_gained:
-            sprite = item_sprite(item_name, size=18)
-            items_html.append(f'<span style="display:inline-flex;align-items:center;gap:3px;margin-right:8px;">{sprite}<span style="color:#22c55e;">{item_name}</span></span>')
-        html_parts.append(f'<div style="margin-bottom:3px;font-family:\'Crimson Text\',serif;font-size:0.85rem;"><span style="color:#a8a29e;">Gained:</span> {"".join(items_html)}</div>')
+            sprite = item_sprite(item_name, size=16)
+            parts.append(f'<span style="display:inline-flex;align-items:center;gap:2px;">{sprite}<span style="color:#22c55e;font-size:0.85rem;">+{item_name}</span></span>')
 
     if items_lost:
-        items_html = []
         for item_name in items_lost:
-            sprite = item_sprite(item_name, size=18)
-            items_html.append(f'<span style="display:inline-flex;align-items:center;gap:3px;margin-right:8px;">{sprite}<span style="color:#ef4444;text-decoration:line-through;">{item_name}</span></span>')
-        html_parts.append(f'<div style="margin-bottom:3px;font-family:\'Crimson Text\',serif;font-size:0.85rem;"><span style="color:#a8a29e;">Lost:</span> {"".join(items_html)}</div>')
+            sprite = item_sprite(item_name, size=16)
+            parts.append(f'<span style="display:inline-flex;align-items:center;gap:2px;">{sprite}<span style="color:#ef4444;text-decoration:line-through;font-size:0.85rem;">{item_name}</span></span>')
 
-    if flags_set:
-        flag_text = ", ".join(f"{name} = {value}" for name, value in flags_set)
-        html_parts.append(f'<div style="font-family:\'Crimson Text\',serif;font-size:0.8rem;color:#94a3b8;font-style:italic;">{flag_text}</div>')
+    if not parts:
+        st.session_state.last_outcome_summary = None
+        return
 
-    if not stat_html and not items_gained and not items_lost and not flags_set:
-        html_parts.append('<p style="margin:0;color:#64748b;font-style:italic;font-size:0.85rem;">No immediate changes.</p>')
-
-    html_parts.append('</div>')
-    st.markdown("".join(html_parts), unsafe_allow_html=True)
+    separator = '<span style="color:#334155;margin:0 6px;">|</span>'
+    st.markdown(
+        f'<div style="display:flex;flex-wrap:wrap;gap:8px;align-items:center;padding:6px 10px;'
+        f'border-left:3px solid #c9a54e40;background:rgba(15,15,30,0.3);border-radius:0 6px 6px 0;'
+        f'margin-bottom:0.5rem;font-family:\'Cinzel\',serif;">'
+        f'{separator.join(parts)}</div>',
+        unsafe_allow_html=True,
+    )
     st.session_state.last_outcome_summary = None
 
 
@@ -176,6 +167,135 @@ def _is_low_impact(choice: Dict[str, Any]) -> bool:
     return set(effects.keys()) <= {"log"} and not choice.get("conditional_effects")
 
 
+def _get_choice_cost_preview(choice: Dict[str, Any]) -> str:
+    """Build a short cost/reward preview string for a choice."""
+    effects, _ = resolve_choice_outcome(choice)
+    parts: List[str] = []
+    stat_labels = {"hp": "HP", "gold": "Gold", "strength": "STR", "dexterity": "DEX"}
+    for stat_key, label in stat_labels.items():
+        delta = effects.get(stat_key, 0)
+        if delta != 0:
+            sign = "+" if delta > 0 else ""
+            color = "#6ee7b7" if delta > 0 else "#fca5a5"
+            parts.append(f'<span style="color:{color};font-size:0.75rem;">{sign}{delta} {label}</span>')
+    for item in effects.get("add_items", []):
+        parts.append(f'<span style="color:#6ee7b7;font-size:0.75rem;">+{item}</span>')
+    for item in effects.get("remove_items", []):
+        parts.append(f'<span style="color:#fca5a5;font-size:0.75rem;">-{item}</span>')
+    return " ".join(parts)
+
+
+def _render_choice_card(node_id: str, index: int, choice: Dict[str, Any], *, key_prefix: str = "choice") -> None:
+    """Render a single choice as a styled card with preview info."""
+    label = choice["label"]
+    warnings = get_choice_warnings(choice)
+    cost_preview = _get_choice_cost_preview(choice)
+
+    warning_icon = ""
+    if warnings:
+        warning_icon = '<span style="color:#fbbf24;margin-right:4px;">&#9888;</span>'
+
+    # Build the card HTML
+    card_html = f"""
+    <div style="
+        padding: 8px 12px;
+        border: 1px solid #2a201580;
+        border-left: 3px solid #c9a54e50;
+        border-radius: 4px 8px 8px 4px;
+        background: linear-gradient(135deg, rgba(20,15,10,0.5), rgba(10,10,20,0.4));
+        margin-bottom: 2px;
+    ">
+        <div style="
+            font-family: 'Crimson Text', Georgia, serif;
+            color: #e2d5c1;
+            font-size: 0.95rem;
+            line-height: 1.3;
+        ">{warning_icon}{label}</div>
+        {f'<div style="margin-top:3px;">{cost_preview}</div>' if cost_preview else ''}
+    </div>
+    """
+    st.markdown(card_html, unsafe_allow_html=True)
+
+    display_label = label
+    if len(display_label) > 50:
+        display_label = display_label[:47] + "..."
+    if warnings:
+        display_label = f"Choose: {display_label}"
+    else:
+        display_label = f"Choose: {display_label}"
+
+    if st.button(display_label, key=f"{key_prefix}_{node_id}_{index}", use_container_width=True):
+        if warnings:
+            st.session_state.pending_choice_confirmation = {
+                "node": node_id,
+                "choice_index": index,
+                "label": label,
+                "warnings": warnings,
+            }
+        else:
+            execute_choice(node_id, label, choice)
+        st.rerun()
+
+
+def _render_grouped_choices(
+    node_id: str,
+    indexed_choices: List[tuple[int, Dict[str, Any]]],
+    *,
+    overflow: bool,
+) -> None:
+    has_explicit_groups = any(choice.get("group") for _, choice in indexed_choices)
+
+    if not overflow and not has_explicit_groups:
+        # Render choices as styled cards in a clean list
+        for index, choice in indexed_choices:
+            _render_choice_card(node_id, index, choice)
+        return
+
+    groups = _group_choices(indexed_choices, group_by_destination=overflow)
+    if not overflow:
+        for group in groups:
+            if len(group["choices"]) == 1 and not group["label"]:
+                index, choice = group["choices"][0]
+                _render_choice_card(node_id, index, choice)
+            else:
+                label = group["label"] or "Grouped options"
+                with st.expander(label, expanded=False):
+                    for index, choice in group["choices"]:
+                        _render_choice_card(node_id, index, choice, key_prefix=f"group_{group['key']}")
+        return
+
+    more_groups: List[Dict[str, Any]] = []
+    primary_groups: List[Dict[str, Any]] = []
+    for group in groups:
+        if all(_is_low_impact(choice) for _, choice in group["choices"]):
+            more_groups.append(group)
+        else:
+            primary_groups.append(group)
+
+    if len(primary_groups) > MAX_CHOICES_PER_NODE - 1:
+        overflow_groups = primary_groups[MAX_CHOICES_PER_NODE - 1 :]
+        primary_groups = primary_groups[: MAX_CHOICES_PER_NODE - 1]
+        more_groups = overflow_groups + more_groups
+
+    for group in primary_groups:
+        if len(group["choices"]) == 1 and not group["label"]:
+            index, choice = group["choices"][0]
+            _render_choice_card(node_id, index, choice)
+        else:
+            label = group["label"] or "Grouped options"
+            with st.expander(label, expanded=False):
+                for index, choice in group["choices"]:
+                    _render_choice_card(node_id, index, choice, key_prefix=f"group_{group['key']}")
+
+    if more_groups:
+        with st.expander("More options", expanded=False):
+            for group in more_groups:
+                label = group["label"] or "Additional options"
+                st.caption(label)
+                for index, choice in group["choices"]:
+                    _render_choice_card(node_id, index, choice, key_prefix=f"more_{group['key']}")
+
+
 def _group_choices(
     indexed_choices: List[tuple[int, Dict[str, Any]]],
     *,
@@ -209,80 +329,6 @@ def _group_choices(
             seen[key] = groups[-1]
         seen[key]["choices"].append((index, choice))
     return groups
-
-
-def _render_choice_button(node_id: str, index: int, choice: Dict[str, Any], *, key_prefix: str = "choice") -> None:
-    label = choice["label"]
-    warnings = get_choice_warnings(choice)
-    display_label = f"\u26a0\ufe0f {label}" if warnings else label
-    if st.button(display_label, key=f"{key_prefix}_{node_id}_{index}", use_container_width=True):
-        if warnings:
-            st.session_state.pending_choice_confirmation = {
-                "node": node_id,
-                "choice_index": index,
-                "label": label,
-                "warnings": warnings,
-            }
-        else:
-            execute_choice(node_id, label, choice)
-        st.rerun()
-
-
-def _render_grouped_choices(
-    node_id: str,
-    indexed_choices: List[tuple[int, Dict[str, Any]]],
-    *,
-    overflow: bool,
-) -> None:
-    has_explicit_groups = any(choice.get("group") for _, choice in indexed_choices)
-    if not overflow and not has_explicit_groups:
-        for index, choice in indexed_choices:
-            _render_choice_button(node_id, index, choice)
-        return
-
-    groups = _group_choices(indexed_choices, group_by_destination=overflow)
-    if not overflow:
-        for group in groups:
-            if len(group["choices"]) == 1 and not group["label"]:
-                index, choice = group["choices"][0]
-                _render_choice_button(node_id, index, choice)
-            else:
-                label = group["label"] or "Grouped options"
-                with st.expander(label, expanded=False):
-                    for index, choice in group["choices"]:
-                        _render_choice_button(node_id, index, choice, key_prefix=f"group_{group['key']}")
-        return
-
-    more_groups: List[Dict[str, Any]] = []
-    primary_groups: List[Dict[str, Any]] = []
-    for group in groups:
-        if all(_is_low_impact(choice) for _, choice in group["choices"]):
-            more_groups.append(group)
-        else:
-            primary_groups.append(group)
-
-    if len(primary_groups) > MAX_CHOICES_PER_NODE - 1:
-        overflow_groups = primary_groups[MAX_CHOICES_PER_NODE - 1 :]
-        primary_groups = primary_groups[: MAX_CHOICES_PER_NODE - 1]
-        more_groups = overflow_groups + more_groups
-
-    for group in primary_groups:
-        if len(group["choices"]) == 1 and not group["label"]:
-            index, choice = group["choices"][0]
-            _render_choice_button(node_id, index, choice)
-        else:
-            label = group["label"] or "Grouped options"
-            with st.expander(label, expanded=False):
-                for index, choice in group["choices"]:
-                    _render_choice_button(node_id, index, choice, key_prefix=f"group_{group['key']}")
-
-    if more_groups:
-        with st.expander("More options", expanded=False):
-            for group in more_groups:
-                label = group["label"] or "Additional options"
-                st.caption(label)
-                for index, choice in group["choices"]:
-                    _render_choice_button(node_id, index, choice, key_prefix=f"more_{group['key']}")
 
 
 def render_node() -> None:
@@ -340,51 +386,39 @@ def render_node() -> None:
     _render_outcome_summary()
     _render_auto_events()
 
-    # Narrative text in a styled container
-    st.markdown(
-        f"""
-        <div style="
-            padding: 0.8rem 1rem;
-            border: 1px solid #2a2015;
-            border-radius: 8px;
-            background: linear-gradient(135deg, rgba(20,15,10,0.7), rgba(10,10,20,0.5));
-            margin-bottom: 0.6rem;
-            line-height: 1.7;
-            font-family: 'Crimson Text', Georgia, serif;
-            font-size: 1.05rem;
-            color: #d4d4dc;
-        ">{node['text']}</div>
-        """,
-        unsafe_allow_html=True,
-    )
-
+    # Build narrative text with dialogue woven in
     dialogue = node.get("dialogue", [])
+    narrative_text = node["text"]
+
+    # Build the combined narrative + dialogue HTML
+    narrative_html = f"""
+    <div style="
+        padding: 0.8rem 1rem;
+        border: 1px solid #2a2015;
+        border-radius: 8px;
+        background: linear-gradient(135deg, rgba(20,15,10,0.7), rgba(10,10,20,0.5));
+        margin-bottom: 0.6rem;
+        line-height: 1.7;
+        font-family: 'Crimson Text', Georgia, serif;
+        font-size: 1.05rem;
+        color: #d4d4dc;
+    ">
+        <p style="margin:0 0 0.6rem 0;">{narrative_text}</p>
+    """
+
     if dialogue:
-        dialogue_html = []
         for line in dialogue:
             speaker = line.get("speaker", "Unknown")
             quote = line.get("line", "")
-            dialogue_html.append(
-                f'<div style="margin-bottom:6px;">'
+            narrative_html += (
+                f'<div style="margin:0.5rem 0;padding:4px 0 4px 12px;border-left:2px solid #c9a54e40;">'
                 f'<span style="color:#c9a54e;font-family:\'Cinzel\',serif;font-size:0.85rem;font-weight:600;">{speaker}:</span> '
-                f'<span style="color:#d4d4dc;font-style:italic;font-family:\'Crimson Text\',serif;font-size:1rem;">&ldquo;{quote}&rdquo;</span>'
+                f'<span style="color:#d4d4dc;font-style:italic;">&ldquo;{quote}&rdquo;</span>'
                 f'</div>'
             )
-        st.markdown(
-            f"""
-            <div style="
-                padding: 0.6rem 0.8rem;
-                border-left: 3px solid #c9a54e40;
-                background: rgba(15,15,30,0.4);
-                border-radius: 0 6px 6px 0;
-                margin-bottom: 0.6rem;
-            ">
-                <p style="margin:0 0 4px 0;color:#a8a29e;font-family:'Cinzel',serif;font-size:0.7rem;text-transform:uppercase;letter-spacing:0.06em;">Dialogue</p>
-                {"".join(dialogue_html)}
-            </div>
-            """,
-            unsafe_allow_html=True,
-        )
+
+    narrative_html += "</div>"
+    st.markdown(narrative_html, unsafe_allow_html=True)
 
     if should_force_injury_redirect(node_id, st.session_state.stats["hp"]):
         transition_to_failure("injured")
@@ -450,13 +484,13 @@ def render_node() -> None:
                         st.write(f"- {detail}")
         return
 
-    # Choice header
+    # Choice section with styled header
     st.markdown(
         """
         <div style="
-            margin: 0.6rem 0 0.3rem 0;
-            padding-bottom: 0.2rem;
-            border-bottom: 1px solid #2a201530;
+            margin: 0.8rem 0 0.4rem 0;
+            padding-bottom: 0.3rem;
+            border-bottom: 1px solid #c9a54e20;
         ">
             <h4 style="
                 font-family: 'Cinzel', serif;

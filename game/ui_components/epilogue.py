@@ -14,7 +14,7 @@ def get_epilogue_aftermath_lines(*, max_lines: int | None = 9) -> List[str]:
     if flags.get("charged_finale"):
         lines.append("Bards celebrate your ferocity, while elders debate the cost of your methods.")
     if flags.get("ember_ridge_vigil_taken"):
-        lines.append("The quiet vigil at Ember Ridge becomes a ritual before every future campaign.")
+        lines.append("The quiet vigil at Ember Ridge becomes a tradition before every future campaign.")
     if flags.get("ember_ridge_vigil_spoken"):
         lines.append("Your pre-assault words at Ember Ridge are repeated as a vow among new recruits.")
     if flags.get("ember_ridge_vigil_walked"):
@@ -42,7 +42,7 @@ def get_epilogue_aftermath_lines(*, max_lines: int | None = 9) -> List[str]:
     if flags.get("ember_sigil_claimed"):
         lines.append("The Ember Sigil's warmth lingers on your skin, a brand that marks you across lifetimes.")
     if flags.get("dawn_relic_claimed"):
-        lines.append("The Dawn Relic's light steadies in your hands — the uncorrupted heart of the old kingdom now travels with you.")
+        lines.append("The First Age Relic's light steadies in your hands — the uncorrupted heart of the old kingdom now travels with you.")
     if flags.get("legacy_ending"):
         lines.append("You carried relics across lifetimes to undo Caldus's corruption from within. The valley will not forget the weight of that persistence.")
 
@@ -71,7 +71,7 @@ def get_epilogue_aftermath_lines(*, max_lines: int | None = 9) -> List[str]:
     if flags.get("archer_routes_marked"):
         lines.append("Ridgewatch signal nests expand along the valley, following your overwatch example.")
     if flags.get("dawnwarden_allied"):
-        lines.append("Dawnwarden banners fly beside Oakrest colors, a reminder of the alliance you forged.")
+        lines.append("Ironwarden banners fly beside Oakrest colors, a reminder of the alliance you forged.")
     if flags.get("ashfang_allied"):
         lines.append("Ashfang drums echo at winter markets, a tense but lasting symbol of your pact.")
     if flags.get("serin_endorsement"):
@@ -79,7 +79,7 @@ def get_epilogue_aftermath_lines(*, max_lines: int | None = 9) -> List[str]:
     if flags.get("drogath_endorsement"):
         lines.append("Drogath's backing keeps the most ruthless fighters in line, if only barely.")
     if flags.get("tidebound_knight_defeated"):
-        lines.append("With Sir Edrin freed from Caldus's warding, the causeway becomes a safer trade lane.")
+        lines.append("With Sir Edrin freed from Caldus's corruption, the causeway becomes a safer trade lane.")
     if flags.get("pyre_alchemist_defeated"):
         lines.append("Without Vorga's forge, Caldus's firebomb stockpile vanishes from battle reports.")
     if flags.get("skipped_causeway_boss_returned"):
@@ -96,8 +96,8 @@ def get_epilogue_aftermath_lines(*, max_lines: int | None = 9) -> List[str]:
         lines.append("Your reputation draws recruits from distant holds, reshaping Oakrest's standing in the region.")
 
     factions = st.session_state.factions
-    if factions.get("dawnwardens", 0) >= 2:
-        lines.append("Dawnwarden captains keep a signal fire lit in your honor, promising future mutual defense.")
+    if factions.get("ironwardens", 0) >= 2:
+        lines.append("Ironwarden captains keep a signal fire lit in your honor, promising future mutual defense.")
     if factions.get("ashfang", 0) >= 2:
         lines.append("Ashfang envoys accept a tense truce, naming you as the only outsider they'll parley with.")
     if factions.get("bandits", 0) <= -2:
