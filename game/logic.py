@@ -6,6 +6,7 @@ from game.data import FACTION_KEYS, HIGH_COST_GOLD_LOSS, HIGH_COST_HP_LOSS, STAT
 from game.content.surprise_events import SURPRISE_EVENTS
 from game.engine.requirements import check_requirements as check_requirements_engine
 from game.engine.state import state_from_session
+from game.engine.state_machine import evaluate_transition, get_phase
 from game.state import add_log, snapshot_state
 from game.validation import validate_story_nodes
 
@@ -35,8 +36,8 @@ def transition_to_failure(failure_type: str) -> None:
 def execute_choice(node_id: str, label: str, choice: Dict[str, Any]) -> None:
     """Apply a selected choice and transition to its next node.
 
-    Uses a single resolution path via ``_resolve_transition_node`` to avoid
-    divergent fallback logic between resolution and ``transition_to``.
+    Uses the state machine to evaluate transitions, applying rules for
+    HP death, missing nodes, phase-specific logic, and cross-cutting concerns.
     """
     st.session_state.pending_choice_confirmation = None
     st.session_state.history.append(snapshot_state())
@@ -57,13 +58,29 @@ def execute_choice(node_id: str, label: str, choice: Dict[str, Any]) -> None:
         add_log("This choice proves fatal. Your journey ends immediately.")
         return
 
-    actual_next = _resolve_transition_node(resolved_next)
+    # Evaluate transition through the state machine
+    sm_result = evaluate_transition(node_id, resolved_next, label, st.session_state)
+
+    # Apply any extra effects from state machine rules
+    if sm_result.extra_effects:
+        apply_effects(sm_result.extra_effects, label="(state machine)", trigger_surprises=False)
+
+    # Determine actual destination
+    actual_next = sm_result.redirect_to or resolved_next
+    # Fallback safety check
+    actual_next = _resolve_transition_node(actual_next)
+
     _record_visit(node_id, actual_next)
-    if actual_next == "death" and resolved_next != "death":
+
+    if sm_result.log_message:
+        add_log(sm_result.log_message)
+    elif actual_next == "death" and resolved_next != "death":
         add_log("You collapse from your wounds. Your journey ends here.")
     elif actual_next != resolved_next:
         add_log(f"Broken path detected for '{resolved_next}'. You are rerouted to a fallback failure arc.")
+
     st.session_state.current_node = actual_next
+    st.session_state.current_phase = get_phase(actual_next)
 
 
 def get_choice_warnings(choice: Dict[str, Any]) -> List[str]:

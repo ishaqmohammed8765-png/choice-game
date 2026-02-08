@@ -4,11 +4,11 @@ from game.data import init_story_nodes
 from game.logic import validate_story_nodes
 from game.state import ensure_session_state, start_game
 from game.ui import render_log, render_node, render_path_map, render_sidebar
+from game.ui_components.sprites import class_icon_svg
 
 
 CLASS_INFO = {
     "Warrior": {
-        "icon": "shield",
         "desc": (
             "A stalwart defender with unmatched fortitude. Higher HP and Strength let you "
             "force through obstacles and endure punishment others cannot."
@@ -18,7 +18,6 @@ CLASS_INFO = {
         "accent": "#fca5a5",
     },
     "Rogue": {
-        "icon": "dagger",
         "desc": (
             "A cunning shadow who thrives on guile. Higher Dexterity and starting Lockpicks "
             "open paths closed to brute strength."
@@ -28,7 +27,6 @@ CLASS_INFO = {
         "accent": "#c4b5fd",
     },
     "Archer": {
-        "icon": "bow",
         "desc": (
             "A keen-eyed tactician with balanced capabilities. Adaptable Strength and "
             "Dexterity let you flex between combat styles as the story demands."
@@ -83,14 +81,20 @@ def inject_game_theme() -> None:
             font-family: 'Crimson Text', Georgia, serif !important;
             font-size: 1.05rem !important;
             padding: 0.6rem 1rem !important;
-            transition: all 0.2s ease !important;
+            transition: all 0.25s ease !important;
             text-shadow: 0 1px 2px rgba(0,0,0,0.4);
+            position: relative;
+            overflow: hidden;
         }
         div.stButton > button:hover {
             background: linear-gradient(180deg, #2a3a50 0%, #1a2740 100%) !important;
             border-color: #c9a54e !important;
             box-shadow: 0 0 12px rgba(201, 165, 78, 0.15), inset 0 1px 0 rgba(255,255,255,0.05) !important;
             color: #fef3c7 !important;
+            transform: translateY(-1px);
+        }
+        div.stButton > button:active {
+            transform: translateY(0px) !important;
         }
         div.stButton > button[kind="primary"] {
             background: linear-gradient(180deg, #78350f 0%, #451a03 100%) !important;
@@ -168,6 +172,11 @@ def inject_game_theme() -> None:
         ::-webkit-scrollbar-thumb:hover {
             background: #3a3025;
         }
+
+        /* Toggle switch styling */
+        div[data-testid="stToggle"] label span {
+            font-family: 'Crimson Text', Georgia, serif !important;
+        }
         </style>
         """,
         unsafe_allow_html=True,
@@ -219,15 +228,9 @@ def render_game_header() -> None:
 
 
 def _render_class_selection() -> None:
-    """Render a fantasy-themed class selection screen."""
+    """Render a fantasy-themed class selection screen with pixel art class icons."""
     st.markdown(
         """
-        <div style="padding: 0.8rem 1rem; border: 1px solid #334155; border-radius: 12px;
-                    background: linear-gradient(90deg, rgba(30,41,59,.75), rgba(51,65,85,.45));
-                    margin-bottom: 0.75rem;">
-            <h2 style="margin:0;">⚔️ Oakrest: Deterministic Adventure</h2>
-            <p style="margin:0.25rem 0 0 0; color:#cbd5e1;">No dice. No randomness. Every choice carries weight.</p>
-        </div>
         <div style="text-align: center; margin: 1rem 0 2rem 0;">
             <h1 style="
                 font-family: 'Cinzel', serif;
@@ -283,6 +286,7 @@ def _render_class_selection() -> None:
     classes = [("Warrior", col1), ("Rogue", col2), ("Archer", col3)]
     for class_name, col in classes:
         info = CLASS_INFO[class_name]
+        icon_svg = class_icon_svg(class_name, size=48)
         with col:
             st.markdown(
                 f"""
@@ -292,9 +296,13 @@ def _render_class_selection() -> None:
                     border-radius: 8px;
                     background: linear-gradient(180deg, rgba(15,12,20,0.9), rgba(8,6,12,0.95));
                     text-align: center;
-                    min-height: 220px;
+                    min-height: 260px;
                     box-shadow: 0 2px 12px rgba(0,0,0,0.3), inset 0 1px 0 {info['color']}15;
+                    transition: border-color 0.3s ease, box-shadow 0.3s ease;
                 ">
+                    <div style="margin-bottom: 0.5rem;">
+                        {icon_svg}
+                    </div>
                     <h3 style="
                         font-family: 'Cinzel', serif;
                         color: {info['accent']} !important;
@@ -341,7 +349,7 @@ def _render_validation_warnings() -> None:
 
 
 def main() -> None:
-    st.set_page_config(page_title="Oakrest: Deterministic Adventure", page_icon="🛡️", layout="centered")
+    st.set_page_config(page_title="Oakrest: Deterministic Adventure", page_icon="shield", layout="centered")
     inject_game_theme()
     init_story_nodes()
     ensure_session_state()
