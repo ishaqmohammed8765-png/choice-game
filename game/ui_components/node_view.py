@@ -14,6 +14,7 @@ from game.logic import (
     transition_to_failure,
 )
 from game.ui_components.epilogue import get_epilogue_aftermath_lines
+from game.ui_components.sprites import item_sprite, stat_icon_svg
 
 
 def should_force_injury_redirect(node_id: str, hp: int) -> bool:
@@ -26,10 +27,29 @@ def _render_pending_confirmation(node_id: str, available_choices: List[Dict[str,
     if not pending or pending.get("node") != node_id:
         return
 
+    st.markdown(
+        """
+        <div style="
+            padding: 0.8rem 1rem;
+            border: 1px solid #b9451c80;
+            border-radius: 8px;
+            background: linear-gradient(135deg, rgba(185,28,28,0.15), rgba(30,20,10,0.6));
+            margin-bottom: 0.5rem;
+        ">
+            <p style="
+                margin: 0 0 0.3rem 0;
+                font-family: 'Cinzel', serif;
+                color: #fca5a5;
+                font-size: 0.9rem;
+            ">Confirm risky choice</p>
+        </div>
+        """,
+        unsafe_allow_html=True,
+    )
     with st.container(border=True):
         st.warning(f"Confirm choice: **{pending['label']}**")
         for warning in pending.get("warnings", []):
-            st.write(f"- ⚠️ {warning}")
+            st.write(f"- {warning}")
         col_confirm, col_cancel = st.columns(2)
         with col_confirm:
             if st.button("Confirm risky choice", type="primary", key=f"confirm_{node_id}", use_container_width=True):
@@ -54,7 +74,13 @@ def _render_locked_choices(choices: List[Dict[str, Any]]) -> None:
     if locked_choices:
         with st.expander("Locked paths", expanded=False):
             for choice, reason in locked_choices:
-                st.write(f"- **{choice['label']}** — _{reason}_")
+                st.markdown(
+                    f'<div style="padding:4px 8px;margin-bottom:4px;border:1px solid #334155;'
+                    f'border-radius:6px;background:rgba(15,15,30,0.4);">'
+                    f'<span style="color:#64748b;font-family:\'Crimson Text\',serif;">**{choice["label"]}**</span>'
+                    f' — <span style="color:#94a3b8;font-style:italic;font-size:0.85rem;">{reason}</span></div>',
+                    unsafe_allow_html=True,
+                )
 
 
 def _render_outcome_summary() -> None:
@@ -66,33 +92,51 @@ def _render_outcome_summary() -> None:
     items_lost = summary.get("items_lost", [])
     flags_set = summary.get("flags_set", [])
 
-    with st.container(border=True):
-        st.caption("Outcome Summary")
-        stat_definitions = [
-            ("HP", "hp"),
-            ("Gold", "gold"),
-            ("STR", "strength"),
-            ("DEX", "dexterity"),
-        ]
-        changed_stats = [(label, key) for label, key in stat_definitions if key in stats_delta]
-        if changed_stats:
-            columns = st.columns(len(changed_stats))
-            for col, (label, key) in zip(columns, changed_stats):
-                value = max(0, st.session_state.stats[key]) if key == "hp" else st.session_state.stats[key]
-                col.metric(label, value, _format_delta(stats_delta.get(key, 0)))
-        else:
-            st.caption("No stat changes.")
+    # Build an enhanced outcome summary with sprites
+    html_parts = ['<div style="padding:0.6rem 0.8rem;border:1px solid #2a2015;border-radius:8px;background:rgba(15,15,30,0.6);margin-bottom:0.5rem;">']
+    html_parts.append('<p style="margin:0 0 0.4rem 0;color:#a8a29e;font-family:\'Cinzel\',serif;font-size:0.75rem;text-transform:uppercase;letter-spacing:0.06em;">Outcome</p>')
 
-        if items_gained or items_lost or flags_set:
-            if items_gained:
-                st.write(f"**Items gained:** {', '.join(items_gained)}")
-            if items_lost:
-                st.write(f"**Items lost:** {', '.join(items_lost)}")
-            if flags_set:
-                flag_text = ", ".join(f"{name} → {value}" for name, value in flags_set)
-                st.write(f"**Flags set:** {flag_text}")
-        else:
-            st.caption("No inventory or flag changes.")
+    # Stat deltas
+    stat_html = []
+    stat_map = {"hp": "HP", "gold": "Gold", "strength": "STR", "dexterity": "DEX"}
+    for stat_key, label in stat_map.items():
+        delta = stats_delta.get(stat_key, 0)
+        if delta != 0:
+            icon = stat_icon_svg(stat_key, size=14)
+            color = "#22c55e" if delta > 0 else "#ef4444"
+            sign = "+" if delta > 0 else ""
+            stat_html.append(
+                f'<span style="display:inline-flex;align-items:center;gap:3px;margin-right:12px;">'
+                f'{icon}<span style="color:{color};font-family:\'Cinzel\',serif;font-weight:600;font-size:0.9rem;">{sign}{delta} {label}</span></span>'
+            )
+
+    if stat_html:
+        html_parts.append(f'<div style="margin-bottom:4px;">{"".join(stat_html)}</div>')
+
+    # Items gained/lost with sprites
+    if items_gained:
+        items_html = []
+        for item_name in items_gained:
+            sprite = item_sprite(item_name, size=18)
+            items_html.append(f'<span style="display:inline-flex;align-items:center;gap:3px;margin-right:8px;">{sprite}<span style="color:#22c55e;">{item_name}</span></span>')
+        html_parts.append(f'<div style="margin-bottom:3px;font-family:\'Crimson Text\',serif;font-size:0.85rem;"><span style="color:#a8a29e;">Gained:</span> {"".join(items_html)}</div>')
+
+    if items_lost:
+        items_html = []
+        for item_name in items_lost:
+            sprite = item_sprite(item_name, size=18)
+            items_html.append(f'<span style="display:inline-flex;align-items:center;gap:3px;margin-right:8px;">{sprite}<span style="color:#ef4444;text-decoration:line-through;">{item_name}</span></span>')
+        html_parts.append(f'<div style="margin-bottom:3px;font-family:\'Crimson Text\',serif;font-size:0.85rem;"><span style="color:#a8a29e;">Lost:</span> {"".join(items_html)}</div>')
+
+    if flags_set:
+        flag_text = ", ".join(f"{name} = {value}" for name, value in flags_set)
+        html_parts.append(f'<div style="font-family:\'Crimson Text\',serif;font-size:0.8rem;color:#94a3b8;font-style:italic;">{flag_text}</div>')
+
+    if not stat_html and not items_gained and not items_lost and not flags_set:
+        html_parts.append('<p style="margin:0;color:#64748b;font-style:italic;font-size:0.85rem;">No immediate changes.</p>')
+
+    html_parts.append('</div>')
+    st.markdown("".join(html_parts), unsafe_allow_html=True)
     st.session_state.last_outcome_summary = None
 
 
@@ -153,7 +197,7 @@ def _group_choices(
             display_label = group_label
             if not display_label and group_by_destination:
                 next_title = STORY_NODES.get(destination, {}).get("title", destination or "Unknown")
-                display_label = f"More options → {next_title}"
+                display_label = f"More options \u2192 {next_title}"
             groups.append(
                 {
                     "key": key,
@@ -170,7 +214,7 @@ def _group_choices(
 def _render_choice_button(node_id: str, index: int, choice: Dict[str, Any], *, key_prefix: str = "choice") -> None:
     label = choice["label"]
     warnings = get_choice_warnings(choice)
-    display_label = f"⚠️ {label}" if warnings else label
+    display_label = f"\u26a0\ufe0f {label}" if warnings else label
     if st.button(display_label, key=f"{key_prefix}_{node_id}_{index}", use_container_width=True):
         if warnings:
             st.session_state.pending_choice_confirmation = {
@@ -266,20 +310,81 @@ def render_node() -> None:
     if _render_pending_auto_death():
         return
 
-    st.markdown(f"### 🧭 {node['title']}")
+    # Enhanced node title with decorative styling
+    st.markdown(
+        f"""
+        <div style="
+            padding: 0.5rem 0;
+            margin-bottom: 0.3rem;
+            border-bottom: 1px solid #2a201540;
+        ">
+            <h3 style="
+                font-family: 'Cinzel', serif;
+                color: #e8d5b0 !important;
+                margin: 0;
+                font-size: 1.3rem;
+                letter-spacing: 0.04em;
+                text-shadow: 0 1px 4px rgba(0,0,0,0.4);
+            ">{node['title']}</h3>
+            <span style="
+                color: #4a3728;
+                font-family: 'Cinzel', serif;
+                font-size: 0.65rem;
+                letter-spacing: 0.08em;
+                text-transform: uppercase;
+            ">{node_id}</span>
+        </div>
+        """,
+        unsafe_allow_html=True,
+    )
     _render_outcome_summary()
     _render_auto_events()
-    with st.container(border=True):
-        st.write(node["text"])
+
+    # Narrative text in a styled container
+    st.markdown(
+        f"""
+        <div style="
+            padding: 0.8rem 1rem;
+            border: 1px solid #2a2015;
+            border-radius: 8px;
+            background: linear-gradient(135deg, rgba(20,15,10,0.7), rgba(10,10,20,0.5));
+            margin-bottom: 0.6rem;
+            line-height: 1.7;
+            font-family: 'Crimson Text', Georgia, serif;
+            font-size: 1.05rem;
+            color: #d4d4dc;
+        ">{node['text']}</div>
+        """,
+        unsafe_allow_html=True,
+    )
 
     dialogue = node.get("dialogue", [])
     if dialogue:
-        with st.container(border=True):
-            st.caption("Dialogue")
-            for line in dialogue:
-                speaker = line.get("speaker", "Unknown")
-                quote = line.get("line", "")
-                st.markdown(f"**{speaker}:** _\"{quote}\"_")
+        dialogue_html = []
+        for line in dialogue:
+            speaker = line.get("speaker", "Unknown")
+            quote = line.get("line", "")
+            dialogue_html.append(
+                f'<div style="margin-bottom:6px;">'
+                f'<span style="color:#c9a54e;font-family:\'Cinzel\',serif;font-size:0.85rem;font-weight:600;">{speaker}:</span> '
+                f'<span style="color:#d4d4dc;font-style:italic;font-family:\'Crimson Text\',serif;font-size:1rem;">&ldquo;{quote}&rdquo;</span>'
+                f'</div>'
+            )
+        st.markdown(
+            f"""
+            <div style="
+                padding: 0.6rem 0.8rem;
+                border-left: 3px solid #c9a54e40;
+                background: rgba(15,15,30,0.4);
+                border-radius: 0 6px 6px 0;
+                margin-bottom: 0.6rem;
+            ">
+                <p style="margin:0 0 4px 0;color:#a8a29e;font-family:'Cinzel',serif;font-size:0.7rem;text-transform:uppercase;letter-spacing:0.06em;">Dialogue</p>
+                {"".join(dialogue_html)}
+            </div>
+            """,
+            unsafe_allow_html=True,
+        )
 
     if should_force_injury_redirect(node_id, st.session_state.stats["hp"]):
         transition_to_failure("injured")
@@ -303,7 +408,34 @@ def render_node() -> None:
                     st.write(f"- {entry}")
 
     if not choices:
-        st.success("The story has reached an ending. Restart to explore another path.")
+        st.markdown(
+            """
+            <div style="
+                padding: 0.8rem 1rem;
+                border: 1px solid #c9a54e40;
+                border-radius: 8px;
+                background: linear-gradient(135deg, rgba(30,20,10,0.6), rgba(20,15,8,0.4));
+                text-align: center;
+                margin: 1rem 0;
+            ">
+                <p style="
+                    margin: 0;
+                    color: #c9a54e;
+                    font-family: 'Cinzel', serif;
+                    font-size: 1rem;
+                    letter-spacing: 0.04em;
+                ">The story has reached an ending.</p>
+                <p style="
+                    margin: 0.3rem 0 0 0;
+                    color: #8b7355;
+                    font-family: 'Crimson Text', Georgia, serif;
+                    font-size: 0.9rem;
+                    font-style: italic;
+                ">Restart to explore another path.</p>
+            </div>
+            """,
+            unsafe_allow_html=True,
+        )
         if node_id.startswith("ending_"):
             show_full_epilogue = st.toggle(
                 "Show full epilogue",
@@ -318,7 +450,25 @@ def render_node() -> None:
                         st.write(f"- {detail}")
         return
 
-    st.subheader("🎮 What do you do?")
+    # Choice header
+    st.markdown(
+        """
+        <div style="
+            margin: 0.6rem 0 0.3rem 0;
+            padding-bottom: 0.2rem;
+            border-bottom: 1px solid #2a201530;
+        ">
+            <h4 style="
+                font-family: 'Cinzel', serif;
+                color: #c9a54e !important;
+                margin: 0;
+                font-size: 1rem;
+                letter-spacing: 0.05em;
+            ">What do you do?</h4>
+        </div>
+        """,
+        unsafe_allow_html=True,
+    )
     st.toggle("Show locked choices", key="show_locked_choices", help="Toggle off to hide paths you cannot currently take.")
 
     _render_pending_confirmation(node_id, available_choices)

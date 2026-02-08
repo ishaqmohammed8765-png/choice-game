@@ -4,6 +4,7 @@ from typing import Any, Dict, Iterable, List
 from game.streamlit_compat import st
 
 from game.data import STORY_NODES
+from game.engine.state_machine import get_phase
 from game.logic import check_requirements, resolve_choice_outcome
 
 
@@ -14,6 +15,16 @@ _TOOLTIP_STAT_SPECS: List[tuple[str, str, str]] = [
     ("min_strength", "strength", "Strength"),
     ("min_dexterity", "dexterity", "Dexterity"),
 ]
+
+_PHASE_FILL_COLORS: Dict[str, str] = {
+    "intro": "#94a3b8",
+    "exploration": "#22c55e",
+    "combat": "#ef4444",
+    "council": "#facc15",
+    "finale": "#f97316",
+    "ending": "#38bdf8",
+    "failure": "#8b5cf6",
+}
 
 
 def format_requirement_tooltip(
@@ -72,10 +83,10 @@ def _build_choice_node_svg(
     extra_line_classes: List[str] | None = None,
     icon_y_offset: int = 5,
     show_available_icon: bool = True,
-) -> tuple[str, str]:
+) -> tuple[str, str, str]:
     """Build SVG elements for a single choice node and its connecting line.
 
-    Returns (line_svg, node_group_svg).
+    Returns (line_svg, node_group_svg, next_node_id).
     """
     is_unlocked, _ = check_requirements(choice.get("requirements"))
     is_locked = not is_unlocked
@@ -84,7 +95,7 @@ def _build_choice_node_svg(
     edge_visited = edge_key in visited_edges
     node_visited = next_node in visited_nodes
 
-    # Tooltip for locked nodes
+    # Tooltip for locked nodes - escape all content for SVG safety
     tooltip = ""
     if is_locked:
         tooltip_text = format_requirement_tooltip(
@@ -96,9 +107,9 @@ def _build_choice_node_svg(
         )
         tooltip = f"<title>{_escape_svg_text(tooltip_text)}</title>"
 
-    # Label
-    label_lines = _wrap_svg_label(choice["label"])
-    label_svg = _render_svg_text(
+    # Label - escape choice label text
+    label_lines = _wrap_svg_label(_escape_svg_text(choice["label"]))
+    label_svg = _render_svg_text_raw(
         label_lines, x=x, y=y + label_offset, class_name=label_class,
     )
 
@@ -140,14 +151,27 @@ def _build_choice_node_svg(
             f'class="node-icon available-icon{icon_suffix}">\u2726</text>'
         )
 
+    # Determine destination phase for coloring the node border
+    dest_phase = get_phase(next_node)
+    phase_color = _PHASE_FILL_COLORS.get(dest_phase, "#64748b")
+
+    # Add phase indicator ring for available nodes
+    phase_ring = ""
+    if not is_locked and not node_visited:
+        phase_ring = (
+            f'<circle cx="{x}" cy="{y}" r="{node_radius + 4}" '
+            f'fill="none" stroke="{phase_color}" stroke-opacity="0.2" stroke-width="1"/>'
+        )
+
     line_svg = (
         f'<line class="{" ".join(line_class_parts)}" '
-        f'x1="{origin_x}" y1="{origin_y}" x2="{x}" y2="{y}"></line>'
+        f'x1="{origin_x}" y1="{origin_y}" x2="{x}" y2="{y}"/>'
     )
     node_svg = (
         f'<g class="{" ".join(group_classes)}">'
         f'{tooltip}'
-        f'<circle cx="{x}" cy="{y}" r="{node_radius}"></circle>'
+        f'{phase_ring}'
+        f'<circle cx="{x}" cy="{y}" r="{node_radius}"/>'
         f'{icon_svg}'
         f'{label_svg}'
         f'</g>'
@@ -165,10 +189,24 @@ def render_path_map() -> None:
         return
 
     choices = node.get("choices", [])
+
+    # Header
+    current_phase = get_phase(node_id)
+    phase_color = _PHASE_FILL_COLORS.get(current_phase, "#c9a54e")
     st.markdown(
-        '<h3 style="font-family:\'Cinzel\',serif; color:#c9a54e !important; '
-        'letter-spacing:0.05em; margin-bottom:0.2rem;">'
-        "Path Map</h3>",
+        f"""
+        <div style="display:flex;align-items:center;gap:0.5rem;margin-bottom:0.2rem;">
+            <h3 style="font-family:'Cinzel',serif;color:#c9a54e !important;letter-spacing:0.05em;margin:0;">
+                Path Map
+            </h3>
+            <span style="
+                display:inline-block;padding:1px 8px;border:1px solid {phase_color}60;
+                border-radius:10px;background:{phase_color}15;
+                font-family:'Cinzel',serif;font-size:0.65rem;color:{phase_color};
+                letter-spacing:0.05em;text-transform:uppercase;
+            ">{current_phase}</span>
+        </div>
+        """,
         unsafe_allow_html=True,
     )
     st.caption(
@@ -190,17 +228,29 @@ def render_path_map() -> None:
         (edge.get("from"), edge.get("to")) for edge in st.session_state.visited_edges
     }
 
-    width = 580
-    height = 580
+    # Adaptive sizing based on number of choices
+    count = len(choices)
+    base_size = 580
+    if show_two_hop:
+        # Need more room for secondary nodes
+        width = max(base_size, min(800, base_size + count * 20))
+        height = width
+    else:
+        width = base_size
+        height = base_size
+
     center_x = width / 2
     center_y = height / 2
-    radius = min(width, height) * 0.30
+    radius = min(width, height) * 0.28
+
+    # Increase radius for many choices to prevent overlap
+    if count > 6:
+        radius = min(width, height) * 0.32
 
     # -- Collect all rendering layers --
     line_elements: List[str] = []
     node_elements: List[str] = []
     first_hop_positions: List[tuple[float, float, float, str]] = []
-    count = len(choices)
 
     for idx, choice in enumerate(choices):
         angle = (2 * math.pi * idx) / count - math.pi / 2
@@ -226,20 +276,23 @@ def render_path_map() -> None:
     secondary_line_elements: List[str] = []
     secondary_node_elements: List[str] = []
     if show_two_hop:
-        secondary_radius = radius * 1.8
+        secondary_radius = radius * 1.75
         for x, y, angle, next_node in first_hop_positions:
             next_node_data = STORY_NODES.get(next_node, {})
             secondary_choices = next_node_data.get("choices", [])
             if not secondary_choices:
                 continue
-            spread = 0.55
+            # Limit secondary nodes to prevent clutter
+            max_secondary = 4
+            secondary_choices = secondary_choices[:max_secondary]
+            spread = 0.5
             count_secondary = len(secondary_choices)
             for idx, secondary_choice in enumerate(secondary_choices):
                 if count_secondary == 1:
                     offset = 0
                 else:
                     offset = (idx - (count_secondary - 1) / 2) * (
-                        spread / (count_secondary - 1)
+                        spread / max(count_secondary - 1, 1)
                     )
                 angle_secondary = angle + offset
                 x2 = center_x + secondary_radius * math.cos(angle_secondary)
@@ -252,8 +305,8 @@ def render_path_map() -> None:
                     origin_node_id=next_node,
                     visited_nodes=visited_nodes,
                     visited_edges=visited_edges,
-                    node_radius=16,
-                    label_offset=32,
+                    node_radius=14,
+                    label_offset=28,
                     label_class="choice-label secondary-label",
                     extra_group_classes=["secondary-node"],
                     extra_line_classes=["secondary"],
@@ -263,9 +316,9 @@ def render_path_map() -> None:
                 secondary_line_elements.append(line_svg)
                 secondary_node_elements.append(node_svg)
 
-    # -- Center node (rendered last so it draws on top) --
-    center_lines = _wrap_svg_label(node.get("title", node_id), max_chars=14)
-    center_label = _render_svg_text(
+    # -- Center node --
+    center_lines = _wrap_svg_label(_escape_svg_text(node.get("title", node_id)), max_chars=14)
+    center_label = _render_svg_text_raw(
         center_lines, x=center_x, y=center_y + 5, class_name="center-label"
     )
     center_tooltip = f"<title>{_escape_svg_text(node_id)}</title>"
@@ -292,14 +345,15 @@ def render_path_map() -> None:
         .path-line.visited {
             stroke: #38bdf8;
             stroke-width: 2;
+            opacity: 0.85;
         }
         .path-line.secondary {
-            stroke-width: 1.4;
-            opacity: 0.6;
+            stroke-width: 1.2;
+            opacity: 0.5;
         }
         .path-line.secondary.visited {
             stroke: #38bdf8;
-            opacity: 0.7;
+            opacity: 0.6;
         }
 
         /* --- Choice nodes --- */
@@ -334,7 +388,7 @@ def render_path_map() -> None:
             font-family: 'Crimson Text', Georgia, serif;
         }
         .secondary-label {
-            font-size: 10px;
+            font-size: 9px;
             fill: #94a3b8;
         }
         .choice-node.available .choice-label {
@@ -353,7 +407,7 @@ def render_path_map() -> None:
             pointer-events: none;
         }
         .node-icon.sec {
-            font-size: 11px;
+            font-size: 10px;
         }
         .locked-icon {
             fill: #94a3b8;
@@ -376,16 +430,21 @@ def render_path_map() -> None:
         }
         .secondary-node.available circle {
             stroke: #c9a54e;
-            stroke-width: 2;
+            stroke-width: 1.5;
             filter: url(#softGlow);
         }
 
         /* --- Center node --- */
-        .center-node circle {
+        .center-node circle.outer {
             fill: url(#centerFill);
             stroke: #facc15;
             stroke-width: 3;
             filter: url(#centerGlow);
+        }
+        .center-node circle.phase-ring {
+            fill: none;
+            stroke-width: 1.5;
+            stroke-dasharray: 4 3;
         }
         .center-label {
             fill: #fef9c3;
@@ -414,47 +473,32 @@ def render_path_map() -> None:
     """
 
     # -- SVG defs (gradients and filters) --
-    svg_defs = f"""
+    svg_defs = """
         <defs>
-            <!-- Glow filters -->
             <filter id="centerGlow" x="-50%" y="-50%" width="200%" height="200%">
                 <feGaussianBlur stdDeviation="6" result="blur"/>
                 <feFlood flood-color="#facc15" flood-opacity="0.3"/>
                 <feComposite in2="blur" operator="in"/>
-                <feMerge>
-                    <feMergeNode/>
-                    <feMergeNode in="SourceGraphic"/>
-                </feMerge>
+                <feMerge><feMergeNode/><feMergeNode in="SourceGraphic"/></feMerge>
             </filter>
             <filter id="nodeGlow" x="-50%" y="-50%" width="200%" height="200%">
                 <feGaussianBlur stdDeviation="3" result="blur"/>
                 <feFlood flood-color="#c9a54e" flood-opacity="0.35"/>
                 <feComposite in2="blur" operator="in"/>
-                <feMerge>
-                    <feMergeNode/>
-                    <feMergeNode in="SourceGraphic"/>
-                </feMerge>
+                <feMerge><feMergeNode/><feMergeNode in="SourceGraphic"/></feMerge>
             </filter>
             <filter id="softGlow" x="-50%" y="-50%" width="200%" height="200%">
                 <feGaussianBlur stdDeviation="2" result="blur"/>
                 <feFlood flood-color="#c9a54e" flood-opacity="0.2"/>
                 <feComposite in2="blur" operator="in"/>
-                <feMerge>
-                    <feMergeNode/>
-                    <feMergeNode in="SourceGraphic"/>
-                </feMerge>
+                <feMerge><feMergeNode/><feMergeNode in="SourceGraphic"/></feMerge>
             </filter>
             <filter id="hoverGlow" x="-50%" y="-50%" width="200%" height="200%">
                 <feGaussianBlur stdDeviation="4" result="blur"/>
                 <feFlood flood-color="#ffffff" flood-opacity="0.25"/>
                 <feComposite in2="blur" operator="in"/>
-                <feMerge>
-                    <feMergeNode/>
-                    <feMergeNode in="SourceGraphic"/>
-                </feMerge>
+                <feMerge><feMergeNode/><feMergeNode in="SourceGraphic"/></feMerge>
             </filter>
-
-            <!-- Gradients -->
             <linearGradient id="lineGradient" x1="0%" y1="0%" x2="100%" y2="0%">
                 <stop offset="0%" stop-color="#c9a54e" stop-opacity="0.6"/>
                 <stop offset="100%" stop-color="#facc15" stop-opacity="0.9"/>
@@ -475,13 +519,6 @@ def render_path_map() -> None:
                 <stop offset="0%" stop-color="#171f2e"/>
                 <stop offset="100%" stop-color="#0d1117"/>
             </radialGradient>
-
-            <!-- Decorative ring around center -->
-            <radialGradient id="ringGrad" cx="50%" cy="50%">
-                <stop offset="85%" stop-color="transparent"/>
-                <stop offset="95%" stop-color="#c9a54e" stop-opacity="0.08"/>
-                <stop offset="100%" stop-color="transparent"/>
-            </radialGradient>
         </defs>
     """
 
@@ -494,10 +531,9 @@ def render_path_map() -> None:
             <style>{svg_style}</style>
             {svg_defs}
 
-            <!-- Decorative background ring -->
+            <!-- Decorative background rings -->
             <circle cx="{center_x}" cy="{center_y}" r="{radius + 10}"
-                    fill="none" stroke="#c9a54e" stroke-opacity="0.06"
-                    stroke-width="1"/>
+                    fill="none" stroke="#c9a54e" stroke-opacity="0.06" stroke-width="1"/>
             <circle cx="{center_x}" cy="{center_y}" r="{radius - 5}"
                     fill="none" stroke="#c9a54e" stroke-opacity="0.04"
                     stroke-width="0.5" stroke-dasharray="3 6"/>
@@ -513,7 +549,9 @@ def render_path_map() -> None:
             <!-- Layer 5: Center node (on top) -->
             <g class="center-node">
                 {center_tooltip}
-                <circle cx="{center_x}" cy="{center_y}" r="34"></circle>
+                <circle class="phase-ring" cx="{center_x}" cy="{center_y}" r="40"
+                        stroke="{phase_color}" stroke-opacity="0.4"/>
+                <circle class="outer" cx="{center_x}" cy="{center_y}" r="34"/>
                 {center_label}
             </g>
         </svg>
@@ -605,22 +643,25 @@ def _wrap_svg_label(text: str, max_chars: int = 14) -> List[str]:
     return lines
 
 
-def _render_svg_text(lines: List[str], *, x: float, y: float, class_name: str) -> str:
+def _render_svg_text_raw(lines: List[str], *, x: float, y: float, class_name: str) -> str:
+    """Render pre-escaped text lines into SVG tspan elements."""
     if not lines:
         return ""
     line_height = 13
     start_y = y - (len(lines) - 1) * line_height / 2
     tspan_lines = "".join(
-        f'<tspan x="{x}" y="{start_y + index * line_height}">{_escape_svg_text(line)}</tspan>'
+        f'<tspan x="{x}" y="{start_y + index * line_height}">{line}</tspan>'
         for index, line in enumerate(lines)
     )
     return f'<text text-anchor="middle" class="{class_name}">{tspan_lines}</text>'
 
 
 def _escape_svg_text(text: str) -> str:
+    """Escape text for safe embedding in SVG elements."""
     return (
         text.replace("&", "&amp;")
         .replace("<", "&lt;")
         .replace(">", "&gt;")
         .replace('"', "&quot;")
+        .replace("'", "&#39;")
     )
