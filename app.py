@@ -3,7 +3,7 @@ from game.streamlit_compat import st
 from game.data import init_story_nodes
 from game.logic import validate_story_nodes
 from game.state import ensure_session_state, start_game
-from game.ui import render_log, render_node, render_path_map, render_sidebar
+from game.ui import render_log, render_main_panel, render_node, render_path_map
 from game.ui_components.sprites import class_icon_svg
 
 
@@ -360,8 +360,6 @@ def main() -> None:
         _render_class_selection()
         return
 
-    render_sidebar()
-
     st.markdown(
         """
         <div style="
@@ -388,6 +386,7 @@ def main() -> None:
     )
 
     if active_panel == "Story":
+        render_main_panel()
         render_node()
         render_log()
     else:

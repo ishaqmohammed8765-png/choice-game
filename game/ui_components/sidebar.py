@@ -138,10 +138,8 @@ def _render_traits_panel() -> None:
         label = _TRAIT_LABELS.get(trait, trait.replace("_", " ").title())
         value = st.session_state.traits[trait]
         color = _TRAIT_COLORS.get(trait, "#94a3b8")
-        # Clamp visual bar to -10..+10 range
         max_range = 10
         normalized = max(-max_range, min(max_range, value))
-        # Center bar at 50%, positive goes right, negative goes left
         if normalized >= 0:
             left_pct = 50
             width_pct = (normalized / max_range) * 50
@@ -170,7 +168,7 @@ def _render_traits_panel() -> None:
 def _render_faction_bars() -> None:
     """Render faction standing as horizontal bars."""
     st.subheader("Faction Standing")
-    _faction_colors = {
+    faction_colors = {
         "oakrest": "#22c55e",
         "ironwardens": "#3b82f6",
         "ashfang": "#f97316",
@@ -178,7 +176,7 @@ def _render_faction_bars() -> None:
     }
     for faction in FACTION_KEYS:
         value = st.session_state.factions[faction]
-        color = _faction_colors.get(faction, "#94a3b8")
+        color = faction_colors.get(faction, "#94a3b8")
         max_range = 5
         normalized = max(-max_range, min(max_range, value))
         if normalized >= 0:
@@ -233,82 +231,97 @@ def _render_save_load_controls() -> None:
                 st.error("Invalid JSON. Please paste a valid exported state.")
 
 
-def render_sidebar() -> None:
-    """Render persistent player information in the sidebar."""
-    with st.sidebar:
-        player_class = st.session_state.player_class or "Warrior"
-        icon = class_icon_svg(player_class, size=24)
+def _render_player_panel_body(*, button_prefix: str) -> None:
+    player_class = st.session_state.player_class or "Warrior"
+    icon = class_icon_svg(player_class, size=24)
+    st.markdown(
+        f"""
+        <div style="display:flex;align-items:center;gap:8px;margin-bottom:0.3rem;">
+            {icon}
+            <span style="font-family:'Cinzel',serif;color:#e8d5b0;font-size:1.1rem;font-weight:600;">{player_class}</span>
+        </div>
+        """,
+        unsafe_allow_html=True,
+    )
+    _render_phase_badge()
+
+    with st.container(border=True):
+        st.subheader("Vitals")
+        _render_hp_bar()
+        gold_icon = stat_icon_svg("gold", size=14)
+        str_icon = stat_icon_svg("strength", size=14)
+        dex_icon = stat_icon_svg("dexterity", size=14)
         st.markdown(
             f"""
-            <div style="display:flex;align-items:center;gap:8px;margin-bottom:0.3rem;">
-                {icon}
-                <span style="font-family:'Cinzel',serif;color:#e8d5b0;font-size:1.1rem;font-weight:600;">{player_class}</span>
+            <div style="display:flex;justify-content:space-around;text-align:center;margin-top:4px;">
+                <div>
+                    <div style="display:flex;align-items:center;justify-content:center;gap:3px;color:#a8a29e;font-family:'Cinzel',serif;font-size:0.7rem;text-transform:uppercase;letter-spacing:0.06em;">
+                        {gold_icon} Gold
+                    </div>
+                    <div style="color:#facc15;font-family:'Cinzel',serif;font-weight:700;font-size:1.2rem;text-shadow:0 0 8px rgba(250,204,21,0.3);">
+                        {st.session_state.stats['gold']}
+                    </div>
+                </div>
+                <div>
+                    <div style="display:flex;align-items:center;justify-content:center;gap:3px;color:#a8a29e;font-family:'Cinzel',serif;font-size:0.7rem;text-transform:uppercase;letter-spacing:0.06em;">
+                        {str_icon} STR
+                    </div>
+                    <div style="color:#facc15;font-family:'Cinzel',serif;font-weight:700;font-size:1.2rem;text-shadow:0 0 8px rgba(250,204,21,0.3);">
+                        {st.session_state.stats['strength']}
+                    </div>
+                </div>
+                <div>
+                    <div style="display:flex;align-items:center;justify-content:center;gap:3px;color:#a8a29e;font-family:'Cinzel',serif;font-size:0.7rem;text-transform:uppercase;letter-spacing:0.06em;">
+                        {dex_icon} DEX
+                    </div>
+                    <div style="color:#facc15;font-family:'Cinzel',serif;font-weight:700;font-size:1.2rem;text-shadow:0 0 8px rgba(250,204,21,0.3);">
+                        {st.session_state.stats['dexterity']}
+                    </div>
+                </div>
             </div>
             """,
             unsafe_allow_html=True,
         )
-        _render_phase_badge()
 
-        with st.container(border=True):
-            st.subheader("Vitals")
-            _render_hp_bar()
-            gold_icon = stat_icon_svg("gold", size=14)
-            str_icon = stat_icon_svg("strength", size=14)
-            dex_icon = stat_icon_svg("dexterity", size=14)
-            st.markdown(
-                f"""
-                <div style="display:flex;justify-content:space-around;text-align:center;margin-top:4px;">
-                    <div>
-                        <div style="display:flex;align-items:center;justify-content:center;gap:3px;color:#a8a29e;font-family:'Cinzel',serif;font-size:0.7rem;text-transform:uppercase;letter-spacing:0.06em;">
-                            {gold_icon} Gold
-                        </div>
-                        <div style="color:#facc15;font-family:'Cinzel',serif;font-weight:700;font-size:1.2rem;text-shadow:0 0 8px rgba(250,204,21,0.3);">
-                            {st.session_state.stats['gold']}
-                        </div>
-                    </div>
-                    <div>
-                        <div style="display:flex;align-items:center;justify-content:center;gap:3px;color:#a8a29e;font-family:'Cinzel',serif;font-size:0.7rem;text-transform:uppercase;letter-spacing:0.06em;">
-                            {str_icon} STR
-                        </div>
-                        <div style="color:#facc15;font-family:'Cinzel',serif;font-weight:700;font-size:1.2rem;text-shadow:0 0 8px rgba(250,204,21,0.3);">
-                            {st.session_state.stats['strength']}
-                        </div>
-                    </div>
-                    <div>
-                        <div style="display:flex;align-items:center;justify-content:center;gap:3px;color:#a8a29e;font-family:'Cinzel',serif;font-size:0.7rem;text-transform:uppercase;letter-spacing:0.06em;">
-                            {dex_icon} DEX
-                        </div>
-                        <div style="color:#facc15;font-family:'Cinzel',serif;font-weight:700;font-size:1.2rem;text-shadow:0 0 8px rgba(250,204,21,0.3);">
-                            {st.session_state.stats['dexterity']}
-                        </div>
-                    </div>
-                </div>
-                """,
-                unsafe_allow_html=True,
-            )
+    _render_inventory_with_sprites()
 
-        _render_inventory_with_sprites()
-
-        with st.expander("Reputation & Factions", expanded=False):
-            _render_traits_panel()
-            st.divider()
-            _render_faction_bars()
-
-        if st.session_state.decision_history:
-            with st.expander("Decision History", expanded=False):
-                for entry in reversed(st.session_state.decision_history[-10:]):
-                    st.caption(f"{entry.get('node', '?')} → {entry.get('choice', '?')}")
-
+    with st.expander("Reputation & Factions", expanded=False):
+        _render_traits_panel()
         st.divider()
-        if st.button("Back (undo last choice)", use_container_width=True, disabled=not st.session_state.history):
-            previous = st.session_state.history.pop()
-            load_snapshot(previous)
-            add_log("You retrace your steps and reconsider your decision.")
-            st.rerun()
+        _render_faction_bars()
 
-        _render_save_load_controls()
+    if st.session_state.decision_history:
+        with st.expander("Decision History", expanded=False):
+            for entry in reversed(st.session_state.decision_history[-10:]):
+                st.caption(f"{entry.get('node', '?')} -> {entry.get('choice', '?')}")
 
-        st.divider()
-        if st.button("Restart Game", use_container_width=True):
-            reset_game_state()
-            st.rerun()
+    st.divider()
+    if st.button(
+        "Back (undo last choice)",
+        key=f"{button_prefix}_undo",
+        use_container_width=True,
+        disabled=not st.session_state.history,
+    ):
+        previous = st.session_state.history.pop()
+        load_snapshot(previous)
+        add_log("You retrace your steps and reconsider your decision.")
+        st.rerun()
+
+    _render_save_load_controls()
+
+    st.divider()
+    if st.button("Restart Game", key=f"{button_prefix}_restart", use_container_width=True):
+        reset_game_state()
+        st.rerun()
+
+
+def render_main_panel() -> None:
+    """Render the full player dashboard in the main content area."""
+    with st.expander("Player Dashboard", expanded=True):
+        _render_player_panel_body(button_prefix="main")
+
+
+def render_sidebar() -> None:
+    """Backward-compatible sidebar renderer."""
+    with st.sidebar:
+        _render_player_panel_body(button_prefix="sidebar")

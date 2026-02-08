@@ -216,15 +216,7 @@ def _render_choice_card(node_id: str, index: int, choice: Dict[str, Any], *, key
     """
     st.markdown(card_html, unsafe_allow_html=True)
 
-    display_label = label
-    if len(display_label) > 50:
-        display_label = display_label[:47] + "..."
-    if warnings:
-        display_label = f"Choose: {display_label}"
-    else:
-        display_label = f"Choose: {display_label}"
-
-    if st.button(display_label, key=f"{key_prefix}_{node_id}_{index}", use_container_width=True):
+    if st.button("Choose", key=f"{key_prefix}_{node_id}_{index}", use_container_width=True):
         if warnings:
             st.session_state.pending_choice_confirmation = {
                 "node": node_id,
@@ -389,6 +381,9 @@ def render_node() -> None:
     # Build narrative text with dialogue woven in
     dialogue = node.get("dialogue", [])
     narrative_text = node["text"]
+    ending_aftermath = []
+    if node_id.startswith("ending_"):
+        ending_aftermath = get_epilogue_aftermath_lines(max_lines=None)
 
     # Build the combined narrative + dialogue HTML
     narrative_html = f"""
@@ -416,6 +411,19 @@ def render_node() -> None:
                 f'<span style="color:#d4d4dc;font-style:italic;">&ldquo;{quote}&rdquo;</span>'
                 f'</div>'
             )
+
+    if ending_aftermath:
+        narrative_html += (
+            '<div style="margin-top:0.7rem;padding-top:0.5rem;border-top:1px solid #c9a54e30;">'
+            '<p style="margin:0 0 0.35rem 0;color:#c9a54e;font-family:\'Cinzel\',serif;font-size:0.9rem;">Aftermath</p>'
+        )
+        for detail in ending_aftermath:
+            narrative_html += (
+                f'<div style="margin:0.3rem 0;padding-left:12px;border-left:2px solid #c9a54e25;">'
+                f'<span style="color:#d4d4dc;">{detail}</span>'
+                f'</div>'
+            )
+        narrative_html += "</div>"
 
     narrative_html += "</div>"
     st.markdown(narrative_html, unsafe_allow_html=True)
@@ -470,18 +478,6 @@ def render_node() -> None:
             """,
             unsafe_allow_html=True,
         )
-        if node_id.startswith("ending_"):
-            show_full_epilogue = st.toggle(
-                "Show full epilogue",
-                key="show_full_epilogue",
-                help="Expand the epilogue with extra reminders of your earlier choices.",
-            )
-            aftermath = get_epilogue_aftermath_lines(max_lines=None if show_full_epilogue else 9)
-            if aftermath:
-                with st.container(border=True):
-                    st.subheader("Epilogue Aftermath")
-                    for detail in aftermath:
-                        st.write(f"- {detail}")
         return
 
     # Choice section with styled header
@@ -498,7 +494,7 @@ def render_node() -> None:
                 margin: 0;
                 font-size: 1rem;
                 letter-spacing: 0.05em;
-            ">What do you do?</h4>
+            ">Choose your path</h4>
         </div>
         """,
         unsafe_allow_html=True,

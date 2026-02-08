@@ -1,4 +1,7 @@
 import copy
+import json
+import os
+from pathlib import Path
 from typing import Any, Dict
 
 from game.streamlit_compat import st
@@ -47,23 +50,88 @@ _SNAPSHOT_FIELDS = (
 )
 
 
+_META_PROGRESS_PATH = Path(__file__).resolve().parents[1] / ".oakrest_meta_state.json"
+
+
 def _get_default(key: str) -> Any:
     """Return the default value for a state field, calling factory lambdas for mutable types."""
     value = _DEFAULT_STATE_FIELDS[key]
     return value() if callable(value) else value
 
 
+def _normalize_meta_state(meta_state: Dict[str, Any] | None) -> Dict[str, list[str]]:
+    if not isinstance(meta_state, dict):
+        return {"unlocked_items": [], "removed_nodes": []}
+    unlocked = meta_state.get("unlocked_items", [])
+    removed = meta_state.get("removed_nodes", [])
+    if not isinstance(unlocked, list):
+        unlocked = []
+    if not isinstance(removed, list):
+        removed = []
+    return {
+        "unlocked_items": list(dict.fromkeys(str(item) for item in unlocked)),
+        "removed_nodes": list(dict.fromkeys(str(node) for node in removed)),
+    }
+
+
+def _meta_persistence_enabled() -> bool:
+    return "PYTEST_CURRENT_TEST" not in os.environ
+
+
+def _merge_meta_state(existing: Dict[str, Any], incoming: Dict[str, Any]) -> Dict[str, list[str]]:
+    existing_norm = _normalize_meta_state(existing)
+    incoming_norm = _normalize_meta_state(incoming)
+    return {
+        "unlocked_items": list(
+            dict.fromkeys(existing_norm["unlocked_items"] + incoming_norm["unlocked_items"])
+        ),
+        "removed_nodes": list(
+            dict.fromkeys(existing_norm["removed_nodes"] + incoming_norm["removed_nodes"])
+        ),
+    }
+
+
+def _load_persistent_meta_state() -> Dict[str, list[str]]:
+    if not _meta_persistence_enabled():
+        return _normalize_meta_state(None)
+    if not _META_PROGRESS_PATH.exists():
+        return _normalize_meta_state(None)
+    try:
+        payload = json.loads(_META_PROGRESS_PATH.read_text(encoding="utf-8"))
+    except (OSError, json.JSONDecodeError):
+        return _normalize_meta_state(None)
+    return _normalize_meta_state(payload)
+
+
+def persist_meta_state(meta_state: Dict[str, Any]) -> None:
+    """Persist cross-run legacy progression to disk."""
+    normalized = _normalize_meta_state(meta_state)
+    st.session_state.meta_state = normalized
+    if not _meta_persistence_enabled():
+        return
+    try:
+        _META_PROGRESS_PATH.write_text(json.dumps(normalized, indent=2), encoding="utf-8")
+    except OSError:
+        return
+
+
 def reset_game_state() -> None:
     """Reset all session state values to begin a fresh run."""
-    meta_state = st.session_state.get("meta_state", _get_default("meta_state"))
+    persisted_meta = _load_persistent_meta_state()
+    session_meta = st.session_state.get("meta_state", _get_default("meta_state"))
+    meta_state = _merge_meta_state(persisted_meta, session_meta)
     for key in _DEFAULT_STATE_FIELDS:
         setattr(st.session_state, key, _get_default(key))
     st.session_state.meta_state = meta_state
+    persist_meta_state(meta_state)
 
 def start_game(player_class: str) -> None:
     """Initialize game state from class template and enter first node."""
     template = CLASS_TEMPLATES[player_class]
-    meta_state = st.session_state.get("meta_state", {"unlocked_items": [], "removed_nodes": []})
+    persisted_meta = _load_persistent_meta_state()
+    session_meta = st.session_state.get("meta_state", {"unlocked_items": [], "removed_nodes": []})
+    meta_state = _merge_meta_state(persisted_meta, session_meta)
+    st.session_state.meta_state = meta_state
     st.session_state.player_class = player_class
     st.session_state.current_node = INTRO_NODE_BY_CLASS.get(player_class, "village_square")
     st.session_state.stats = {
@@ -190,9 +258,8 @@ def load_snapshot(snapshot: Dict[str, Any]) -> None:
     if "meta_state" in snapshot:
         existing_meta = st.session_state.get("meta_state", _get_default("meta_state"))
         incoming_meta = snapshot["meta_state"]
-        merged_items = list(dict.fromkeys(existing_meta.get("unlocked_items", []) + incoming_meta.get("unlocked_items", [])))
-        merged_nodes = list(dict.fromkeys(existing_meta.get("removed_nodes", []) + incoming_meta.get("removed_nodes", [])))
-        st.session_state.meta_state = {"unlocked_items": merged_items, "removed_nodes": merged_nodes}
+        st.session_state.meta_state = _merge_meta_state(existing_meta, incoming_meta)
+        persist_meta_state(st.session_state.meta_state)
 
 def ensure_session_state() -> None:
     """Initialize session state keys on first load."""
@@ -201,3 +268,7 @@ def ensure_session_state() -> None:
     for key in _DEFAULT_STATE_FIELDS:
         if key not in st.session_state:
             setattr(st.session_state, key, _get_default(key))
+    st.session_state.meta_state = _merge_meta_state(
+        st.session_state.get("meta_state", _get_default("meta_state")),
+        _load_persistent_meta_state(),
+    )

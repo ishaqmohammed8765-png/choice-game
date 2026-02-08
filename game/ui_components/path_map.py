@@ -26,6 +26,48 @@ _PHASE_FILL_COLORS: Dict[str, str] = {
     "failure": "#8b5cf6",
 }
 
+_STATUS_SPRITES: Dict[str, List[tuple[int, int]]] = {
+    "available": [
+        (1, 0), (2, 0), (3, 0),
+        (0, 1), (4, 1),
+        (0, 2), (2, 2), (4, 2),
+        (0, 3), (4, 3),
+        (1, 4), (2, 4), (3, 4),
+    ],
+    "visited": [
+        (0, 2), (1, 3), (2, 4), (3, 3), (4, 2),
+        (2, 1),
+    ],
+    "locked": [
+        (1, 0), (2, 0), (3, 0),
+        (1, 1), (3, 1),
+        (1, 2), (2, 2), (3, 2),
+        (1, 3), (3, 3),
+        (1, 4), (2, 4), (3, 4),
+    ],
+}
+
+
+def _status_sprite_svg(
+    x: float,
+    y: float,
+    status: str,
+    *,
+    secondary: bool = False,
+) -> str:
+    pixels = _STATUS_SPRITES.get(status, [])
+    if not pixels:
+        return ""
+    size = 1.4 if secondary else 1.9
+    offset = size * 2.5
+    pixel_rects = "".join(
+        f'<rect x="{x - offset + px * size:.2f}" y="{y - offset + py * size:.2f}" '
+        f'width="{size:.2f}" height="{size:.2f}" rx="0.2" ry="0.2"/>'
+        for px, py in pixels
+    )
+    sec_class = " secondary" if secondary else ""
+    return f'<g class="status-sprite {status}{sec_class}">{pixel_rects}</g>'
+
 
 def format_requirement_tooltip(
     requirements: Dict[str, Any] | None,
@@ -131,25 +173,15 @@ def _build_choice_node_svg(
     elif not edge_visited and "secondary" not in (extra_line_classes or []):
         line_class_parts.append("available")
 
-    # Status icon
-    icon_y = y + icon_y_offset
+    # Status sprite marker
     icon_svg = ""
-    icon_suffix = " sec" if extra_group_classes and "secondary-node" in extra_group_classes else ""
+    is_secondary = bool(extra_group_classes and "secondary-node" in extra_group_classes)
     if is_locked:
-        icon_svg = (
-            f'<text x="{x}" y="{icon_y}" text-anchor="middle" '
-            f'class="node-icon locked-icon{icon_suffix}">\U0001F512</text>'
-        )
+        icon_svg = _status_sprite_svg(x, y + icon_y_offset, "locked", secondary=is_secondary)
     elif node_visited:
-        icon_svg = (
-            f'<text x="{x}" y="{icon_y}" text-anchor="middle" '
-            f'class="node-icon visited-icon{icon_suffix}">\u2713</text>'
-        )
+        icon_svg = _status_sprite_svg(x, y + icon_y_offset, "visited", secondary=is_secondary)
     elif show_available_icon:
-        icon_svg = (
-            f'<text x="{x}" y="{icon_y}" text-anchor="middle" '
-            f'class="node-icon available-icon{icon_suffix}">\u2726</text>'
-        )
+        icon_svg = _status_sprite_svg(x, y + icon_y_offset, "available", secondary=is_secondary)
 
     # Determine destination phase for coloring the node border
     dest_phase = get_phase(next_node)
@@ -401,26 +433,26 @@ def render_path_map() -> None:
             fill: #7dd3fc;
         }
 
-        /* --- Node icons --- */
-        .node-icon {
-            font-size: 14px;
+        /* --- Pixel sprite markers --- */
+        .status-sprite {
             pointer-events: none;
         }
-        .node-icon.sec {
-            font-size: 10px;
-        }
-        .locked-icon {
-            fill: #94a3b8;
-            font-size: 12px;
-        }
-        .visited-icon {
-            fill: #38bdf8;
-            font-size: 16px;
-            font-weight: bold;
-        }
-        .available-icon {
+        .status-sprite.available rect {
             fill: #facc15;
-            font-size: 13px;
+            stroke: #fef3c7;
+            stroke-width: 0.25;
+        }
+        .status-sprite.visited rect {
+            fill: #38bdf8;
+            stroke: #bae6fd;
+            stroke-width: 0.25;
+        }
+        .status-sprite.locked rect {
+            fill: #94a3b8;
+            opacity: 0.8;
+        }
+        .status-sprite.secondary rect {
+            opacity: 0.85;
         }
 
         /* --- Secondary nodes --- */
@@ -572,24 +604,37 @@ def render_path_map() -> None:
                 font-size: 0.8rem; color: #94a3b8;
             ">
                 <span style="display:flex;align-items:center;gap:0.3rem;">
-                    <svg width="14" height="14"><circle cx="7" cy="7" r="5"
-                        fill="#1e293b" stroke="#c9a54e" stroke-width="2"/></svg>
+                    <svg width="16" height="16" viewBox="0 0 16 16" style="image-rendering:pixelated;">
+                        <rect x="6" y="1" width="2" height="2" fill="#facc15"/><rect x="8" y="1" width="2" height="2" fill="#facc15"/>
+                        <rect x="4" y="3" width="2" height="2" fill="#facc15"/><rect x="10" y="3" width="2" height="2" fill="#facc15"/>
+                        <rect x="4" y="5" width="2" height="2" fill="#facc15"/><rect x="8" y="5" width="2" height="2" fill="#facc15"/><rect x="10" y="5" width="2" height="2" fill="#facc15"/>
+                        <rect x="4" y="7" width="2" height="2" fill="#facc15"/><rect x="10" y="7" width="2" height="2" fill="#facc15"/>
+                        <rect x="6" y="9" width="2" height="2" fill="#facc15"/><rect x="8" y="9" width="2" height="2" fill="#facc15"/>
+                    </svg>
                     Available
                 </span>
                 <span style="display:flex;align-items:center;gap:0.3rem;">
-                    <svg width="14" height="14"><circle cx="7" cy="7" r="5"
-                        fill="#0c2d48" stroke="#38bdf8" stroke-width="2"/></svg>
+                    <svg width="16" height="16" viewBox="0 0 16 16" style="image-rendering:pixelated;">
+                        <rect x="4" y="5" width="2" height="2" fill="#38bdf8"/><rect x="6" y="7" width="2" height="2" fill="#38bdf8"/>
+                        <rect x="8" y="9" width="2" height="2" fill="#38bdf8"/><rect x="10" y="7" width="2" height="2" fill="#38bdf8"/>
+                        <rect x="12" y="5" width="2" height="2" fill="#38bdf8"/><rect x="8" y="3" width="2" height="2" fill="#38bdf8"/>
+                    </svg>
                     Visited
                 </span>
                 <span style="display:flex;align-items:center;gap:0.3rem;">
-                    <svg width="14" height="14"><circle cx="7" cy="7" r="5"
-                        fill="#0f172a" stroke="#475569" stroke-width="1.5"
-                        stroke-dasharray="2 2" opacity="0.5"/></svg>
+                    <svg width="16" height="16" viewBox="0 0 16 16" style="image-rendering:pixelated;">
+                        <rect x="6" y="1" width="2" height="2" fill="#94a3b8"/><rect x="8" y="1" width="2" height="2" fill="#94a3b8"/>
+                        <rect x="6" y="3" width="2" height="2" fill="#94a3b8"/><rect x="10" y="3" width="2" height="2" fill="#94a3b8"/>
+                        <rect x="6" y="5" width="2" height="2" fill="#94a3b8"/><rect x="8" y="5" width="2" height="2" fill="#94a3b8"/><rect x="10" y="5" width="2" height="2" fill="#94a3b8"/>
+                        <rect x="6" y="7" width="2" height="2" fill="#94a3b8"/><rect x="10" y="7" width="2" height="2" fill="#94a3b8"/>
+                        <rect x="6" y="9" width="2" height="2" fill="#94a3b8"/><rect x="8" y="9" width="2" height="2" fill="#94a3b8"/>
+                    </svg>
                     Locked
                 </span>
                 <span style="display:flex;align-items:center;gap:0.3rem;">
-                    <svg width="14" height="14"><circle cx="7" cy="7" r="6"
-                        fill="#0a0f1a" stroke="#facc15" stroke-width="2"/></svg>
+                    <svg width="16" height="16" viewBox="0 0 16 16" style="image-rendering:pixelated;">
+                        <rect x="3" y="3" width="10" height="10" fill="#0a0f1a" stroke="#facc15" stroke-width="1.5"/>
+                    </svg>
                     Current
                 </span>
             </div>

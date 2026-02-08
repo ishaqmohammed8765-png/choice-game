@@ -7,7 +7,7 @@ from game.content.surprise_events import SURPRISE_EVENTS
 from game.engine.requirements import check_requirements as check_requirements_engine
 from game.engine.state import state_from_session
 from game.engine.state_machine import evaluate_transition, get_phase
-from game.state import add_log, snapshot_state
+from game.state import add_log, persist_meta_state, snapshot_state
 from game.validation import validate_story_nodes
 
 def transition_to_failure(failure_type: str) -> None:
@@ -241,6 +241,8 @@ def apply_effects(
     for node_id in effects.get("remove_meta_nodes", []):
         if node_id not in meta_state["removed_nodes"]:
             meta_state["removed_nodes"].append(node_id)
+    st.session_state.meta_state = meta_state
+    persist_meta_state(meta_state)
 
     apply_morality_flags(flags)
 
