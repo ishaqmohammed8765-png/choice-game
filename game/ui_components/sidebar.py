@@ -7,6 +7,7 @@ from game.data import CLASS_TEMPLATES, FACTION_KEYS, TRAIT_KEYS
 from game.engine.state_machine import get_phase
 from game.logic import apply_morality_flags
 from game.state import add_log, load_snapshot, reset_game_state, snapshot_state, validate_snapshot
+from game.ui_components.path_map import render_path_map
 from game.ui_components.sprites import class_icon_svg, item_sprite, stat_icon_svg
 
 
@@ -313,6 +314,86 @@ def _render_player_panel_body(*, button_prefix: str) -> None:
         st.rerun()
 
 
+def _render_side_hud_header() -> None:
+    """Render compact player identity and phase at the top of the side HUD."""
+    player_class = st.session_state.player_class or "Warrior"
+    safe_player_class = escape(player_class, quote=True)
+    icon = class_icon_svg(player_class, size=22)
+    hp = st.session_state.stats["hp"]
+    gold = st.session_state.stats["gold"]
+    strength = st.session_state.stats["strength"]
+    dexterity = st.session_state.stats["dexterity"]
+    st.markdown(
+        f"""
+        <div style="
+            padding:0.7rem 0.75rem;
+            border:1px solid #2b3449;
+            border-radius:10px;
+            background:linear-gradient(160deg, rgba(11,15,28,0.96), rgba(16,22,36,0.92));
+            margin-bottom:0.45rem;
+        ">
+            <div style="display:flex;align-items:center;justify-content:space-between;gap:8px;">
+                <div style="display:flex;align-items:center;gap:8px;">
+                    {icon}
+                    <span style="font-family:'Cinzel',serif;color:#f3e9d2;font-size:0.98rem;">{safe_player_class}</span>
+                </div>
+                <span style="color:#93a4c4;font-size:0.75rem;">LVL PROGRESSION</span>
+            </div>
+            <div style="display:flex;gap:6px;flex-wrap:wrap;margin-top:7px;">
+                <span style="padding:2px 7px;border:1px solid #364766;border-radius:999px;font-size:0.72rem;">HP {hp}</span>
+                <span style="padding:2px 7px;border:1px solid #364766;border-radius:999px;font-size:0.72rem;">Gold {gold}</span>
+                <span style="padding:2px 7px;border:1px solid #364766;border-radius:999px;font-size:0.72rem;">STR {strength}</span>
+                <span style="padding:2px 7px;border:1px solid #364766;border-radius:999px;font-size:0.72rem;">DEX {dexterity}</span>
+            </div>
+        </div>
+        """,
+        unsafe_allow_html=True,
+    )
+    _render_phase_badge()
+
+
+def render_side_panel() -> None:
+    """Render the right-side HUD with inventory, map, progression, and system tabs."""
+    _render_side_hud_header()
+    inventory_tab, map_tab, progress_tab, system_tab = st.tabs(
+        ["Inventory", "Path Map", "Progress", "System"]
+    )
+
+    with inventory_tab:
+        _render_inventory_with_sprites()
+
+    with map_tab:
+        render_path_map()
+
+    with progress_tab:
+        _render_traits_panel()
+        st.divider()
+        _render_faction_bars()
+
+    with system_tab:
+        st.toggle(
+            "Show locked choices",
+            key="show_locked_choices",
+            help="Display locked choices and their requirement details in the story panel.",
+        )
+        st.divider()
+        if st.button(
+            "Back (undo last choice)",
+            key="panel_undo",
+            use_container_width=True,
+            disabled=not st.session_state.history,
+        ):
+            previous = st.session_state.history.pop()
+            load_snapshot(previous)
+            add_log("You retrace your steps and reconsider your decision.")
+            st.rerun()
+        _render_save_load_controls()
+        st.divider()
+        if st.button("Restart Game", key="panel_restart", use_container_width=True):
+            reset_game_state()
+            st.rerun()
+
+
 def render_main_panel() -> None:
     """Render a compact top utility bar in the main content area."""
     render_utility_bar()
@@ -371,12 +452,7 @@ def render_utility_bar() -> None:
                 unsafe_allow_html=True,
             )
         with col_controls:
-            st.toggle("Show map", key="show_path_map", help="Show or hide the path map panel.")
-            st.toggle(
-                "Show locked",
-                key="show_locked_choices",
-                help="Show choices that are currently unavailable.",
-            )
+            st.caption("Run Controls")
             undo_disabled = not st.session_state.history
             if st.button("Undo", key="top_undo", use_container_width=True, disabled=undo_disabled):
                 previous = st.session_state.history.pop()

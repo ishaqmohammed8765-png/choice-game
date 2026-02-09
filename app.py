@@ -5,7 +5,7 @@ from game.streamlit_compat import st
 from game.data import init_story_nodes
 from game.logic import validate_story_nodes
 from game.state import ensure_session_state, start_game
-from game.ui import render_node, render_path_map, render_utility_bar
+from game.ui import render_node, render_side_panel, render_utility_bar
 from game.ui_components.sprites import class_icon_svg
 
 
@@ -47,9 +47,22 @@ def inject_game_theme() -> None:
         <style>
         @import url('https://fonts.googleapis.com/css2?family=Cinzel:wght@400;600;700&family=Crimson+Text:ital,wght@0,400;0,600;1,400&display=swap');
 
+        :root {
+            --hud-bg: #0b1220;
+            --hud-panel: #111a2e;
+            --hud-border: #2b3449;
+            --hud-text: #dbe7ff;
+            --hud-muted: #8ea0bf;
+            --hud-accent: #facc15;
+            --hud-danger: #ef4444;
+        }
+
         .stApp {
-            background: radial-gradient(ellipse at top, #1a1a2e 0%, #0f0f1a 40%, #050510 100%);
-            color: #d4d4dc;
+            background:
+                radial-gradient(900px 500px at 0% 0%, rgba(26, 52, 99, 0.38), transparent 60%),
+                radial-gradient(700px 420px at 100% 100%, rgba(128, 69, 18, 0.22), transparent 62%),
+                linear-gradient(180deg, #05070f 0%, #090f1d 50%, #0b111f 100%);
+            color: var(--hud-text);
             font-family: 'Crimson Text', Georgia, serif;
         }
 
@@ -77,9 +90,9 @@ def inject_game_theme() -> None:
 
         div.stButton > button {
             border-radius: 6px !important;
-            border: 1px solid #4a3728 !important;
-            background: linear-gradient(180deg, #1e293b 0%, #0f172a 100%) !important;
-            color: #e2d5c1 !important;
+            border: 1px solid var(--hud-border) !important;
+            background: linear-gradient(180deg, #1a2740 0%, #10192d 100%) !important;
+            color: #d6e4ff !important;
             font-family: 'Crimson Text', Georgia, serif !important;
             font-size: 1.05rem !important;
             padding: 0.6rem 1rem !important;
@@ -89,29 +102,29 @@ def inject_game_theme() -> None:
             overflow: hidden;
         }
         div.stButton > button:hover {
-            background: linear-gradient(180deg, #2a3a50 0%, #1a2740 100%) !important;
-            border-color: #c9a54e !important;
-            box-shadow: 0 0 12px rgba(201, 165, 78, 0.15), inset 0 1px 0 rgba(255,255,255,0.05) !important;
-            color: #fef3c7 !important;
+            background: linear-gradient(180deg, #223656 0%, #15233c 100%) !important;
+            border-color: #93c5fd !important;
+            box-shadow: 0 0 12px rgba(59, 130, 246, 0.2), inset 0 1px 0 rgba(255,255,255,0.05) !important;
+            color: #eff6ff !important;
             transform: translateY(-1px);
         }
         div.stButton > button:active {
             transform: translateY(0px) !important;
         }
         div.stButton > button[kind="primary"] {
-            background: linear-gradient(180deg, #78350f 0%, #451a03 100%) !important;
-            border-color: #d97706 !important;
+            background: linear-gradient(180deg, #7c2d12 0%, #4a1c0d 100%) !important;
+            border-color: #fb923c !important;
             color: #fef3c7 !important;
         }
         div.stButton > button[kind="primary"]:hover {
-            background: linear-gradient(180deg, #92400e 0%, #5a2003 100%) !important;
-            border-color: #f59e0b !important;
-            box-shadow: 0 0 16px rgba(217, 119, 6, 0.25) !important;
+            background: linear-gradient(180deg, #9a3412 0%, #5c2511 100%) !important;
+            border-color: #fdba74 !important;
+            box-shadow: 0 0 16px rgba(249, 115, 22, 0.25) !important;
         }
 
         div[data-testid="stExpander"] {
-            border-color: #2a2015 !important;
-            background: rgba(10, 10, 20, 0.6) !important;
+            border-color: var(--hud-border) !important;
+            background: rgba(11, 18, 32, 0.72) !important;
             border-radius: 8px !important;
         }
         div[data-testid="stExpander"] summary {
@@ -120,7 +133,7 @@ def inject_game_theme() -> None:
         }
 
         div[data-testid="stVerticalBlock"] > div[data-testid="element-container"] > div[data-testid="stContainer"] {
-            border-color: #2a2015 !important;
+            border-color: var(--hud-border) !important;
         }
 
         div[data-testid="stRadio"] > div {
@@ -133,7 +146,7 @@ def inject_game_theme() -> None:
 
         section[data-testid="stSidebar"] {
             background: linear-gradient(180deg, #13111a 0%, #0a0910 100%) !important;
-            border-right: 1px solid #2a2015 !important;
+            border-right: 1px solid var(--hud-border) !important;
         }
         section[data-testid="stSidebar"] h1,
         section[data-testid="stSidebar"] h2,
@@ -142,9 +155,9 @@ def inject_game_theme() -> None:
         }
 
         textarea {
-            background: #0a0a15 !important;
-            border-color: #2a2015 !important;
-            color: #c4b5a0 !important;
+            background: #0a1222 !important;
+            border-color: var(--hud-border) !important;
+            color: #d9e6ff !important;
             font-family: monospace !important;
         }
 
@@ -158,7 +171,7 @@ def inject_game_theme() -> None:
         }
 
         hr {
-            border-color: #2a2015 !important;
+            border-color: var(--hud-border) !important;
         }
 
         ::-webkit-scrollbar {
@@ -183,6 +196,23 @@ def inject_game_theme() -> None:
         div[data-testid="stHorizontalBlock"] {
             align-items: start;
         }
+
+        button[data-baseweb="tab"] {
+            background: rgba(17, 26, 46, 0.72) !important;
+            border: 1px solid var(--hud-border) !important;
+            border-radius: 8px !important;
+            color: var(--hud-muted) !important;
+            font-family: 'Cinzel', serif !important;
+            letter-spacing: 0.02em;
+        }
+        button[data-baseweb="tab"][aria-selected="true"] {
+            border-color: #60a5fa !important;
+            color: #e5efff !important;
+            background: linear-gradient(180deg, rgba(36, 59, 99, 0.64), rgba(17, 30, 55, 0.82)) !important;
+        }
+        [data-testid="stTabs"] [data-baseweb="tab-list"] {
+            gap: 0.35rem;
+        }
         </style>
         """,
         unsafe_allow_html=True,
@@ -206,7 +236,7 @@ def inject_fixed_game_layout() -> None:
             padding-top: 0.7rem !important;
             padding-bottom: 0.7rem !important;
             height: calc(100vh - 1.4rem) !important;
-            overflow: hidden !important;
+            overflow: auto !important;
             display: flex !important;
             flex-direction: column !important;
             gap: 0.55rem !important;
@@ -424,9 +454,11 @@ def main() -> None:
 
     inject_fixed_game_layout()
     render_utility_bar()
-    if st.session_state.get("show_path_map", False):
-        render_path_map()
-    render_node()
+    col_story, col_hud = st.columns([2.25, 1], gap="large")
+    with col_story:
+        render_node()
+    with col_hud:
+        render_side_panel()
 
 
 if __name__ == "__main__":
