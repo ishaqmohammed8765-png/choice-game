@@ -47,17 +47,12 @@ _TRAIT_COLORS = {
 
 
 def _render_hp_bar() -> None:
-    """Display an HP progress bar with color coding based on health percentage."""
+    """Display an HP progress bar using the requested green style."""
     current_hp = max(0, st.session_state.stats["hp"])
     player_class = st.session_state.player_class or "Warrior"
     max_hp = CLASS_TEMPLATES.get(player_class, {}).get("hp", 14)
     pct = min(current_hp / max_hp, 1.0) if max_hp > 0 else 0
-    if pct > 0.6:
-        bar_color = "#22c55e"
-    elif pct > 0.3:
-        bar_color = "#eab308"
-    else:
-        bar_color = "#ef4444"
+    bar_color = "#22c55e"
 
     hp_icon = stat_icon_svg("hp", size=14)
     st.markdown(
@@ -67,10 +62,10 @@ def _render_hp_bar() -> None:
                 <span style="color:#a8a29e;font-family:'Cinzel',serif;text-transform:uppercase;letter-spacing:0.08em;display:flex;align-items:center;gap:4px;">
                     {hp_icon} HP
                 </span>
-                <span style="color:{bar_color};font-family:'Cinzel',serif;font-weight:700;">{current_hp}/{max_hp}</span>
+                <span style="color:#86efac;font-family:'Cinzel',serif;font-weight:700;">{current_hp}/{max_hp}</span>
             </div>
-            <div style="background:#1a1a2e;border:1px solid #2a2015;border-radius:4px;height:14px;overflow:hidden;box-shadow:inset 0 1px 3px rgba(0,0,0,0.4);">
-                <div style="width:{pct*100:.0f}%;height:100%;background:linear-gradient(90deg, {bar_color}cc, {bar_color});border-radius:3px;transition:width 0.4s ease;box-shadow:0 0 8px {bar_color}40;"></div>
+            <div style="background:#052e16;border:1px solid #166534;border-radius:4px;height:14px;overflow:hidden;box-shadow:inset 0 1px 3px rgba(0,0,0,0.4);">
+                <div style="width:{pct*100:.0f}%;height:100%;background:linear-gradient(90deg, #16a34a, #22c55e);border-radius:3px;transition:width 0.4s ease;box-shadow:0 0 8px #22c55e40;"></div>
             </div>
         </div>
         """,
@@ -319,6 +314,10 @@ def _render_side_hud_header() -> None:
     player_class = st.session_state.player_class or "Warrior"
     safe_player_class = escape(player_class, quote=True)
     icon = class_icon_svg(player_class, size=22)
+    hp_icon = stat_icon_svg("hp", size=13)
+    gold_icon = stat_icon_svg("gold", size=13)
+    str_icon = stat_icon_svg("strength", size=13)
+    dex_icon = stat_icon_svg("dexterity", size=13)
     hp = st.session_state.stats["hp"]
     gold = st.session_state.stats["gold"]
     strength = st.session_state.stats["strength"]
@@ -337,18 +336,27 @@ def _render_side_hud_header() -> None:
                     {icon}
                     <span style="font-family:'Cinzel',serif;color:#f3e9d2;font-size:0.98rem;">{safe_player_class}</span>
                 </div>
-                <span style="color:#93a4c4;font-size:0.75rem;">LVL PROGRESSION</span>
+                <span style="color:#93a4c4;font-size:0.75rem;">Status</span>
             </div>
-            <div style="display:flex;gap:6px;flex-wrap:wrap;margin-top:7px;">
-                <span style="padding:2px 7px;border:1px solid #364766;border-radius:999px;font-size:0.72rem;">HP {hp}</span>
-                <span style="padding:2px 7px;border:1px solid #364766;border-radius:999px;font-size:0.72rem;">Gold {gold}</span>
-                <span style="padding:2px 7px;border:1px solid #364766;border-radius:999px;font-size:0.72rem;">STR {strength}</span>
-                <span style="padding:2px 7px;border:1px solid #364766;border-radius:999px;font-size:0.72rem;">DEX {dexterity}</span>
+            <div style="display:grid;grid-template-columns:repeat(2,minmax(0,1fr));gap:6px;margin-top:7px;">
+                <span style="padding:3px 8px;border:1px solid #275348;border-radius:8px;font-size:0.74rem;display:flex;align-items:center;gap:5px;background:rgba(22,163,74,0.10);">
+                    {hp_icon} HP {hp}
+                </span>
+                <span style="padding:3px 8px;border:1px solid #5f4b1f;border-radius:8px;font-size:0.74rem;display:flex;align-items:center;gap:5px;background:rgba(202,138,4,0.12);">
+                    {gold_icon} Gold {gold}
+                </span>
+                <span style="padding:3px 8px;border:1px solid #2f4f83;border-radius:8px;font-size:0.74rem;display:flex;align-items:center;gap:5px;background:rgba(59,130,246,0.12);">
+                    {str_icon} STR {strength}
+                </span>
+                <span style="padding:3px 8px;border:1px solid #2f5f4a;border-radius:8px;font-size:0.74rem;display:flex;align-items:center;gap:5px;background:rgba(34,197,94,0.12);">
+                    {dex_icon} DEX {dexterity}
+                </span>
             </div>
         </div>
         """,
         unsafe_allow_html=True,
     )
+    _render_hp_bar()
     _render_phase_badge()
 
 
@@ -400,7 +408,7 @@ def render_main_panel() -> None:
 
 
 def render_utility_bar() -> None:
-    """Render the compact top utility bar used during active gameplay."""
+    """Render a compact top status bar for active gameplay."""
     player_class = st.session_state.player_class or "Warrior"
     safe_player_class = escape(player_class, quote=True)
     icon = class_icon_svg(player_class, size=22)
@@ -410,58 +418,29 @@ def render_utility_bar() -> None:
     phase_color = _PHASE_COLORS.get(phase, "#94a3b8")
 
     with st.container(border=True):
-        col_status, col_controls = st.columns([2.2, 1.2])
-        with col_status:
-            st.markdown(
-                f"""
-                <div style="display:flex;align-items:center;justify-content:space-between;gap:10px;margin-bottom:6px;">
-                    <div style="display:flex;align-items:center;gap:8px;">
-                        {icon}
-                        <span style="font-family:'Cinzel',serif;color:#e8d5b0;font-size:1.05rem;">{safe_player_class}</span>
-                    </div>
-                    <span style="
-                        border:1px solid {phase_color}60;
-                        background:{phase_color}14;
-                        color:{phase_color};
-                        border-radius:999px;
-                        padding:2px 10px;
-                        font-family:'Cinzel',serif;
-                        font-size:0.68rem;
-                        letter-spacing:0.05em;
-                        text-transform:uppercase;
-                    ">{phase_label}</span>
+        st.markdown(
+            f"""
+            <div style="display:flex;align-items:center;justify-content:space-between;gap:10px;">
+                <div style="display:flex;align-items:center;gap:8px;">
+                    {icon}
+                    <span style="font-family:'Cinzel',serif;color:#e8d5b0;font-size:1.05rem;">{safe_player_class}</span>
                 </div>
-                """,
-                unsafe_allow_html=True,
-            )
-            hp = st.session_state.stats["hp"]
-            gold = st.session_state.stats["gold"]
-            strength = st.session_state.stats["strength"]
-            dexterity = st.session_state.stats["dexterity"]
-            inventory_count = len(st.session_state.inventory)
-            st.markdown(
-                f"""
-                <div style="display:flex;flex-wrap:wrap;gap:8px;">
-                    <span style="padding:3px 8px;border:1px solid #334155;border-radius:999px;">HP {hp}</span>
-                    <span style="padding:3px 8px;border:1px solid #334155;border-radius:999px;">Gold {gold}</span>
-                    <span style="padding:3px 8px;border:1px solid #334155;border-radius:999px;">STR {strength}</span>
-                    <span style="padding:3px 8px;border:1px solid #334155;border-radius:999px;">DEX {dexterity}</span>
-                    <span style="padding:3px 8px;border:1px solid #334155;border-radius:999px;">Items {inventory_count}</span>
-                </div>
-                """,
-                unsafe_allow_html=True,
-            )
-        with col_controls:
-            st.caption("Run Controls")
-            undo_disabled = not st.session_state.history
-            if st.button("Undo", key="top_undo", use_container_width=True, disabled=undo_disabled):
-                previous = st.session_state.history.pop()
-                load_snapshot(previous)
-                add_log("You retrace your steps and reconsider your decision.")
-                st.rerun()
-            if st.button("Restart", key="top_restart", use_container_width=True):
-                reset_game_state()
-                st.rerun()
+                <span style="
+                    border:1px solid {phase_color}60;
+                    background:{phase_color}14;
+                    color:{phase_color};
+                    border-radius:999px;
+                    padding:2px 10px;
+                    font-family:'Cinzel',serif;
+                    font-size:0.68rem;
+                    letter-spacing:0.05em;
+                    text-transform:uppercase;
+                ">{phase_label}</span>
+            </div>
+            """,
+            unsafe_allow_html=True,
+        )
+        st.caption("Undo/Restart moved to the System tab in the right panel.")
 
 
 def render_sidebar() -> None:

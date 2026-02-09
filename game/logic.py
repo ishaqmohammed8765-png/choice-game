@@ -7,7 +7,7 @@ from game.content.surprise_events import SURPRISE_EVENTS
 from game.engine.requirements import check_requirements as check_requirements_engine
 from game.engine.state import state_from_session
 from game.engine.state_machine import evaluate_transition, get_phase
-from game.state import add_log, persist_meta_state, snapshot_state
+from game.state import add_log, normalize_meta_state, persist_meta_state, snapshot_state
 from game.validation import validate_story_nodes
 
 def transition_to_failure(failure_type: str) -> None:
@@ -195,7 +195,7 @@ def apply_effects(
     flags = st.session_state.flags
     traits = st.session_state.traits
     factions = st.session_state.factions
-    meta_state = st.session_state.get("meta_state", {"unlocked_items": [], "removed_nodes": []})
+    meta_state = normalize_meta_state(st.session_state.get("meta_state"))
     feedback: List[str] = []
     before_stats = dict(stats)
     before_inventory = list(inventory)

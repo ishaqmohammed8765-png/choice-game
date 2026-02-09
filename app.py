@@ -5,7 +5,7 @@ from game.streamlit_compat import st
 from game.data import init_story_nodes
 from game.logic import validate_story_nodes
 from game.state import ensure_session_state, start_game
-from game.ui import render_node, render_side_panel, render_utility_bar
+from game.ui import render_node, render_side_panel
 from game.ui_components.sprites import class_icon_svg
 
 
@@ -453,8 +453,7 @@ def main() -> None:
         return
 
     inject_fixed_game_layout()
-    render_utility_bar()
-    col_story, col_hud = st.columns([2.25, 1], gap="large")
+    col_story, col_hud = st.columns([1.85, 1.15], gap="large")
     with col_story:
         render_node()
     with col_hud:

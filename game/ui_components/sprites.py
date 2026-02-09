@@ -44,7 +44,11 @@ def sprite_svg(name: str, size: int = 24, title: str = "") -> str:
 def item_sprite(item_name: str, size: int = 20) -> str:
     """Get the sprite SVG for a game item by its display name."""
     key = item_name.lower().replace(" ", "_")
-    return sprite_svg(key, size=size, title=item_name)
+    key = _ITEM_KEY_ALIASES.get(key, key)
+    sprite = sprite_svg(key, size=size, title=item_name)
+    if sprite:
+        return sprite
+    return sprite_svg("item_generic", size=size, title=item_name)
 
 
 def class_icon_svg(class_name: str, size: int = 28) -> str:
@@ -83,6 +87,10 @@ WH = "#f0f0f0"  # white/bright
 OR = "#f97316"  # orange
 DG = "#1a472a"  # dark green
 CY = "#38bdf8"  # cyan
+
+_ITEM_KEY_ALIASES = {
+    "first_age_relic": "dawn_relic",
+}
 
 # Each grid is 16x16, colors can be any hex string
 _RUSTY_SWORD = [
@@ -237,6 +245,25 @@ _HEALING_POTION = [
     [_,_,_,_,_,_,_,_,_,_,_,_,_,_,_,_],
 ]
 
+_ANCIENT_SHIELD = [
+    [_,_,_,_,_,_,_,G,G,_,_,_,_,_,_,_],
+    [_,_,_,_,_,_,G,S,S,G,_,_,_,_,_,_],
+    [_,_,_,_,_,G,S,W,W,S,G,_,_,_,_,_],
+    [_,_,_,_,G,S,W,Y,Y,W,S,G,_,_,_,_],
+    [_,_,_,G,S,W,Y,WH,WH,Y,W,S,G,_,_,_],
+    [_,_,G,S,W,Y,WH,LBL,LBL,WH,Y,W,S,G,_,_],
+    [_,_,G,S,W,Y,WH,LBL,LBL,WH,Y,W,S,G,_,_],
+    [_,_,G,S,W,Y,WH,LBL,LBL,WH,Y,W,S,G,_,_],
+    [_,_,G,S,W,Y,WH,LBL,LBL,WH,Y,W,S,G,_,_],
+    [_,_,G,S,W,Y,WH,LBL,LBL,WH,Y,W,S,G,_,_],
+    [_,_,G,S,W,Y,WH,LBL,LBL,WH,Y,W,S,G,_,_],
+    [_,_,_,G,S,W,Y,WH,WH,Y,W,S,G,_,_,_],
+    [_,_,_,_,G,S,W,Y,Y,W,S,G,_,_,_,_],
+    [_,_,_,_,_,G,S,W,W,S,G,_,_,_,_,_],
+    [_,_,_,_,_,_,G,S,S,G,_,_,_,_,_,_],
+    [_,_,_,_,_,_,_,G,G,_,_,_,_,_,_,_],
+]
+
 _WARDEN_TOKEN = [
     [_,_,_,_,_,_,_,_,_,_,_,_,_,_,_,_],
     [_,_,_,_,_,_,W,Y,Y,W,_,_,_,_,_,_],
@@ -368,6 +395,25 @@ _DAWN_RELIC = [
     [_,_,_,_,_,_,Y,WH,Y,_,_,_,_,_,_,_],
     [_,_,_,_,_,_,_,Y,_,_,_,_,_,_,_,_],
     [_,_,_,_,_,_,_,_,_,_,_,_,_,_,_,_],
+]
+
+_ITEM_GENERIC = [
+    [_,_,_,_,_,_,_,G,G,_,_,_,_,_,_,_],
+    [_,_,_,_,_,_,G,S,S,G,_,_,_,_,_,_],
+    [_,_,_,_,_,G,S,S,S,S,G,_,_,_,_,_],
+    [_,_,_,_,G,S,S,S,S,S,S,G,_,_,_,_],
+    [_,_,_,G,S,S,W,W,W,W,S,S,G,_,_,_],
+    [_,_,G,S,S,W,Y,Y,Y,Y,W,S,S,G,_,_],
+    [_,_,G,S,S,W,Y,WH,WH,Y,W,S,S,G,_,_],
+    [_,_,G,S,S,W,Y,WH,WH,Y,W,S,S,G,_,_],
+    [_,_,G,S,S,W,Y,WH,WH,Y,W,S,S,G,_,_],
+    [_,_,G,S,S,W,Y,WH,WH,Y,W,S,S,G,_,_],
+    [_,_,G,S,S,W,Y,Y,Y,Y,W,S,S,G,_,_],
+    [_,_,_,G,S,S,W,W,W,W,S,S,G,_,_,_],
+    [_,_,_,_,G,S,S,S,S,S,S,G,_,_,_,_],
+    [_,_,_,_,_,G,S,S,S,S,G,_,_,_,_,_],
+    [_,_,_,_,_,_,G,S,S,G,_,_,_,_,_,_],
+    [_,_,_,_,_,_,_,G,G,_,_,_,_,_,_,_],
 ]
 
 # Class icons
@@ -519,6 +565,7 @@ SPRITE_DATA: Dict[str, str] = {
     "rope": _px(_ROPE),
     "torch": _px(_TORCH),
     "healing_potion": _px(_HEALING_POTION),
+    "ancient_shield": _px(_ANCIENT_SHIELD),
     "warden_token": _px(_WARDEN_TOKEN),
     "bronze_seal": _px(_BRONZE_SEAL),
     "ashfang_charm": _px(_ASHFANG_CHARM),
@@ -526,6 +573,8 @@ SPRITE_DATA: Dict[str, str] = {
     "echo_locket": _px(_ECHO_LOCKET),
     "ember_sigil": _px(_EMBER_SIGIL),
     "dawn_relic": _px(_DAWN_RELIC),
+    "first_age_relic": _px(_DAWN_RELIC),
+    "item_generic": _px(_ITEM_GENERIC),
     # Class icons
     "class_warrior": _px(_CLASS_WARRIOR),
     "class_rogue": _px(_CLASS_ROGUE),

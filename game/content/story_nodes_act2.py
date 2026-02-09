@@ -132,7 +132,7 @@ STORY_NODES_ACT2: Dict[str, Dict[str, Any]] = {
         "id": "causeway_depths",
         "title": "Undervault Chamber",
         "text": (
-            "Below the altar, a rusted floodgate seals a vault of old containment engines — the same "
+            "Below the stone dais, a rusted floodgate seals a vault of old containment engines — the same "
             "kind Caldus repurposed for his channeling array. You can reactivate the pumps to drain the "
             "road and expose a safer assault lane, but Edrin's chain-bound form stirs in the dark water."
         ),
@@ -641,3 +641,4 @@ STORY_NODES_ACT2: Dict[str, Dict[str, Any]] = {
         ],
     },
 }
+

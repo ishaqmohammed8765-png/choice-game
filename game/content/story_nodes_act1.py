@@ -408,7 +408,7 @@ STORY_NODES_ACT1: Dict[str, Dict[str, Any]] = {
         "title": "Echo Hollow",
         "text": (
             "A mossy hollow sits between leaning pines. Wind chimes ring without a breeze, and a carved "
-            "locket rests on the altar as if it has been waiting for your return."
+            "locket rests on a stone dais as if it has been waiting for your return."
         ),
         "dialogue": [
             {"speaker": "Your Instinct", "line": "This is not a gift. It's a promise that the forest remembers you."},

@@ -60,18 +60,44 @@ def _get_default(key: str) -> Any:
     return value() if callable(value) else value
 
 
-def _normalize_meta_state(meta_state: Dict[str, Any] | None) -> Dict[str, list[str]]:
+def _coerce_string_list(raw: Any) -> list[str]:
+    if raw is None:
+        return []
+    if isinstance(raw, dict):
+        values = list(raw.keys())
+    elif isinstance(raw, (list, tuple, set)):
+        values = list(raw)
+    elif isinstance(raw, str):
+        values = [raw]
+    else:
+        return []
+    normalized: list[str] = []
+    for value in values:
+        text = str(value).strip()
+        if not text or text in normalized:
+            continue
+        normalized.append(text)
+    return normalized
+
+
+def normalize_meta_state(meta_state: Dict[str, Any] | None) -> Dict[str, list[str]]:
     if not isinstance(meta_state, dict):
         return {"unlocked_items": [], "removed_nodes": []}
-    unlocked = meta_state.get("unlocked_items", [])
-    removed = meta_state.get("removed_nodes", [])
-    if not isinstance(unlocked, list):
-        unlocked = []
-    if not isinstance(removed, list):
-        removed = []
+
+    # Accept legacy payload keys so older saves still carry progression.
+    unlocked = (
+        meta_state.get("unlocked_items")
+        if "unlocked_items" in meta_state
+        else meta_state.get("legacy_items", meta_state.get("meta_items", []))
+    )
+    removed = (
+        meta_state.get("removed_nodes")
+        if "removed_nodes" in meta_state
+        else meta_state.get("removed_meta_nodes", meta_state.get("removed_locations", []))
+    )
     return {
-        "unlocked_items": list(dict.fromkeys(str(item) for item in unlocked)),
-        "removed_nodes": list(dict.fromkeys(str(node) for node in removed)),
+        "unlocked_items": _coerce_string_list(unlocked),
+        "removed_nodes": _coerce_string_list(removed),
     }
 
 
@@ -80,8 +106,8 @@ def _meta_persistence_enabled() -> bool:
 
 
 def _merge_meta_state(existing: Dict[str, Any], incoming: Dict[str, Any]) -> Dict[str, list[str]]:
-    existing_norm = _normalize_meta_state(existing)
-    incoming_norm = _normalize_meta_state(incoming)
+    existing_norm = normalize_meta_state(existing)
+    incoming_norm = normalize_meta_state(incoming)
     return {
         "unlocked_items": list(
             dict.fromkeys(existing_norm["unlocked_items"] + incoming_norm["unlocked_items"])
@@ -94,19 +120,19 @@ def _merge_meta_state(existing: Dict[str, Any], incoming: Dict[str, Any]) -> Dic
 
 def _load_persistent_meta_state() -> Dict[str, list[str]]:
     if not _meta_persistence_enabled():
-        return _normalize_meta_state(None)
+        return normalize_meta_state(None)
     if not _META_PROGRESS_PATH.exists():
-        return _normalize_meta_state(None)
+        return normalize_meta_state(None)
     try:
         payload = json.loads(_META_PROGRESS_PATH.read_text(encoding="utf-8"))
     except (OSError, json.JSONDecodeError):
-        return _normalize_meta_state(None)
-    return _normalize_meta_state(payload)
+        return normalize_meta_state(None)
+    return normalize_meta_state(payload)
 
 
 def persist_meta_state(meta_state: Dict[str, Any]) -> None:
     """Persist cross-run legacy progression to disk."""
-    normalized = _normalize_meta_state(meta_state)
+    normalized = normalize_meta_state(meta_state)
     st.session_state.meta_state = normalized
     if not _meta_persistence_enabled():
         return
@@ -133,6 +159,7 @@ def start_game(player_class: str) -> None:
     session_meta = st.session_state.get("meta_state", {"unlocked_items": [], "removed_nodes": []})
     meta_state = _merge_meta_state(persisted_meta, session_meta)
     st.session_state.meta_state = meta_state
+    persist_meta_state(meta_state)
     st.session_state.player_class = player_class
     st.session_state.current_node = INTRO_NODE_BY_CLASS.get(player_class, "village_square")
     st.session_state.stats = {

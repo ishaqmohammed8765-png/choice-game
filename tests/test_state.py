@@ -3,6 +3,7 @@ import unittest
 from game.state import (
     ensure_session_state,
     load_snapshot,
+    normalize_meta_state,
     reset_game_state,
     snapshot_state,
     start_game,
@@ -47,6 +48,19 @@ class StateTests(unittest.TestCase):
         ok, errors = validate_snapshot({"player_class": "Warrior"})
         self.assertFalse(ok)
         self.assertTrue(errors)
+
+    def test_normalize_meta_state_accepts_legacy_keys(self):
+        normalized = normalize_meta_state({
+            "legacy_items": ["Echo Locket", "Echo Locket"],
+            "removed_locations": ["echo_shrine"],
+        })
+        self.assertEqual(normalized["unlocked_items"], ["Echo Locket"])
+        self.assertEqual(normalized["removed_nodes"], ["echo_shrine"])
+
+    def test_start_game_uses_legacy_key_payload(self):
+        st.session_state.meta_state = {"legacy_items": ["Echo Locket"], "removed_locations": []}
+        start_game("Warrior")
+        self.assertIn("Echo Locket", st.session_state.inventory)
 
 
 if __name__ == "__main__":
