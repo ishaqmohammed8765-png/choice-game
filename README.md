@@ -30,6 +30,7 @@ A deterministic, choice-driven fantasy adventure built with Streamlit.
 ## Tooling
 
 - `scripts/balance_report.py`: quick class viability and resource-pressure report.
+  - Run with: `python scripts/balance_report.py`
 - Story simplification pass:
   - auto-applies marked low-impact beats,
   - removes exact duplicate choices,

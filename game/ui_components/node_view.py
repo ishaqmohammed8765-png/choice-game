@@ -9,8 +9,8 @@ from game.logic import (
     check_requirements,
     execute_choice,
     format_outcome_summary,
-    get_available_choices,
-    get_choice_warnings,
+    get_choice_warnings_with_effects,
+    get_node_choice_evaluations,
     resolve_choice_outcome,
     transition_to,
     transition_to_failure,
@@ -72,13 +72,7 @@ def _render_pending_confirmation(node_id: str, available_choices: List[Dict[str,
                 st.rerun()
 
 
-def _render_locked_choices(choices: List[Dict[str, Any]]) -> None:
-    locked_choices: List[tuple[Dict[str, Any], str]] = []
-    for choice in choices:
-        ok, reason = check_requirements(choice.get("requirements"))
-        if not ok:
-            locked_choices.append((choice, reason))
-
+def _render_locked_choices(locked_choices: List[tuple[Dict[str, Any], str]]) -> None:
     if locked_choices:
         with st.expander("Locked paths", expanded=False):
             for choice, reason in locked_choices:
@@ -176,9 +170,8 @@ def _is_low_impact(choice: Dict[str, Any]) -> bool:
     return set(effects.keys()) <= {"log"} and not choice.get("conditional_effects")
 
 
-def _get_choice_cost_preview(choice: Dict[str, Any]) -> str:
+def _get_choice_cost_preview(effects: Dict[str, Any]) -> str:
     """Build a short cost/reward preview string for a choice."""
-    effects, _ = resolve_choice_outcome(choice)
     parts: List[str] = []
     stat_labels = {"hp": "HP", "gold": "Gold", "strength": "STR", "dexterity": "DEX"}
     for stat_key, label in stat_labels.items():
@@ -194,12 +187,22 @@ def _get_choice_cost_preview(choice: Dict[str, Any]) -> str:
     return " ".join(parts)
 
 
-def _render_choice_card(node_id: str, index: int, choice: Dict[str, Any], *, key_prefix: str = "choice") -> None:
+def _render_choice_card(
+    node_id: str,
+    index: int,
+    choice: Dict[str, Any],
+    *,
+    resolved_effects: Dict[str, Any] | None = None,
+    key_prefix: str = "choice",
+) -> None:
     """Render a single choice as a styled card with preview info."""
     label = choice["label"]
     safe_label = _escape_html(label)
-    warnings = get_choice_warnings(choice)
-    cost_preview = _get_choice_cost_preview(choice)
+    effects = resolved_effects
+    if effects is None:
+        effects, _ = resolve_choice_outcome(choice)
+    warnings = get_choice_warnings_with_effects(choice, effects)
+    cost_preview = _get_choice_cost_preview(effects)
 
     warning_icon = ""
     if warnings:
@@ -244,7 +247,7 @@ def _should_group_by_destination(node_id: str, indexed_choices: List[tuple[int, 
         return True
     if len(indexed_choices) < 5:
         return False
-    self_loop_count = sum(1 for _, choice in indexed_choices if choice.get("next") == node_id)
+    self_loop_count = sum(1 for _, entry in indexed_choices if entry["choice"].get("next") == node_id)
     return self_loop_count >= 3
 
 
@@ -254,13 +257,18 @@ def _render_grouped_choices(
     *,
     overflow: bool,
 ) -> None:
-    has_explicit_groups = any(choice.get("group") for _, choice in indexed_choices)
+    has_explicit_groups = any(entry["choice"].get("group") for _, entry in indexed_choices)
     group_by_destination = _should_group_by_destination(node_id, indexed_choices, overflow=overflow)
 
     if not group_by_destination and not has_explicit_groups:
         # Render choices as styled cards in a clean list
-        for index, choice in indexed_choices:
-            _render_choice_card(node_id, index, choice)
+        for index, entry in indexed_choices:
+            _render_choice_card(
+                node_id,
+                index,
+                entry["choice"],
+                resolved_effects=entry.get("resolved_effects"),
+            )
         return
 
     groups = _group_choices(
@@ -271,19 +279,30 @@ def _render_grouped_choices(
     if not overflow:
         for group in groups:
             if len(group["choices"]) == 1 and not group["label"]:
-                index, choice = group["choices"][0]
-                _render_choice_card(node_id, index, choice)
+                index, entry = group["choices"][0]
+                _render_choice_card(
+                    node_id,
+                    index,
+                    entry["choice"],
+                    resolved_effects=entry.get("resolved_effects"),
+                )
             else:
                 label = group["label"] or "Grouped options"
                 with st.expander(label, expanded=False):
-                    for index, choice in group["choices"]:
-                        _render_choice_card(node_id, index, choice, key_prefix=f"group_{group['key']}")
+                    for index, entry in group["choices"]:
+                        _render_choice_card(
+                            node_id,
+                            index,
+                            entry["choice"],
+                            resolved_effects=entry.get("resolved_effects"),
+                            key_prefix=f"group_{group['key']}",
+                        )
         return
 
     more_groups: List[Dict[str, Any]] = []
     primary_groups: List[Dict[str, Any]] = []
     for group in groups:
-        if all(_is_low_impact(choice) for _, choice in group["choices"]):
+        if all(_is_low_impact(entry["choice"]) for _, entry in group["choices"]):
             more_groups.append(group)
         else:
             primary_groups.append(group)
@@ -295,21 +314,38 @@ def _render_grouped_choices(
 
     for group in primary_groups:
         if len(group["choices"]) == 1 and not group["label"]:
-            index, choice = group["choices"][0]
-            _render_choice_card(node_id, index, choice)
+            index, entry = group["choices"][0]
+            _render_choice_card(
+                node_id,
+                index,
+                entry["choice"],
+                resolved_effects=entry.get("resolved_effects"),
+            )
         else:
             label = group["label"] or "Grouped options"
             with st.expander(label, expanded=False):
-                for index, choice in group["choices"]:
-                    _render_choice_card(node_id, index, choice, key_prefix=f"group_{group['key']}")
+                for index, entry in group["choices"]:
+                    _render_choice_card(
+                        node_id,
+                        index,
+                        entry["choice"],
+                        resolved_effects=entry.get("resolved_effects"),
+                        key_prefix=f"group_{group['key']}",
+                    )
 
     if more_groups:
         with st.expander("More options", expanded=False):
             for group in more_groups:
                 label = group["label"] or "Additional options"
                 st.caption(label)
-                for index, choice in group["choices"]:
-                    _render_choice_card(node_id, index, choice, key_prefix=f"more_{group['key']}")
+                for index, entry in group["choices"]:
+                    _render_choice_card(
+                        node_id,
+                        index,
+                        entry["choice"],
+                        resolved_effects=entry.get("resolved_effects"),
+                        key_prefix=f"more_{group['key']}",
+                    )
 
 
 def _group_choices(
@@ -320,7 +356,8 @@ def _group_choices(
 ) -> List[Dict[str, Any]]:
     groups: List[Dict[str, Any]] = []
     seen: Dict[str, Dict[str, Any]] = {}
-    for index, choice in indexed_choices:
+    for index, entry in indexed_choices:
+        choice = entry["choice"]
         group_label = choice.get("group")
         destination = choice.get("next")
         if group_label:
@@ -347,7 +384,7 @@ def _group_choices(
                 }
             )
             seen[key] = groups[-1]
-        seen[key]["choices"].append((index, choice))
+        seen[key]["choices"].append((index, entry))
     return groups
 
 
@@ -464,7 +501,14 @@ def render_node() -> None:
         return
 
     choices = node.get("choices", [])
-    available_choices = get_available_choices(node)
+    evaluations = get_node_choice_evaluations(node_id, node)
+    available_entries = [entry for entry in evaluations if entry["is_available"]]
+    available_choices = [entry["choice"] for entry in available_entries]
+    locked_choices = [
+        (entry["choice"], entry["locked_reason"])
+        for entry in evaluations
+        if not entry["is_available"] and entry["locked_reason"]
+    ]
     overflow = len(available_choices) > MAX_CHOICES_PER_NODE
     if overflow:
         st.warning("This scene has many options; some are grouped.")
@@ -531,11 +575,11 @@ def render_node() -> None:
     )
 
     _render_pending_confirmation(node_id, available_choices)
-    indexed_choices = list(enumerate(available_choices))
+    indexed_choices = list(enumerate(available_entries))
     _render_grouped_choices(node_id, indexed_choices, overflow=overflow)
 
     if st.session_state.show_locked_choices:
-        _render_locked_choices(choices)
+        _render_locked_choices(locked_choices)
 
     if not available_choices:
         st.warning("No valid choices remain based on your current stats, items, and flags.")

@@ -1,5 +1,6 @@
 import unittest
 
+from game.data import init_story_nodes
 from game.logic import (
     apply_effects,
     check_requirements,
@@ -98,6 +99,12 @@ class LogicTests(unittest.TestCase):
     def test_validate_story_nodes_has_no_warnings(self):
         warnings = validate_story_nodes()
         self.assertEqual([], warnings)
+
+    def test_validate_story_nodes_has_no_missing_next_after_simplification(self):
+        init_story_nodes()
+        warnings = validate_story_nodes()
+        missing_next = [warning for warning in warnings if "points to missing node 'None'" in warning]
+        self.assertEqual([], missing_next)
 
     def test_transition_to_unknown_node_redirects(self):
         transition_to("missing_node")

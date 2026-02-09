@@ -3,7 +3,7 @@ from html import escape
 
 from game.streamlit_compat import st
 
-from game.data import CLASS_TEMPLATES, FACTION_KEYS, TRAIT_KEYS
+from game.data import CLASS_TEMPLATES, FACTION_KEYS, STORY_NODES, TRAIT_KEYS
 from game.engine.state_machine import get_phase
 from game.logic import apply_morality_flags
 from game.state import add_log, load_snapshot, reset_game_state, snapshot_state, validate_snapshot
@@ -44,6 +44,32 @@ _TRAIT_COLORS = {
     "alignment": "#22c55e",
     "ember_tide": "#f97316",
 }
+
+
+def _render_centered_delta_bar(*, label: str, value: int, color: str, max_range: int) -> None:
+    normalized = max(-max_range, min(max_range, value))
+    if normalized >= 0:
+        left_pct = 50
+        width_pct = (normalized / max_range) * 50
+    else:
+        width_pct = (abs(normalized) / max_range) * 50
+        left_pct = 50 - width_pct
+    sign = "+" if value > 0 else ""
+    st.markdown(
+        f"""
+        <div style="margin-bottom:6px;">
+            <div style="display:flex;justify-content:space-between;font-size:0.75rem;margin-bottom:1px;">
+                <span style="color:#a8a29e;font-family:'Cinzel',serif;">{label}</span>
+                <span style="color:{color};font-family:'Cinzel',serif;font-weight:600;">{sign}{value}</span>
+            </div>
+            <div style="background:#1a1a2e;border:1px solid #1e293b;border-radius:3px;height:6px;position:relative;overflow:hidden;">
+                <div style="position:absolute;left:50%;top:0;bottom:0;width:1px;background:#334155;"></div>
+                <div style="position:absolute;left:{left_pct}%;top:0;height:100%;width:{width_pct}%;background:{color};border-radius:2px;transition:all 0.3s ease;"></div>
+            </div>
+        </div>
+        """,
+        unsafe_allow_html=True,
+    )
 
 
 def _render_hp_bar() -> None:
@@ -136,31 +162,7 @@ def _render_traits_panel() -> None:
         label = _TRAIT_LABELS.get(trait, trait.replace("_", " ").title())
         value = st.session_state.traits[trait]
         color = _TRAIT_COLORS.get(trait, "#94a3b8")
-        max_range = 10
-        normalized = max(-max_range, min(max_range, value))
-        if normalized >= 0:
-            left_pct = 50
-            width_pct = (normalized / max_range) * 50
-        else:
-            width_pct = (abs(normalized) / max_range) * 50
-            left_pct = 50 - width_pct
-
-        sign = "+" if value > 0 else ""
-        st.markdown(
-            f"""
-            <div style="margin-bottom:6px;">
-                <div style="display:flex;justify-content:space-between;font-size:0.75rem;margin-bottom:1px;">
-                    <span style="color:#a8a29e;font-family:'Cinzel',serif;">{label}</span>
-                    <span style="color:{color};font-family:'Cinzel',serif;font-weight:600;">{sign}{value}</span>
-                </div>
-                <div style="background:#1a1a2e;border:1px solid #1e293b;border-radius:3px;height:6px;position:relative;overflow:hidden;">
-                    <div style="position:absolute;left:50%;top:0;bottom:0;width:1px;background:#334155;"></div>
-                    <div style="position:absolute;left:{left_pct}%;top:0;height:100%;width:{width_pct}%;background:{color};border-radius:2px;transition:all 0.3s ease;"></div>
-                </div>
-            </div>
-            """,
-            unsafe_allow_html=True,
-        )
+        _render_centered_delta_bar(label=label, value=value, color=color, max_range=10)
 
 
 def _render_faction_bars() -> None:
@@ -175,32 +177,36 @@ def _render_faction_bars() -> None:
     for faction in FACTION_KEYS:
         value = st.session_state.factions[faction]
         color = faction_colors.get(faction, "#94a3b8")
-        max_range = 5
-        normalized = max(-max_range, min(max_range, value))
-        if normalized >= 0:
-            left_pct = 50
-            width_pct = (normalized / max_range) * 50
-        else:
-            width_pct = (abs(normalized) / max_range) * 50
-            left_pct = 50 - width_pct
-
-        sign = "+" if value > 0 else ""
         display_name = faction.title()
-        st.markdown(
-            f"""
-            <div style="margin-bottom:6px;">
-                <div style="display:flex;justify-content:space-between;font-size:0.75rem;margin-bottom:1px;">
-                    <span style="color:#a8a29e;font-family:'Cinzel',serif;">{display_name}</span>
-                    <span style="color:{color};font-family:'Cinzel',serif;font-weight:600;">{sign}{value}</span>
-                </div>
-                <div style="background:#1a1a2e;border:1px solid #1e293b;border-radius:3px;height:6px;position:relative;overflow:hidden;">
-                    <div style="position:absolute;left:50%;top:0;bottom:0;width:1px;background:#334155;"></div>
-                    <div style="position:absolute;left:{left_pct}%;top:0;height:100%;width:{width_pct}%;background:{color};border-radius:2px;transition:all 0.3s ease;"></div>
-                </div>
-            </div>
-            """,
-            unsafe_allow_html=True,
-        )
+        _render_centered_delta_bar(label=display_name, value=value, color=color, max_range=5)
+
+
+def _render_campaign_progress() -> None:
+    """Display run progress and key milestones to improve navigation feedback."""
+    st.subheader("Campaign Progress")
+    canonical_nodes = [node_id for node_id in STORY_NODES if not node_id.startswith("intro_")]
+    visited_nodes = {
+        node_id
+        for node_id in st.session_state.visited_nodes
+        if node_id in STORY_NODES and not node_id.startswith("intro_")
+    }
+    explored = len(visited_nodes)
+    total = max(1, len(canonical_nodes))
+    pct = explored / total
+    st.progress(pct, text=f"Explored scenes: {explored}/{total}")
+
+    branch_flags = [
+        flag_name
+        for flag_name, value in st.session_state.flags.items()
+        if flag_name.startswith("branch_") and flag_name.endswith("_completed") and value
+    ]
+    major_threats = sum(
+        1
+        for flag_name in ("tidebound_knight_defeated", "pyre_alchemist_defeated")
+        if st.session_state.flags.get(flag_name)
+    )
+    st.caption(f"Resolved field operations: {len(branch_flags)}")
+    st.caption(f"Major threats defeated: {major_threats}/2")
 
 
 def _render_save_load_controls() -> None:
@@ -227,6 +233,30 @@ def _render_save_load_controls() -> None:
                     st.rerun()
             except json.JSONDecodeError:
                 st.error("Invalid JSON. Please paste a valid exported state.")
+
+
+def _render_system_controls(*, button_prefix: str) -> None:
+    st.toggle(
+        "Show locked choices",
+        key="show_locked_choices",
+        help="Display locked choices and their requirement details in the story panel.",
+    )
+    st.divider()
+    if st.button(
+        "Back (undo last choice)",
+        key=f"{button_prefix}_undo",
+        use_container_width=True,
+        disabled=not st.session_state.history,
+    ):
+        previous = st.session_state.history.pop()
+        load_snapshot(previous)
+        add_log("You retrace your steps and reconsider your decision.")
+        st.rerun()
+    _render_save_load_controls()
+    st.divider()
+    if st.button("Restart Game", key=f"{button_prefix}_restart", use_container_width=True):
+        reset_game_state()
+        st.rerun()
 
 
 def _render_player_panel_body(*, button_prefix: str) -> None:
@@ -290,23 +320,7 @@ def _render_player_panel_body(*, button_prefix: str) -> None:
         _render_faction_bars()
 
     st.divider()
-    if st.button(
-        "Back (undo last choice)",
-        key=f"{button_prefix}_undo",
-        use_container_width=True,
-        disabled=not st.session_state.history,
-    ):
-        previous = st.session_state.history.pop()
-        load_snapshot(previous)
-        add_log("You retrace your steps and reconsider your decision.")
-        st.rerun()
-
-    _render_save_load_controls()
-
-    st.divider()
-    if st.button("Restart Game", key=f"{button_prefix}_restart", use_container_width=True):
-        reset_game_state()
-        st.rerun()
+    _render_system_controls(button_prefix=button_prefix)
 
 
 def _render_side_hud_header() -> None:
@@ -374,32 +388,14 @@ def render_side_panel() -> None:
         render_path_map()
 
     with progress_tab:
+        _render_campaign_progress()
+        st.divider()
         _render_traits_panel()
         st.divider()
         _render_faction_bars()
 
     with system_tab:
-        st.toggle(
-            "Show locked choices",
-            key="show_locked_choices",
-            help="Display locked choices and their requirement details in the story panel.",
-        )
-        st.divider()
-        if st.button(
-            "Back (undo last choice)",
-            key="panel_undo",
-            use_container_width=True,
-            disabled=not st.session_state.history,
-        ):
-            previous = st.session_state.history.pop()
-            load_snapshot(previous)
-            add_log("You retrace your steps and reconsider your decision.")
-            st.rerun()
-        _render_save_load_controls()
-        st.divider()
-        if st.button("Restart Game", key="panel_restart", use_container_width=True):
-            reset_game_state()
-            st.rerun()
+        _render_system_controls(button_prefix="panel")
 
 
 def render_main_panel() -> None:

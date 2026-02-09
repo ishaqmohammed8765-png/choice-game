@@ -4,7 +4,7 @@ from game.streamlit_compat import st
 
 from game.data import STORY_NODES
 from game.engine.state_machine import get_phase
-from game.logic import check_requirements, resolve_choice_outcome
+from game.logic import check_requirements, get_node_choice_evaluations, resolve_choice_outcome
 
 
 # Stat requirement specs for tooltip formatting: (requirement_key, stat_key, label)
@@ -262,14 +262,17 @@ def render_path_map() -> None:
         st.info("No outgoing paths from this scene.")
         return
 
+    evaluations = get_node_choice_evaluations(node_id, node)
     visited_nodes = set(st.session_state.visited_nodes)
     visited_edges = {(edge.get("from"), edge.get("to")) for edge in st.session_state.visited_edges}
 
-    columns_per_row = 3 if len(choices) >= 6 else 2
+    columns_per_row = 3 if len(evaluations) >= 6 else 2
     choice_columns = st.columns(columns_per_row)
-    for index, choice in enumerate(choices):
-        is_unlocked, locked_reason = check_requirements(choice.get("requirements"))
-        _, next_node_id = resolve_choice_outcome(choice)
+    for index, entry in enumerate(evaluations):
+        choice = entry["choice"]
+        is_unlocked = entry["is_available"]
+        locked_reason = entry["locked_reason"]
+        next_node_id = entry["resolved_next"]
         destination = STORY_NODES.get(next_node_id, {}).get("title", next_node_id or "Unknown")
         is_visited = next_node_id in visited_nodes
         edge_visited = (node_id, next_node_id) in visited_edges

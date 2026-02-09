@@ -1,4 +1,4 @@
-from typing import Any, Dict, List
+from typing import Any, Dict, List, Tuple
 
 from game.streamlit_compat import st
 
@@ -85,8 +85,13 @@ def execute_choice(node_id: str, label: str, choice: Dict[str, Any]) -> None:
 
 def get_choice_warnings(choice: Dict[str, Any]) -> List[str]:
     """Return warning messages for irreversible or high-cost choices."""
-    warnings: List[str] = []
     effects, _ = resolve_choice_outcome(choice)
+    return get_choice_warnings_with_effects(choice, effects)
+
+
+def get_choice_warnings_with_effects(choice: Dict[str, Any], effects: Dict[str, Any]) -> List[str]:
+    """Return warning messages using already-resolved effects to avoid duplicate work."""
+    warnings: List[str] = []
 
     if choice.get("irreversible"):
         warnings.append("Irreversible choice: this clears undo history once confirmed.")
@@ -346,14 +351,78 @@ def _record_visit(from_node: str, to_node: str) -> None:
         visited_edges.append(edge)
 
 
+def _freeze_state_value(value: Any) -> Any:
+    if isinstance(value, dict):
+        return tuple((k, _freeze_state_value(v)) for k, v in sorted(value.items(), key=lambda item: str(item[0])))
+    if isinstance(value, list):
+        return tuple(_freeze_state_value(v) for v in value)
+    return value
+
+
+def _choice_eval_state_signature() -> Tuple[Any, ...]:
+    meta_state = normalize_meta_state(st.session_state.get("meta_state"))
+    return (
+        st.session_state.player_class,
+        tuple((k, st.session_state.stats.get(k, 0)) for k in STAT_KEYS),
+        tuple(st.session_state.inventory),
+        tuple((k, st.session_state.traits.get(k, 0)) for k in TRAIT_KEYS),
+        _freeze_state_value(st.session_state.flags),
+        tuple(meta_state.get("unlocked_items", [])),
+        tuple(meta_state.get("removed_nodes", [])),
+    )
+
+
+def _choice_identity(choice: Dict[str, Any]) -> Tuple[Any, ...]:
+    return (
+        choice.get("label"),
+        choice.get("next"),
+        _freeze_state_value(choice.get("requirements", {})),
+        _freeze_state_value(choice.get("effects", {})),
+        _freeze_state_value(choice.get("conditional_effects", [])),
+        bool(choice.get("irreversible")),
+        bool(choice.get("instant_death")),
+        choice.get("group"),
+    )
+
+
+def _node_content_signature(node: Dict[str, Any]) -> Tuple[Any, ...]:
+    return tuple(_choice_identity(choice) for choice in node.get("choices", []))
+
+
+def get_node_choice_evaluations(node_id: str, node: Dict[str, Any]) -> List[Dict[str, Any]]:
+    """Return cached evaluations for a node's visible choices during this rerun."""
+    cache = st.session_state.setdefault("_choice_eval_cache", {})
+    cache_key = (node_id, _choice_eval_state_signature(), _node_content_signature(node))
+    cached = cache.get(cache_key)
+    if cached is not None:
+        return cached
+
+    evaluations: List[Dict[str, Any]] = []
+    for choice in node.get("choices", []):
+        is_valid, reason = check_requirements(choice.get("requirements"))
+        effects, resolved_next = resolve_choice_outcome(choice)
+        evaluations.append(
+            {
+                "choice": choice,
+                "is_available": is_valid,
+                "locked_reason": reason,
+                "resolved_effects": effects,
+                "resolved_next": resolved_next,
+            }
+        )
+
+    cache[cache_key] = evaluations
+    if len(cache) > 24:
+        cache.clear()
+        cache[cache_key] = evaluations
+    return evaluations
+
+
 def get_available_choices(node: Dict[str, Any]) -> List[Dict[str, Any]]:
     """Return choices that pass requirements for display and interaction."""
-    valid_choices = []
-    for choice in node.get("choices", []):
-        is_valid, _ = check_requirements(choice.get("requirements"))
-        if is_valid:
-            valid_choices.append(choice)
-    return valid_choices
+    node_id = st.session_state.current_node or node.get("id", "")
+    evaluations = get_node_choice_evaluations(node_id, node)
+    return [entry["choice"] for entry in evaluations if entry["is_available"]]
 
 
 def apply_node_auto_choices(node_id: str, node: Dict[str, Any]) -> bool:

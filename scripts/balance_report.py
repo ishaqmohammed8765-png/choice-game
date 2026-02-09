@@ -1,28 +1,15 @@
 from __future__ import annotations
 
 from collections import defaultdict
+from pathlib import Path
+import sys
 
-from game.content import CLASS_TEMPLATES, STAT_KEYS, STORY_NODES
-from game.validation import _collect_story_metadata
+REPO_ROOT = Path(__file__).resolve().parents[1]
+if str(REPO_ROOT) not in sys.path:
+    sys.path.insert(0, str(REPO_ROOT))
 
-
-def _max_stats_for_class() -> dict[str, dict[str, int]]:
-    max_gains = {stat: 0 for stat in STAT_KEYS}
-    for node in STORY_NODES.values():
-        for choice in node.get("choices", []):
-            effects = choice.get("effects", {})
-            for stat in STAT_KEYS:
-                if stat in effects and effects[stat] > 0:
-                    max_gains[stat] += effects[stat]
-            for variant in choice.get("conditional_effects", []):
-                variant_effects = variant.get("effects", {})
-                for stat in STAT_KEYS:
-                    if stat in variant_effects and variant_effects[stat] > 0:
-                        max_gains[stat] += variant_effects[stat]
-    return {
-        class_name: {stat: template[stat] + max_gains[stat] for stat in STAT_KEYS}
-        for class_name, template in CLASS_TEMPLATES.items()
-    }
+from game.content import CLASS_TEMPLATES, STORY_NODES
+from game.validation import _collect_story_metadata, _max_stats_for_class
 
 
 def _choice_possible_for_class(choice: dict, class_name: str, obtainable_items: set[str], max_stats: dict) -> bool:

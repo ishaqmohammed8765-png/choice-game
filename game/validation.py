@@ -45,6 +45,16 @@ def _iter_all_choices(node: Dict[str, Any]) -> List[Dict[str, Any]]:
     return list(node.get("choices", [])) + list(node.get("auto_choices", []))
 
 
+def _iter_choice_entries(node: Dict[str, Any]) -> List[tuple[str, Dict[str, Any]]]:
+    """Yield choices tagged by source collection: 'choices' or 'auto_choices'."""
+    entries: List[tuple[str, Dict[str, Any]]] = []
+    for choice in node.get("choices", []):
+        entries.append(("choices", choice))
+    for choice in node.get("auto_choices", []):
+        entries.append(("auto_choices", choice))
+    return entries
+
+
 def _collect_story_metadata() -> tuple[set[str], set[str]]:
     """Collect known flags and obtainable items."""
     known_flags = set(SYSTEM_FLAG_KEYS)
@@ -221,10 +231,14 @@ def validate_story_nodes() -> List[str]:
             if not _iter_all_choices(node):
                 warnings.append(f"Node '{node_id}' has no choices and is not marked as terminal.")
 
-        for idx, choice in enumerate(_iter_all_choices(node), start=1):
+        for idx, (choice_source, choice) in enumerate(_iter_choice_entries(node), start=1):
             label = choice.get("label", f"unnamed-{idx}")
             next_id = choice.get("next")
-            if next_id not in STORY_NODES:
+            # Standard player-selectable choices must transition somewhere.
+            # Auto choices can be log/effect-only events with no transition.
+            if choice_source == "choices" and next_id not in STORY_NODES:
+                warnings.append(f"Choice '{label}' in node '{node_id}' points to missing node '{next_id}'.")
+            if choice_source == "auto_choices" and next_id is not None and next_id not in STORY_NODES:
                 warnings.append(f"Choice '{label}' in node '{node_id}' points to missing node '{next_id}'.")
 
             requirements = choice.get("requirements", {})
