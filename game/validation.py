@@ -86,18 +86,34 @@ def _possible_stat_caps() -> dict[str, dict[str, int]]:
     max_gains: dict[str, dict[str, int]] = {
         cls: {stat: 0 for stat in STAT_KEYS} for cls in known_classes
     }
+
+    def eligible_classes(requirements: Dict[str, Any] | None, pool: set[str]) -> set[str]:
+        """Best-effort class gating extraction for reachability estimates.
+
+        Supports nested `any_of` by taking the union of eligible classes for each option.
+        """
+        if not requirements:
+            return set(pool)
+        if "any_of" in requirements:
+            elig: set[str] = set()
+            for option in requirements["any_of"]:
+                elig |= eligible_classes(option, pool)
+            return elig or set(pool)
+        req_classes = requirements.get("class")
+        if req_classes:
+            return set(req_classes) & pool
+        return set(pool)
+
     for node in STORY_NODES.values():
         for choice in _iter_all_choices(node):
-            req_classes = choice.get("requirements", {}).get("class")
-            eligible = set(req_classes) & known_classes if req_classes else known_classes
+            eligible = eligible_classes(choice.get("requirements"), known_classes)
             effects = choice.get("effects", {})
             for stat in STAT_KEYS:
                 if stat in effects and effects[stat] > 0:
                     for cls in eligible:
                         max_gains[cls][stat] += effects[stat]
             for variant in choice.get("conditional_effects", []):
-                variant_req_classes = variant.get("requirements", {}).get("class")
-                variant_eligible = set(variant_req_classes) & eligible if variant_req_classes else eligible
+                variant_eligible = eligible_classes(variant.get("requirements"), eligible)
                 variant_effects = variant.get("effects", {})
                 for stat in STAT_KEYS:
                     if stat in variant_effects and variant_effects[stat] > 0:
@@ -129,6 +145,15 @@ def _choice_possible_for_class(
     max_stats: Dict[str, int],
 ) -> bool:
     requirements = choice.get("requirements", {})
+    # If the requirement is an any_of, it is possible if any option is possible.
+    if "any_of" in requirements:
+        for option in requirements["any_of"]:
+            opt_choice = dict(choice)
+            opt_choice["requirements"] = option
+            if _choice_possible_for_class(opt_choice, class_name, obtainable_items, max_stats):
+                return True
+        return False
+
     if "class" in requirements and class_name not in requirements["class"]:
         return False
 

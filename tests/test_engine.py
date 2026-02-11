@@ -216,9 +216,9 @@ class GoldClampingTests(unittest.TestCase):
         self.assertEqual(st.session_state.stats["gold"], 0)
 
     def test_hp_can_go_negative(self):
-        """HP is allowed to go negative; death is handled by transition logic."""
+        """HP is clamped to 0; death is handled by transition logic."""
         apply_effects({"hp": -20})
-        self.assertLess(st.session_state.stats["hp"], 0)
+        self.assertEqual(st.session_state.stats["hp"], 0)
 
 
 class AutoChoiceSummaryTests(unittest.TestCase):
@@ -482,8 +482,8 @@ class AutoChoiceDeathTests(unittest.TestCase):
             ]
         }
         apply_node_auto_choices("stop_test_node", node)
-        # HP should be -8 (2 - 10), not -8 + 99
-        self.assertEqual(st.session_state.stats["hp"], -8)
+        # HP should clamp to 0 after death trigger; the heal must not fire.
+        self.assertEqual(st.session_state.stats["hp"], 0)
 
 
 class ExecuteChoiceHPDeathTests(unittest.TestCase):

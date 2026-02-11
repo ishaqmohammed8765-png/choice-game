@@ -1,6 +1,5 @@
 from game.content.classes import CLASS_TEMPLATES
 from game.content.constants import (
-    CHOICE_SIMPLIFICATION_REPORT,
     FACTION_KEYS,
     HIGH_COST_GOLD_LOSS,
     HIGH_COST_HP_LOSS,
@@ -8,10 +7,9 @@ from game.content.constants import (
     STAT_KEYS,
     TRAIT_KEYS,
 )
-from game.content.story import STORY_NODES, init_story_nodes
+from game.content.story import STORY_NODES, get_choice_simplification_report, init_story_nodes
 
 __all__ = [
-    "CHOICE_SIMPLIFICATION_REPORT",
     "CLASS_TEMPLATES",
     "FACTION_KEYS",
     "HIGH_COST_GOLD_LOSS",
@@ -20,5 +18,6 @@ __all__ = [
     "STAT_KEYS",
     "STORY_NODES",
     "TRAIT_KEYS",
+    "get_choice_simplification_report",
     "init_story_nodes",
 ]

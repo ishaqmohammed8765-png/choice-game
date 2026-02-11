@@ -3,7 +3,7 @@ from typing import Any, Dict, List
 
 from game.streamlit_compat import st
 
-from game.data import CHOICE_SIMPLIFICATION_REPORT, MAX_CHOICES_PER_NODE, STORY_NODES
+from game.data import MAX_CHOICES_PER_NODE, STORY_NODES, get_choice_simplification_report
 from game.logic import (
     apply_node_auto_choices,
     check_requirements,
@@ -517,10 +517,11 @@ def render_node() -> None:
                 f"Node '{node_id}' has {len(available_choices)} available choices (cap: {MAX_CHOICES_PER_NODE})."
             )
             st.write("Consider grouping by destination or assigning explicit choice groups in content.")
-            if CHOICE_SIMPLIFICATION_REPORT:
+            report = get_choice_simplification_report()
+            if report:
                 st.divider()
                 st.caption("Choice simplification report")
-                for entry in CHOICE_SIMPLIFICATION_REPORT:
+                for entry in report:
                     st.write(f"- {entry}")
 
     if not choices:

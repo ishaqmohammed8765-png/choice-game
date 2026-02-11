@@ -2,6 +2,7 @@ import unittest
 
 from game.ui import format_requirement_tooltip, should_force_injury_redirect
 from game.ui_components.path_map import _escape_svg_text
+from game.ui_components.sprites import sprite_svg
 
 
 class UiLogicTests(unittest.TestCase):
@@ -56,6 +57,10 @@ class UiLogicTests(unittest.TestCase):
     def test_escape_svg_text(self):
         escaped = _escape_svg_text('<warn ">&')
         self.assertEqual(escaped, "&lt;warn &quot;&gt;&amp;")
+
+    def test_sprite_svg_escapes_title(self):
+        svg = sprite_svg("item_generic", title='<script>alert("x")</script>')
+        self.assertIn("&lt;script&gt;alert(&quot;x&quot;)&lt;/script&gt;", svg)
 
 
 if __name__ == "__main__":

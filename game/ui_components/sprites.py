@@ -33,7 +33,16 @@ def sprite_svg(name: str, size: int = 24, title: str = "") -> str:
     pixel_data = SPRITE_DATA.get(name.lower().replace(" ", "_"))
     if not pixel_data:
         return ""
-    title_el = f"<title>{title}</title>" if title else ""
+    # Escape because `<title>` becomes part of the SVG DOM (defense-in-depth).
+    safe_title = (
+        str(title)
+        .replace("&", "&amp;")
+        .replace("<", "&lt;")
+        .replace(">", "&gt;")
+        .replace('"', "&quot;")
+        .replace("'", "&#39;")
+    )
+    title_el = f"<title>{safe_title}</title>" if safe_title else ""
     return (
         f'<svg viewBox="0 0 16 16" width="{size}" height="{size}" '
         f'style="image-rendering:pixelated;vertical-align:middle;">'

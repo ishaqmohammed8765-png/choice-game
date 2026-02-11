@@ -40,6 +40,13 @@ class LogicTests(unittest.TestCase):
         ok, _ = check_requirements({"any_of": [{"min_strength": 99}, {"min_gold": 5}]})
         self.assertTrue(ok)
 
+    def test_check_requirements_any_of_includes_failed_details(self):
+        ok, reason = check_requirements({"any_of": [{"items": ["Moon Key"]}, {"min_gold": 999}]})
+        self.assertFalse(ok)
+        self.assertIn("Requires one of:", reason)
+        self.assertIn("Missing item: Moon Key", reason)
+        self.assertIn("Requires gold >=", reason)
+
     def test_apply_effects_updates_state(self):
         apply_effects(
             {
@@ -59,6 +66,13 @@ class LogicTests(unittest.TestCase):
         self.assertEqual(st.session_state.traits["trust"], 1)
         self.assertIn("scout_meeting", st.session_state.seen_events)
         self.assertIn("Test event", st.session_state.event_log)
+
+    def test_apply_effects_clamps_negative_stats(self):
+        apply_effects({"hp": -999, "gold": -999, "strength": -999, "dexterity": -999})
+        self.assertEqual(st.session_state.stats["hp"], 0)
+        self.assertEqual(st.session_state.stats["gold"], 0)
+        self.assertEqual(st.session_state.stats["strength"], 0)
+        self.assertEqual(st.session_state.stats["dexterity"], 0)
 
     def test_reputation_surprise_event_triggers_once(self):
         st.session_state.auto_event_summary = []

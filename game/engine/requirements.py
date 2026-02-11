@@ -41,14 +41,18 @@ def check_requirements(requirements: Dict[str, Any] | None, state: GameState) ->
         return True, ""
 
     if "any_of" in requirements:
-        failed_summaries: List[str] = []
-        for option in requirements["any_of"]:
-            ok, _ = check_requirements(option, state)
+        failed_details: List[str] = []
+        for index, option in enumerate(requirements["any_of"], start=1):
+            ok, reason = check_requirements(option, state)
             if ok:
                 return True, ""
-            failed_summaries.append(_summarize_requirements(option))
-        detail = " or ".join(summary for summary in failed_summaries if summary)
-        return False, f"Requires one of: {detail or 'multiple conditions'}"
+            summary = _summarize_requirements(option)
+            # Prefer the most specific reason we have; fall back to summary.
+            detail = reason or summary or "unspecified condition"
+            if summary and reason and reason != summary:
+                detail = f"{summary} ({reason})"
+            failed_details.append(f"{index}) {detail}")
+        return False, "Requires one of: " + " | ".join(failed_details)
 
     stats = state.stats
     inventory = state.inventory

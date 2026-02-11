@@ -4,7 +4,6 @@ Story content now lives in the game.content package, split into smaller modules.
 """
 
 from game.content import (
-    CHOICE_SIMPLIFICATION_REPORT,
     CLASS_TEMPLATES,
     FACTION_KEYS,
     HIGH_COST_GOLD_LOSS,
@@ -13,11 +12,11 @@ from game.content import (
     STAT_KEYS,
     STORY_NODES,
     TRAIT_KEYS,
+    get_choice_simplification_report,
     init_story_nodes,
 )
 
 __all__ = [
-    "CHOICE_SIMPLIFICATION_REPORT",
     "CLASS_TEMPLATES",
     "FACTION_KEYS",
     "HIGH_COST_GOLD_LOSS",
@@ -26,5 +25,6 @@ __all__ = [
     "STAT_KEYS",
     "STORY_NODES",
     "TRAIT_KEYS",
+    "get_choice_simplification_report",
     "init_story_nodes",
 ]

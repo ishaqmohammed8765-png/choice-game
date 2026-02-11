@@ -210,8 +210,11 @@ def apply_effects(
         if stat in effects:
             stats[stat] += effects[stat]
 
-    if stats["gold"] < 0:
-        stats["gold"] = 0
+    # Stat floors: prevent negative values from leaking into the UI/state machine.
+    # HP <= 0 is still meaningful (death routing), but we clamp at 0 for display/storage.
+    for stat in ("hp", "gold", "strength", "dexterity"):
+        if stats.get(stat, 0) < 0:
+            stats[stat] = 0
 
     for item in effects.get("add_items", []):
         if item not in inventory:
