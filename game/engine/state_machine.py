@@ -107,6 +107,14 @@ for _phase, _nodes in PHASE_NODES.items():
 
 def get_phase(node_id: str) -> str:
     """Return the game phase for a given node, defaulting to 'exploration'."""
+    # Keep phase badges resilient even when content adds new node IDs.
+    if node_id:
+        if node_id.startswith("ending_"):
+            return "ending"
+        if node_id.startswith("failure_"):
+            return "failure"
+        if node_id.startswith("intro_"):
+            return "intro"
     return _NODE_PHASE_MAP.get(node_id, "exploration")
 
 

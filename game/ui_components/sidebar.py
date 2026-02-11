@@ -236,11 +236,72 @@ def _render_save_load_controls() -> None:
 
 
 def _render_system_controls(*, button_prefix: str) -> None:
+    # Put the restart button first so we can safely reset session state before
+    # any widget-backed keys (e.g. show_locked_choices) are created this run.
+    if st.button("Restart Game", key=f"{button_prefix}_restart", use_container_width=True):
+        reset_game_state()
+        st.rerun()
+
     st.toggle(
         "Show locked choices",
         key="show_locked_choices",
         help="Display locked choices and their requirement details in the story panel.",
     )
+    st.toggle(
+        "Developer mode",
+        key="dev_mode",
+        help="Show debug controls (jump to nodes, endings, etc.).",
+    )
+
+    if st.session_state.get("dev_mode"):
+        with st.expander("Developer Tools", expanded=True):
+            ending_targets = sorted([nid for nid in STORY_NODES.keys() if str(nid).startswith("ending_")])
+            quick_targets = [
+                "final_confrontation",
+                "ending_good",
+            ]
+            targets = [t for t in quick_targets if t in STORY_NODES]
+            for t in ending_targets:
+                if t not in targets:
+                    targets.append(t)
+
+            if targets:
+                st.selectbox(
+                    "Jump to node",
+                    options=targets,
+                    key=f"{button_prefix}_dev_jump_target",
+                )
+                col_jump, col_end = st.columns(2)
+                with col_jump:
+                    if st.button("Jump", key=f"{button_prefix}_dev_jump", use_container_width=True):
+                        target = st.session_state.get(f"{button_prefix}_dev_jump_target")
+                        if target in STORY_NODES:
+                            st.session_state.current_node = target
+                            st.session_state.pending_choice_confirmation = None
+                            st.session_state.pending_auto_death = False
+                            st.session_state.last_outcome_summary = None
+                            st.session_state.last_choice_feedback = []
+                            if "visited_nodes" in st.session_state:
+                                if target not in st.session_state.visited_nodes:
+                                    st.session_state.visited_nodes.append(target)
+                            add_log(f"[DEV] Jumped to {target}.")
+                            st.rerun()
+                with col_end:
+                    if st.button("Skip to end", key=f"{button_prefix}_dev_skip_end", use_container_width=True):
+                        target = "ending_good" if "ending_good" in STORY_NODES else (ending_targets[0] if ending_targets else None)
+                        if target:
+                            st.session_state.current_node = target
+                            st.session_state.pending_choice_confirmation = None
+                            st.session_state.pending_auto_death = False
+                            st.session_state.last_outcome_summary = None
+                            st.session_state.last_choice_feedback = []
+                            if "visited_nodes" in st.session_state:
+                                if target not in st.session_state.visited_nodes:
+                                    st.session_state.visited_nodes.append(target)
+                            add_log(f"[DEV] Skipped to {target}.")
+                            st.rerun()
+            else:
+                st.info("No ending nodes found to jump to.")
     st.divider()
     if st.button(
         "Back (undo last choice)",
@@ -254,9 +315,6 @@ def _render_system_controls(*, button_prefix: str) -> None:
         st.rerun()
     _render_save_load_controls()
     st.divider()
-    if st.button("Restart Game", key=f"{button_prefix}_restart", use_container_width=True):
-        reset_game_state()
-        st.rerun()
 
 
 def _render_player_panel_body(*, button_prefix: str) -> None:
