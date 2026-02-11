@@ -74,6 +74,20 @@ class DialogueLine(TypedDict):
     line: str
 
 
+class ConditionalNarrative(TypedDict, total=False):
+    """A node-level narrative variant applied when requirements are met.
+
+    This enables "consequences without complexity": the same node can shift tone,
+    append lines, or swap dialogue based on past flags/items/stats.
+    """
+
+    requirements: Requirements
+    text_replace: str
+    text_append: str
+    dialogue_replace: List[DialogueLine]
+    dialogue_append: List[DialogueLine]
+
+
 class StoryNode(TypedDict, total=False):
     """A single node in the story graph."""
 
@@ -81,6 +95,7 @@ class StoryNode(TypedDict, total=False):
     title: str
     text: str
     dialogue: List[DialogueLine]
+    conditional_narrative: List[ConditionalNarrative]
     choices: List[Choice]
     auto_choices: List[Choice]
     requirements: Requirements

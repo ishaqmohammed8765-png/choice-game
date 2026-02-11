@@ -30,6 +30,43 @@ def _escape_html(text: Any) -> str:
     return escape(str(text), quote=True).replace("\n", "<br/>")
 
 
+def _resolve_conditional_narrative(node: Dict[str, Any]) -> tuple[str, List[Dict[str, str]]]:
+    """Resolve node text/dialogue variants based on current requirements state.
+
+    This is intended to deepen consequences without multiplying node count: the same
+    node can change tone, add lines, or replace dialogue based on past flags/items.
+
+    Supported node keys:
+      - conditional_narrative: List[Dict] where each dict may contain:
+        - requirements: requirements dict
+        - text_replace: str
+        - text_append: str
+        - dialogue_replace: List[DialogueLine-like dicts]
+        - dialogue_append: List[DialogueLine-like dicts]
+    """
+    text = str(node.get("text", ""))
+    dialogue: List[Dict[str, str]] = list(node.get("dialogue", []) or [])
+
+    for variant in node.get("conditional_narrative", []) or []:
+        ok, _reason = check_requirements(variant.get("requirements"))
+        if not ok:
+            continue
+        if "text_replace" in variant and variant["text_replace"] is not None:
+            text = str(variant["text_replace"])
+        if "text_append" in variant and variant["text_append"]:
+            addition = str(variant["text_append"])
+            if text:
+                text = f"{text}\n\n{addition}"
+            else:
+                text = addition
+        if "dialogue_replace" in variant and variant["dialogue_replace"] is not None:
+            dialogue = list(variant["dialogue_replace"] or [])
+        if "dialogue_append" in variant and variant["dialogue_append"]:
+            dialogue.extend(list(variant["dialogue_append"]))
+
+    return text, dialogue
+
+
 def _render_pending_confirmation(node_id: str, available_choices: List[Dict[str, Any]]) -> None:
     pending = st.session_state.pending_choice_confirmation
     if not pending or pending.get("node") != node_id:
@@ -187,59 +224,89 @@ def _get_choice_cost_preview(effects: Dict[str, Any]) -> str:
     return " ".join(parts)
 
 
-def _render_choice_card(
+def _ensure_choice_selection(node_id: str, available_count: int) -> int:
+    """Ensure a valid selected choice index exists for this node; return it."""
+    selection = st.session_state.get("_choice_selection") or {}
+    if selection.get("node") != node_id:
+        selection = {"node": node_id, "choice_index": 0}
+        st.session_state["_choice_selection"] = selection
+    idx = int(selection.get("choice_index", 0) or 0)
+    if available_count <= 0:
+        idx = 0
+    elif idx < 0 or idx >= available_count:
+        idx = 0
+        st.session_state["_choice_selection"]["choice_index"] = idx
+    return idx
+
+
+def _render_choice_selector_box(
     node_id: str,
-    index: int,
-    choice: Dict[str, Any],
+    indexed_choices: List[tuple[int, Dict[str, Any]]],
     *,
-    resolved_effects: Dict[str, Any] | None = None,
-    key_prefix: str = "choice",
+    overflow: bool,
 ) -> None:
-    """Render a single choice as a styled card with preview info."""
-    label = choice["label"]
-    safe_label = _escape_html(label)
-    effects = resolved_effects
-    if effects is None:
-        effects, _ = resolve_choice_outcome(choice)
-    warnings = get_choice_warnings_with_effects(choice, effects)
-    cost_preview = _get_choice_cost_preview(effects)
+    """Render choices as a single boxed selector (click to select, filled circle indicates selection)."""
+    available_count = len(indexed_choices)
+    selected_index = _ensure_choice_selection(node_id, available_count)
 
-    warning_icon = ""
-    if warnings:
-        warning_icon = '<span style="color:#fbbf24;margin-right:4px;">&#9888;</span>'
+    # Keep some structure without hiding options behind per-choice "Choose" buttons.
+    has_explicit_groups = any(entry["choice"].get("group") for _, entry in indexed_choices)
+    group_by_destination = _should_group_by_destination(node_id, indexed_choices, overflow=overflow)
+    groups = _group_choices(
+        indexed_choices,
+        group_by_destination=group_by_destination,
+        current_node_id=node_id,
+    )
 
-    # Build the card HTML
-    card_html = f"""
-    <div style="
-        padding: 8px 12px;
-        border: 1px solid #2a201580;
-        border-left: 3px solid #c9a54e50;
-        border-radius: 4px 8px 8px 4px;
-        background: linear-gradient(135deg, rgba(20,15,10,0.5), rgba(10,10,20,0.4));
-        margin-bottom: 2px;
-    ">
-        <div style="
-            font-family: 'Crimson Text', Georgia, serif;
-            color: #e2d5c1;
-            font-size: 0.95rem;
-            line-height: 1.3;
-        ">{warning_icon}{safe_label}</div>
-        {f'<div style="margin-top:3px;">{cost_preview}</div>' if cost_preview else ''}
-    </div>
-    """
-    st.markdown(card_html, unsafe_allow_html=True)
+    with st.container(border=True):
+        for group in groups:
+            label = group.get("label")
+            if label:
+                st.caption(label)
+            for index, entry in group["choices"]:
+                choice = entry["choice"]
+                marker = "◉" if index == selected_index else "◯"
+                warning_hint = ""
+                effects, _ = resolve_choice_outcome(choice)
+                warnings = get_choice_warnings_with_effects(choice, effects)
+                if warnings:
+                    warning_hint = "  [! risky]"
+                if st.button(
+                    f"{marker} {choice.get('label', 'Unnamed choice')}{warning_hint}",
+                    key=f"select_choice_{node_id}_{index}",
+                    use_container_width=True,
+                ):
+                    st.session_state["_choice_selection"] = {"node": node_id, "choice_index": index}
+                    st.rerun()
 
-    if st.button("Choose", key=f"{key_prefix}_{node_id}_{index}", use_container_width=True):
-        if warnings:
-            st.session_state.pending_choice_confirmation = {
-                "node": node_id,
-                "choice_index": index,
-                "label": label,
-                "warnings": warnings,
-            }
-        else:
-            execute_choice(node_id, label, choice)
-        st.rerun()
+        if available_count > 0:
+            # Selected choice preview + execute action
+            selected_entry = next((e for i, e in indexed_choices if i == selected_index), None)
+            if selected_entry is not None:
+                choice = selected_entry["choice"]
+                effects, _ = resolve_choice_outcome(choice)
+                warnings = get_choice_warnings_with_effects(choice, effects)
+                cost_preview = _get_choice_cost_preview(effects)
+
+                if cost_preview:
+                    st.markdown(cost_preview, unsafe_allow_html=True)
+                if warnings:
+                    st.warning("This choice has consequences that cannot be undone easily.")
+                    for w in warnings:
+                        st.write(f"- {w}")
+
+                if st.button("Continue", type="primary", key=f"continue_{node_id}", use_container_width=True):
+                    label = choice.get("label", "Unnamed choice")
+                    if warnings:
+                        st.session_state.pending_choice_confirmation = {
+                            "node": node_id,
+                            "choice_index": selected_index,
+                            "label": label,
+                            "warnings": warnings,
+                        }
+                    else:
+                        execute_choice(node_id, label, choice)
+                    st.rerun()
 
 
 def _should_group_by_destination(node_id: str, indexed_choices: List[tuple[int, Dict[str, Any]]], *, overflow: bool) -> bool:
@@ -257,95 +324,7 @@ def _render_grouped_choices(
     *,
     overflow: bool,
 ) -> None:
-    has_explicit_groups = any(entry["choice"].get("group") for _, entry in indexed_choices)
-    group_by_destination = _should_group_by_destination(node_id, indexed_choices, overflow=overflow)
-
-    if not group_by_destination and not has_explicit_groups:
-        # Render choices as styled cards in a clean list
-        for index, entry in indexed_choices:
-            _render_choice_card(
-                node_id,
-                index,
-                entry["choice"],
-                resolved_effects=entry.get("resolved_effects"),
-            )
-        return
-
-    groups = _group_choices(
-        indexed_choices,
-        group_by_destination=group_by_destination,
-        current_node_id=node_id,
-    )
-    if not overflow:
-        for group in groups:
-            if len(group["choices"]) == 1 and not group["label"]:
-                index, entry = group["choices"][0]
-                _render_choice_card(
-                    node_id,
-                    index,
-                    entry["choice"],
-                    resolved_effects=entry.get("resolved_effects"),
-                )
-            else:
-                label = group["label"] or "Grouped options"
-                with st.expander(label, expanded=False):
-                    for index, entry in group["choices"]:
-                        _render_choice_card(
-                            node_id,
-                            index,
-                            entry["choice"],
-                            resolved_effects=entry.get("resolved_effects"),
-                            key_prefix=f"group_{group['key']}",
-                        )
-        return
-
-    more_groups: List[Dict[str, Any]] = []
-    primary_groups: List[Dict[str, Any]] = []
-    for group in groups:
-        if all(_is_low_impact(entry["choice"]) for _, entry in group["choices"]):
-            more_groups.append(group)
-        else:
-            primary_groups.append(group)
-
-    if len(primary_groups) > MAX_CHOICES_PER_NODE - 1:
-        overflow_groups = primary_groups[MAX_CHOICES_PER_NODE - 1 :]
-        primary_groups = primary_groups[: MAX_CHOICES_PER_NODE - 1]
-        more_groups = overflow_groups + more_groups
-
-    for group in primary_groups:
-        if len(group["choices"]) == 1 and not group["label"]:
-            index, entry = group["choices"][0]
-            _render_choice_card(
-                node_id,
-                index,
-                entry["choice"],
-                resolved_effects=entry.get("resolved_effects"),
-            )
-        else:
-            label = group["label"] or "Grouped options"
-            with st.expander(label, expanded=False):
-                for index, entry in group["choices"]:
-                    _render_choice_card(
-                        node_id,
-                        index,
-                        entry["choice"],
-                        resolved_effects=entry.get("resolved_effects"),
-                        key_prefix=f"group_{group['key']}",
-                    )
-
-    if more_groups:
-        with st.expander("More options", expanded=False):
-            for group in more_groups:
-                label = group["label"] or "Additional options"
-                st.caption(label)
-                for index, entry in group["choices"]:
-                    _render_choice_card(
-                        node_id,
-                        index,
-                        entry["choice"],
-                        resolved_effects=entry.get("resolved_effects"),
-                        key_prefix=f"more_{group['key']}",
-                    )
+    _render_choice_selector_box(node_id, indexed_choices, overflow=overflow)
 
 
 def _group_choices(
@@ -445,8 +424,8 @@ def render_node() -> None:
     render_log()
 
     # Build narrative text with dialogue woven in
-    dialogue = node.get("dialogue", [])
-    narrative_text = _escape_html(node["text"])
+    resolved_text, dialogue = _resolve_conditional_narrative(node)
+    narrative_text = _escape_html(resolved_text)
     ending_aftermath = []
     if node_id.startswith("ending_"):
         ending_aftermath = get_epilogue_aftermath_lines(max_lines=None)

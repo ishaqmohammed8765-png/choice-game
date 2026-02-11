@@ -378,6 +378,29 @@ STORY_NODES_ACT2: Dict[str, Dict[str, Any]] = {
             "heartbeat. Allies and rivals judge you by what you've done — spared lives, won respect, "
             "or ruled through fear. Your next move decides who stands with you at Caldus's gate."
         ),
+        # Consequences without extra branching: the same hub scene shifts tone based on your reputation.
+        "conditional_narrative": [
+            {
+                "requirements": {"flag_true": ["mercy_reputation"]},
+                "text_append": (
+                    "When you step into the firelight, the rescued and the resolute meet your eyes. "
+                    "Mercy has made allies of people who would otherwise be ash on Caldus's wind."
+                ),
+                "dialogue_append": [
+                    {"speaker": "Elder Mara", "line": "Mercy is a strategy too. It makes people choose you twice."},
+                ],
+            },
+            {
+                "requirements": {"flag_true": ["cruel_reputation"]},
+                "text_append": (
+                    "The ridge quiets when you arrive. Plans are offered like tribute, not counsel, and even victory "
+                    "feels sharp-edged in your hands."
+                ),
+                "dialogue_append": [
+                    {"speaker": "Signal Runner Tams", "line": "Orders only, then. No one wants to be the next lesson."},
+                ],
+            },
+        ],
         "dialogue": [
             {"speaker": "Signal Runner Tams", "line": "The Ember Tide keeps rising. Caldus is almost ready. Say the word and I move people now."},
             {"speaker": "Your Instinct", "line": "This ridge is a ledger. Every spared enemy and ignored threat gets collected tonight."},
