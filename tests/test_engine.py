@@ -5,6 +5,7 @@ import copy
 import unittest
 
 from game.data import STORY_NODES
+from game.engine.state import state_from_session
 from game.logic import (
     apply_effects,
     apply_morality_flags,
@@ -48,6 +49,22 @@ class MergeEffectsTests(unittest.TestCase):
         merged = merge_effects(base, incoming)
         self.assertFalse(merged["set_flags"]["met_scout"])
         self.assertTrue(merged["set_flags"]["found_relic"])
+
+
+class EngineStateTests(unittest.TestCase):
+    def test_state_from_session_normalizes_legacy_meta_keys(self):
+        snapshot = state_from_session(
+            {
+                "player_class": "Warrior",
+                "stats": {"hp": 1, "gold": 0, "strength": 0, "dexterity": 0},
+                "inventory": [],
+                "flags": {},
+                "traits": {},
+                "meta_state": {"legacy_items": ["Echo Locket"], "removed_locations": ["echo_shrine"]},
+            }
+        )
+        self.assertEqual(snapshot.meta_state["unlocked_items"], ["Echo Locket"])
+        self.assertEqual(snapshot.meta_state["removed_nodes"], ["echo_shrine"])
 
     def test_trait_delta_addition(self):
         base = {"trait_delta": {"trust": 2}}

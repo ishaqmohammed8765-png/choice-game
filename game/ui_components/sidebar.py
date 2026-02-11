@@ -6,7 +6,7 @@ from game.streamlit_compat import st
 from game.data import CLASS_TEMPLATES, FACTION_KEYS, STORY_NODES, TRAIT_KEYS
 from game.engine.state_machine import get_phase
 from game.logic import apply_morality_flags
-from game.state import add_log, load_snapshot, reset_game_state, snapshot_state, validate_snapshot
+from game.state import add_log, load_snapshot, normalize_meta_state, reset_game_state, snapshot_state, validate_snapshot
 from game.ui_components.path_map import render_path_map
 from game.ui_components.sprites import class_icon_svg, item_sprite, stat_icon_svg
 
@@ -132,7 +132,7 @@ def _render_inventory_with_sprites() -> None:
         st.caption("(empty)")
         return
 
-    meta_state = st.session_state.get("meta_state", {"unlocked_items": [], "removed_nodes": []})
+    meta_state = normalize_meta_state(st.session_state.get("meta_state"))
     legacy_items = set(meta_state.get("unlocked_items", []))
 
     items_html = []

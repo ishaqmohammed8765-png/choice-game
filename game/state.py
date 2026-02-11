@@ -51,7 +51,23 @@ _SNAPSHOT_FIELDS = (
 )
 
 
-_META_PROGRESS_PATH = Path(__file__).resolve().parents[1] / ".oakrest_meta_state.json"
+_LEGACY_REPO_META_PROGRESS_PATH = Path(__file__).resolve().parents[1] / ".oakrest_meta_state.json"
+
+
+def _primary_meta_progress_path() -> Path:
+    """Return the preferred on-disk path for meta progression.
+
+    Use a per-user directory rather than a repo dotfile. This avoids failures on
+    synced/read-only folders and makes persistence consistent across launches.
+    """
+    base = os.environ.get("LOCALAPPDATA") or os.environ.get("APPDATA")
+    root = Path(base) if base else Path.home()
+    return root / "choice-game" / "meta_state.json"
+
+
+def _meta_progress_paths() -> list[Path]:
+    """Ordered list of supported meta-state locations (newest first)."""
+    return [_primary_meta_progress_path(), _LEGACY_REPO_META_PROGRESS_PATH]
 
 
 def _get_default(key: str) -> Any:
@@ -121,13 +137,23 @@ def _merge_meta_state(existing: Dict[str, Any], incoming: Dict[str, Any]) -> Dic
 def _load_persistent_meta_state() -> Dict[str, list[str]]:
     if not _meta_persistence_enabled():
         return normalize_meta_state(None)
-    if not _META_PROGRESS_PATH.exists():
-        return normalize_meta_state(None)
-    try:
-        payload = json.loads(_META_PROGRESS_PATH.read_text(encoding="utf-8"))
-    except (OSError, json.JSONDecodeError):
-        return normalize_meta_state(None)
-    return normalize_meta_state(payload)
+    merged = normalize_meta_state(None)
+    loaded_any = False
+    for path in _meta_progress_paths():
+        if not path.exists():
+            continue
+        try:
+            payload = json.loads(path.read_text(encoding="utf-8"))
+        except (OSError, json.JSONDecodeError):
+            continue
+        merged = _merge_meta_state(merged, payload)
+        loaded_any = True
+
+    # If we successfully loaded from any legacy location, opportunistically
+    # migrate to the primary path so future loads are stable.
+    if loaded_any:
+        persist_meta_state(merged)
+    return merged
 
 
 def persist_meta_state(meta_state: Dict[str, Any]) -> None:
@@ -136,10 +162,23 @@ def persist_meta_state(meta_state: Dict[str, Any]) -> None:
     st.session_state.meta_state = normalized
     if not _meta_persistence_enabled():
         return
+    primary = _primary_meta_progress_path()
     try:
-        _META_PROGRESS_PATH.write_text(json.dumps(normalized, indent=2), encoding="utf-8")
+        primary.parent.mkdir(parents=True, exist_ok=True)
+        tmp = primary.with_suffix(primary.suffix + ".tmp")
+        tmp.write_text(json.dumps(normalized, indent=2), encoding="utf-8")
+        tmp.replace(primary)
     except OSError:
-        return
+        # Keep silent in normal gameplay; failing to persist should not crash a run.
+        pass
+
+    # Best-effort backwards compatibility: if the legacy repo dotfile already
+    # exists, keep it updated. Don't create it unprompted (it clutters repos).
+    if _LEGACY_REPO_META_PROGRESS_PATH.exists():
+        try:
+            _LEGACY_REPO_META_PROGRESS_PATH.write_text(json.dumps(normalized, indent=2), encoding="utf-8")
+        except OSError:
+            return
 
 
 def reset_game_state() -> None:

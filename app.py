@@ -4,7 +4,7 @@ from game.streamlit_compat import st
 
 from game.data import init_story_nodes
 from game.logic import validate_story_nodes
-from game.state import ensure_session_state, start_game
+from game.state import ensure_session_state, normalize_meta_state, start_game
 from game.ui import render_node, render_side_panel
 from game.ui_components.sprites import class_icon_svg
 
@@ -335,7 +335,7 @@ def _render_class_selection() -> None:
         unsafe_allow_html=True,
     )
 
-    meta_state = st.session_state.get("meta_state", {"unlocked_items": [], "removed_nodes": []})
+    meta_state = normalize_meta_state(st.session_state.get("meta_state"))
     unlocked = meta_state.get("unlocked_items", [])
     if unlocked:
         unlocked_text = ", ".join(escape(str(item), quote=True) for item in unlocked)

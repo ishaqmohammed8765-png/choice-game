@@ -3,6 +3,8 @@ from __future__ import annotations
 from dataclasses import dataclass
 from typing import Any, Dict, List, Mapping
 
+from game.state import normalize_meta_state
+
 
 @dataclass(slots=True)
 class GameState:
@@ -18,7 +20,7 @@ class GameState:
 
 def state_from_session(session: Mapping[str, Any]) -> GameState:
     """Build a GameState snapshot from a session-like object."""
-    meta_state = session.get("meta_state", {"unlocked_items": [], "removed_nodes": []})
+    meta_state = normalize_meta_state(session.get("meta_state"))
     return GameState(
         player_class=session.get("player_class"),
         stats=dict(session.get("stats", {})),
