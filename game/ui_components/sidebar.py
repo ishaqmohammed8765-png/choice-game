@@ -57,14 +57,14 @@ def _render_centered_delta_bar(*, label: str, value: int, color: str, max_range:
     sign = "+" if value > 0 else ""
     st.markdown(
         f"""
-        <div style="margin-bottom:6px;">
-            <div style="display:flex;justify-content:space-between;font-size:0.75rem;margin-bottom:1px;">
-                <span style="color:#a8a29e;font-family:'Cinzel',serif;">{label}</span>
-                <span style="color:{color};font-family:'Cinzel',serif;font-weight:600;">{sign}{value}</span>
+        <div style="margin-bottom:8px;">
+            <div style="display:flex;justify-content:space-between;font-size:0.73rem;margin-bottom:2px;">
+                <span style="color:#7b8fad;font-family:'Cinzel',serif;letter-spacing:0.03em;">{label}</span>
+                <span style="color:{color};font-family:'Cinzel',serif;font-weight:600;text-shadow:0 0 8px {color}30;">{sign}{value}</span>
             </div>
-            <div style="background:#1a1a2e;border:1px solid #1e293b;border-radius:3px;height:6px;position:relative;overflow:hidden;">
-                <div style="position:absolute;left:50%;top:0;bottom:0;width:1px;background:#334155;"></div>
-                <div style="position:absolute;left:{left_pct}%;top:0;height:100%;width:{width_pct}%;background:{color};border-radius:2px;transition:all 0.3s ease;"></div>
+            <div style="background:rgba(10,15,28,0.8);border:1px solid rgba(30,45,74,0.5);border-radius:4px;height:7px;position:relative;overflow:hidden;">
+                <div style="position:absolute;left:50%;top:0;bottom:0;width:1px;background:rgba(50,65,90,0.6);"></div>
+                <div style="position:absolute;left:{left_pct}%;top:0;height:100%;width:{width_pct}%;background:linear-gradient(90deg, {color}cc, {color});border-radius:3px;transition:all 0.5s cubic-bezier(0.25, 0.46, 0.45, 0.94);box-shadow:0 0 6px {color}30;"></div>
             </div>
         </div>
         """,
@@ -78,20 +78,46 @@ def _render_hp_bar() -> None:
     player_class = st.session_state.player_class or "Warrior"
     max_hp = CLASS_TEMPLATES.get(player_class, {}).get("hp", 14)
     pct = min(current_hp / max_hp, 1.0) if max_hp > 0 else 0
-    bar_color = "#22c55e"
+
+    # Color shifts based on HP percentage
+    if pct > 0.5:
+        bar_gradient = "linear-gradient(90deg, #16a34a, #22c55e, #34d399)"
+        glow_color = "rgba(34, 197, 94, 0.3)"
+        text_color = "#86efac"
+    elif pct > 0.25:
+        bar_gradient = "linear-gradient(90deg, #ca8a04, #eab308)"
+        glow_color = "rgba(234, 179, 8, 0.3)"
+        text_color = "#fde047"
+    else:
+        bar_gradient = "linear-gradient(90deg, #dc2626, #ef4444)"
+        glow_color = "rgba(239, 68, 68, 0.3)"
+        text_color = "#fca5a5"
 
     hp_icon = stat_icon_svg("hp", size=14)
     st.markdown(
         f"""
-        <div style="margin-bottom:0.5rem;">
-            <div style="display:flex;justify-content:space-between;align-items:center;font-size:0.8rem;margin-bottom:2px;">
-                <span style="color:#a8a29e;font-family:'Cinzel',serif;text-transform:uppercase;letter-spacing:0.08em;display:flex;align-items:center;gap:4px;">
+        <div style="margin-bottom:0.6rem;">
+            <div style="display:flex;justify-content:space-between;align-items:center;font-size:0.78rem;margin-bottom:3px;">
+                <span style="color:#7b8fad;font-family:'Cinzel',serif;text-transform:uppercase;letter-spacing:0.08em;display:flex;align-items:center;gap:5px;">
                     {hp_icon} HP
                 </span>
-                <span style="color:#86efac;font-family:'Cinzel',serif;font-weight:700;">{current_hp}/{max_hp}</span>
+                <span style="color:{text_color};font-family:'Cinzel',serif;font-weight:700;text-shadow:0 0 8px {glow_color};">{current_hp}/{max_hp}</span>
             </div>
-            <div style="background:#052e16;border:1px solid #166534;border-radius:4px;height:14px;overflow:hidden;box-shadow:inset 0 1px 3px rgba(0,0,0,0.4);">
-                <div style="width:{pct*100:.0f}%;height:100%;background:linear-gradient(90deg, #16a34a, #22c55e);border-radius:3px;transition:width 0.4s ease;box-shadow:0 0 8px #22c55e40;"></div>
+            <div style="background:rgba(5,20,10,0.6);border:1px solid rgba(22,101,52,0.4);border-radius:6px;height:12px;overflow:hidden;box-shadow:inset 0 2px 4px rgba(0,0,0,0.4);position:relative;">
+                <div style="
+                    width:{pct*100:.0f}%;height:100%;
+                    background:{bar_gradient};
+                    border-radius:5px;
+                    transition:width 0.6s cubic-bezier(0.25, 0.46, 0.45, 0.94);
+                    box-shadow:0 0 10px {glow_color};
+                    position:relative;
+                    overflow:hidden;
+                ">
+                    <div style="
+                        position:absolute;inset:0;
+                        background:linear-gradient(180deg, rgba(255,255,255,0.15) 0%, transparent 50%, rgba(0,0,0,0.1) 100%);
+                    "></div>
+                </div>
             </div>
         </div>
         """,
@@ -109,16 +135,19 @@ def _render_phase_badge() -> None:
         f"""
         <div style="
             display:inline-block;
-            padding: 2px 10px;
-            border: 1px solid {color}60;
-            border-radius: 12px;
-            background: {color}15;
+            padding: 3px 12px;
+            border: 1px solid {color}50;
+            border-radius: 999px;
+            background: {color}12;
             font-family: 'Cinzel', serif;
-            font-size: 0.7rem;
+            font-size: 0.68rem;
             color: {color};
-            letter-spacing: 0.06em;
+            letter-spacing: 0.08em;
             text-transform: uppercase;
             margin-bottom: 0.5rem;
+            box-shadow: 0 0 12px {color}10;
+            backdrop-filter: blur(4px);
+            -webkit-backdrop-filter: blur(4px);
         ">{label}</div>
         """,
         unsafe_allow_html=True,
@@ -136,18 +165,22 @@ def _render_inventory_with_sprites() -> None:
     legacy_items = set(meta_state.get("unlocked_items", []))
 
     items_html = []
-    for item_name in st.session_state.inventory:
+    for idx, item_name in enumerate(st.session_state.inventory):
         sprite = item_sprite(item_name, size=22)
         is_legacy = item_name in legacy_items
-        legacy_tag = ' <span style="color:#c9a54e;font-size:0.7rem;font-family:\'Cinzel\',serif;">(legacy)</span>' if is_legacy else ""
-        border_color = "#c9a54e40" if is_legacy else "#1e293b"
+        legacy_tag = ' <span style="color:#d4a843;font-size:0.65rem;font-family:\'Cinzel\',serif;letter-spacing:0.04em;opacity:0.8;">(legacy)</span>' if is_legacy else ""
+        border_color = "rgba(212, 168, 67, 0.25)" if is_legacy else "rgba(30, 45, 74, 0.5)"
+        bg = "rgba(212, 168, 67, 0.04)" if is_legacy else "rgba(12, 18, 32, 0.6)"
         safe_item_name = escape(str(item_name), quote=True)
         items_html.append(
-            f'<div style="display:flex;align-items:center;gap:8px;padding:4px 8px;'
-            f'border:1px solid {border_color};border-radius:6px;margin-bottom:3px;'
-            f'background:rgba(15,15,30,0.5);">'
+            f'<div style="display:flex;align-items:center;gap:10px;padding:6px 10px;'
+            f'border:1px solid {border_color};border-radius:8px;margin-bottom:4px;'
+            f'background:{bg};'
+            f'backdrop-filter:blur(4px);-webkit-backdrop-filter:blur(4px);'
+            f'transition:border-color 0.2s ease, background 0.2s ease;'
+            f'">'
             f'{sprite}'
-            f'<span style="font-family:\'Crimson Text\',Georgia,serif;color:#d4d4dc;font-size:0.9rem;">'
+            f'<span style="font-family:\'Crimson Text\',Georgia,serif;color:#c0c8d8;font-size:0.9rem;">'
             f'{safe_item_name}{legacy_tag}</span>'
             f'</div>'
         )
@@ -320,12 +353,20 @@ def _render_system_controls(*, button_prefix: str) -> None:
 def _render_player_panel_body(*, button_prefix: str) -> None:
     player_class = st.session_state.player_class or "Warrior"
     safe_player_class = escape(player_class, quote=True)
-    icon = class_icon_svg(player_class, size=24)
+    icon = class_icon_svg(player_class, size=26)
     st.markdown(
         f"""
-        <div style="display:flex;align-items:center;gap:8px;margin-bottom:0.3rem;">
-            {icon}
-            <span style="font-family:'Cinzel',serif;color:#e8d5b0;font-size:1.1rem;font-weight:600;">{safe_player_class}</span>
+        <div style="display:flex;align-items:center;gap:10px;margin-bottom:0.4rem;">
+            <div style="
+                width:38px;height:38px;
+                display:flex;align-items:center;justify-content:center;
+                border-radius:10px;
+                background:rgba(212, 168, 67, 0.06);
+                border:1px solid rgba(212, 168, 67, 0.15);
+            ">
+                {icon}
+            </div>
+            <span style="font-family:'Cinzel',serif;color:#e8dcc8;font-size:1.1rem;font-weight:600;letter-spacing:0.04em;">{safe_player_class}</span>
         </div>
         """,
         unsafe_allow_html=True,
@@ -340,28 +381,28 @@ def _render_player_panel_body(*, button_prefix: str) -> None:
         dex_icon = stat_icon_svg("dexterity", size=14)
         st.markdown(
             f"""
-            <div style="display:flex;justify-content:space-around;text-align:center;margin-top:4px;">
-                <div>
-                    <div style="display:flex;align-items:center;justify-content:center;gap:3px;color:#a8a29e;font-family:'Cinzel',serif;font-size:0.7rem;text-transform:uppercase;letter-spacing:0.06em;">
+            <div style="display:grid;grid-template-columns:repeat(3,1fr);gap:8px;text-align:center;margin-top:6px;">
+                <div style="padding:6px 4px;border:1px solid rgba(212,168,67,0.15);border-radius:8px;background:rgba(212,168,67,0.04);">
+                    <div style="display:flex;align-items:center;justify-content:center;gap:3px;color:#7a6a4a;font-family:'Cinzel',serif;font-size:0.65rem;text-transform:uppercase;letter-spacing:0.06em;">
                         {gold_icon} Gold
                     </div>
-                    <div style="color:#facc15;font-family:'Cinzel',serif;font-weight:700;font-size:1.2rem;text-shadow:0 0 8px rgba(250,204,21,0.3);">
+                    <div style="color:#f0c850;font-family:'Cinzel',serif;font-weight:700;font-size:1.15rem;text-shadow:0 0 10px rgba(212,168,67,0.25);">
                         {st.session_state.stats['gold']}
                     </div>
                 </div>
-                <div>
-                    <div style="display:flex;align-items:center;justify-content:center;gap:3px;color:#a8a29e;font-family:'Cinzel',serif;font-size:0.7rem;text-transform:uppercase;letter-spacing:0.06em;">
+                <div style="padding:6px 4px;border:1px solid rgba(59,130,246,0.15);border-radius:8px;background:rgba(59,130,246,0.04);">
+                    <div style="display:flex;align-items:center;justify-content:center;gap:3px;color:#4a6a8a;font-family:'Cinzel',serif;font-size:0.65rem;text-transform:uppercase;letter-spacing:0.06em;">
                         {str_icon} STR
                     </div>
-                    <div style="color:#facc15;font-family:'Cinzel',serif;font-weight:700;font-size:1.2rem;text-shadow:0 0 8px rgba(250,204,21,0.3);">
+                    <div style="color:#93c5fd;font-family:'Cinzel',serif;font-weight:700;font-size:1.15rem;text-shadow:0 0 10px rgba(59,130,246,0.25);">
                         {st.session_state.stats['strength']}
                     </div>
                 </div>
-                <div>
-                    <div style="display:flex;align-items:center;justify-content:center;gap:3px;color:#a8a29e;font-family:'Cinzel',serif;font-size:0.7rem;text-transform:uppercase;letter-spacing:0.06em;">
+                <div style="padding:6px 4px;border:1px solid rgba(52,211,153,0.15);border-radius:8px;background:rgba(52,211,153,0.04);">
+                    <div style="display:flex;align-items:center;justify-content:center;gap:3px;color:#4a7a5a;font-family:'Cinzel',serif;font-size:0.65rem;text-transform:uppercase;letter-spacing:0.06em;">
                         {dex_icon} DEX
                     </div>
-                    <div style="color:#facc15;font-family:'Cinzel',serif;font-weight:700;font-size:1.2rem;text-shadow:0 0 8px rgba(250,204,21,0.3);">
+                    <div style="color:#6ee7b7;font-family:'Cinzel',serif;font-weight:700;font-size:1.15rem;text-shadow:0 0 10px rgba(52,211,153,0.25);">
                         {st.session_state.stats['dexterity']}
                     </div>
                 </div>
@@ -385,7 +426,7 @@ def _render_side_hud_header() -> None:
     """Render compact player identity and phase at the top of the side HUD."""
     player_class = st.session_state.player_class or "Warrior"
     safe_player_class = escape(player_class, quote=True)
-    icon = class_icon_svg(player_class, size=22)
+    icon = class_icon_svg(player_class, size=24)
     hp_icon = stat_icon_svg("hp", size=13)
     gold_icon = stat_icon_svg("gold", size=13)
     str_icon = stat_icon_svg("strength", size=13)
@@ -397,32 +438,53 @@ def _render_side_hud_header() -> None:
     st.markdown(
         f"""
         <div style="
-            padding:0.7rem 0.75rem;
-            border:1px solid #2b3449;
-            border-radius:10px;
-            background:linear-gradient(160deg, rgba(11,15,28,0.96), rgba(16,22,36,0.92));
-            margin-bottom:0.45rem;
+            padding:0.8rem 0.85rem;
+            border:1px solid rgba(30, 45, 74, 0.6);
+            border-radius:12px;
+            background:linear-gradient(160deg, rgba(12, 18, 32, 0.95), rgba(8, 13, 26, 0.98));
+            margin-bottom:0.5rem;
+            position:relative;
+            overflow:hidden;
+            box-shadow:0 4px 16px rgba(0,0,0,0.2), inset 0 1px 0 rgba(255,255,255,0.02);
+            backdrop-filter:blur(8px);
+            -webkit-backdrop-filter:blur(8px);
         ">
-            <div style="display:flex;align-items:center;justify-content:space-between;gap:8px;">
-                <div style="display:flex;align-items:center;gap:8px;">
-                    {icon}
-                    <span style="font-family:'Cinzel',serif;color:#f3e9d2;font-size:0.98rem;">{safe_player_class}</span>
+            <!-- Top accent -->
+            <div style="
+                position:absolute;top:0;left:10%;right:10%;height:1px;
+                background:linear-gradient(90deg, transparent, rgba(212, 168, 67, 0.2), transparent);
+            "></div>
+            <div style="display:flex;align-items:center;justify-content:space-between;gap:8px;margin-bottom:8px;">
+                <div style="display:flex;align-items:center;gap:10px;">
+                    <div style="
+                        width:36px;height:36px;
+                        display:flex;align-items:center;justify-content:center;
+                        border-radius:10px;
+                        background:rgba(212, 168, 67, 0.06);
+                        border:1px solid rgba(212, 168, 67, 0.15);
+                    ">
+                        {icon}
+                    </div>
+                    <span style="font-family:'Cinzel',serif;color:#e8dcc8;font-size:1rem;letter-spacing:0.04em;">{safe_player_class}</span>
                 </div>
-                <span style="color:#93a4c4;font-size:0.75rem;">Status</span>
             </div>
-            <div style="display:grid;grid-template-columns:repeat(2,minmax(0,1fr));gap:6px;margin-top:7px;">
-                <span style="padding:3px 8px;border:1px solid #275348;border-radius:8px;font-size:0.74rem;display:flex;align-items:center;gap:5px;background:rgba(22,163,74,0.10);">
-                    {hp_icon} HP {hp}
-                </span>
-                <span style="padding:3px 8px;border:1px solid #5f4b1f;border-radius:8px;font-size:0.74rem;display:flex;align-items:center;gap:5px;background:rgba(202,138,4,0.12);">
-                    {gold_icon} Gold {gold}
-                </span>
-                <span style="padding:3px 8px;border:1px solid #2f4f83;border-radius:8px;font-size:0.74rem;display:flex;align-items:center;gap:5px;background:rgba(59,130,246,0.12);">
-                    {str_icon} STR {strength}
-                </span>
-                <span style="padding:3px 8px;border:1px solid #2f5f4a;border-radius:8px;font-size:0.74rem;display:flex;align-items:center;gap:5px;background:rgba(34,197,94,0.12);">
-                    {dex_icon} DEX {dexterity}
-                </span>
+            <div style="display:grid;grid-template-columns:repeat(4,minmax(0,1fr));gap:5px;">
+                <div style="padding:5px 6px;border:1px solid rgba(34,197,94,0.2);border-radius:8px;text-align:center;background:rgba(34,197,94,0.06);">
+                    <div style="display:flex;align-items:center;justify-content:center;gap:3px;color:#5a7a6a;font-size:0.58rem;font-family:'Cinzel',serif;text-transform:uppercase;letter-spacing:0.05em;">{hp_icon} HP</div>
+                    <div style="color:#86efac;font-family:'Cinzel',serif;font-weight:700;font-size:1rem;text-shadow:0 0 8px rgba(34,197,94,0.2);">{hp}</div>
+                </div>
+                <div style="padding:5px 6px;border:1px solid rgba(212,168,67,0.2);border-radius:8px;text-align:center;background:rgba(212,168,67,0.06);">
+                    <div style="display:flex;align-items:center;justify-content:center;gap:3px;color:#7a6a4a;font-size:0.58rem;font-family:'Cinzel',serif;text-transform:uppercase;letter-spacing:0.05em;">{gold_icon} Gold</div>
+                    <div style="color:#f0c850;font-family:'Cinzel',serif;font-weight:700;font-size:1rem;text-shadow:0 0 8px rgba(212,168,67,0.2);">{gold}</div>
+                </div>
+                <div style="padding:5px 6px;border:1px solid rgba(59,130,246,0.2);border-radius:8px;text-align:center;background:rgba(59,130,246,0.06);">
+                    <div style="display:flex;align-items:center;justify-content:center;gap:3px;color:#4a6a8a;font-size:0.58rem;font-family:'Cinzel',serif;text-transform:uppercase;letter-spacing:0.05em;">{str_icon} STR</div>
+                    <div style="color:#93c5fd;font-family:'Cinzel',serif;font-weight:700;font-size:1rem;text-shadow:0 0 8px rgba(59,130,246,0.2);">{strength}</div>
+                </div>
+                <div style="padding:5px 6px;border:1px solid rgba(34,197,94,0.2);border-radius:8px;text-align:center;background:rgba(34,197,94,0.06);">
+                    <div style="display:flex;align-items:center;justify-content:center;gap:3px;color:#4a7a5a;font-size:0.58rem;font-family:'Cinzel',serif;text-transform:uppercase;letter-spacing:0.05em;">{dex_icon} DEX</div>
+                    <div style="color:#6ee7b7;font-family:'Cinzel',serif;font-weight:700;font-size:1rem;text-shadow:0 0 8px rgba(52,211,153,0.2);">{dexterity}</div>
+                </div>
             </div>
         </div>
         """,
@@ -465,7 +527,7 @@ def render_utility_bar() -> None:
     """Render a compact top status bar for active gameplay."""
     player_class = st.session_state.player_class or "Warrior"
     safe_player_class = escape(player_class, quote=True)
-    icon = class_icon_svg(player_class, size=22)
+    icon = class_icon_svg(player_class, size=20)
     current_node = st.session_state.current_node or ""
     phase = get_phase(current_node)
     phase_label = _PHASE_LABELS.get(phase, phase.title())
@@ -477,18 +539,19 @@ def render_utility_bar() -> None:
             <div style="display:flex;align-items:center;justify-content:space-between;gap:10px;">
                 <div style="display:flex;align-items:center;gap:8px;">
                     {icon}
-                    <span style="font-family:'Cinzel',serif;color:#e8d5b0;font-size:1.05rem;">{safe_player_class}</span>
+                    <span style="font-family:'Cinzel',serif;color:#e8dcc8;font-size:0.95rem;letter-spacing:0.03em;">{safe_player_class}</span>
                 </div>
                 <span style="
-                    border:1px solid {phase_color}60;
-                    background:{phase_color}14;
+                    border:1px solid {phase_color}45;
+                    background:{phase_color}10;
                     color:{phase_color};
                     border-radius:999px;
-                    padding:2px 10px;
+                    padding:3px 12px;
                     font-family:'Cinzel',serif;
-                    font-size:0.68rem;
-                    letter-spacing:0.05em;
+                    font-size:0.65rem;
+                    letter-spacing:0.06em;
                     text-transform:uppercase;
+                    box-shadow:0 0 10px {phase_color}08;
                 ">{phase_label}</span>
             </div>
             """,

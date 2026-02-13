@@ -41,101 +41,166 @@ CLASS_INFO = {
 
 
 def inject_game_theme() -> None:
-    """Apply lightweight visual styling so the app feels closer to a fantasy game HUD."""
+    """Apply rich visual styling with polished animations for a fantasy game HUD."""
     st.markdown(
         """
         <style>
         @import url('https://fonts.googleapis.com/css2?family=Cinzel:wght@400;600;700&family=Crimson+Text:ital,wght@0,400;0,600;1,400&display=swap');
 
         :root {
-            --hud-bg: #0b1220;
-            --hud-panel: #111a2e;
-            --hud-border: #2b3449;
+            --hud-bg: #080d1a;
+            --hud-panel: #0e1628;
+            --hud-panel-glass: rgba(12, 20, 40, 0.75);
+            --hud-border: #1e2d4a;
+            --hud-border-light: #2a3f66;
             --hud-text: #dbe7ff;
-            --hud-muted: #8ea0bf;
-            --hud-accent: #facc15;
-            --hud-danger: #ef4444;
+            --hud-muted: #7b8fad;
+            --hud-accent: #f0c850;
+            --hud-gold: #d4a843;
+            --hud-gold-glow: rgba(212, 168, 67, 0.25);
+            --hud-danger: #e85454;
+            --hud-success: #34d399;
+            --glass-bg: linear-gradient(135deg, rgba(14, 22, 40, 0.85), rgba(8, 13, 26, 0.92));
+            --glass-border: rgba(42, 63, 102, 0.6);
         }
 
+        /* ===== KEYFRAME ANIMATIONS ===== */
+        @keyframes fadeInUp {
+            from { opacity: 0; transform: translateY(12px); }
+            to { opacity: 1; transform: translateY(0); }
+        }
+        @keyframes fadeIn {
+            from { opacity: 0; }
+            to { opacity: 1; }
+        }
+        @keyframes shimmer {
+            0% { background-position: -200% center; }
+            100% { background-position: 200% center; }
+        }
+        @keyframes pulseGlow {
+            0%, 100% { box-shadow: 0 0 8px rgba(212, 168, 67, 0.15); }
+            50% { box-shadow: 0 0 20px rgba(212, 168, 67, 0.3); }
+        }
+        @keyframes subtleBreathe {
+            0%, 100% { opacity: 0.6; }
+            50% { opacity: 1; }
+        }
+        @keyframes slideInLeft {
+            from { opacity: 0; transform: translateX(-8px); }
+            to { opacity: 1; transform: translateX(0); }
+        }
+        @keyframes borderGlow {
+            0%, 100% { border-color: var(--hud-border); }
+            50% { border-color: var(--hud-border-light); }
+        }
+
+        /* ===== BASE ===== */
         .stApp {
             background:
-                radial-gradient(900px 500px at 0% 0%, rgba(26, 52, 99, 0.38), transparent 60%),
-                radial-gradient(700px 420px at 100% 100%, rgba(128, 69, 18, 0.22), transparent 62%),
-                linear-gradient(180deg, #05070f 0%, #090f1d 50%, #0b111f 100%);
+                radial-gradient(ellipse 1100px 600px at 5% 0%, rgba(20, 40, 80, 0.4), transparent 55%),
+                radial-gradient(ellipse 800px 500px at 95% 100%, rgba(100, 55, 15, 0.18), transparent 50%),
+                radial-gradient(ellipse 600px 400px at 50% 50%, rgba(15, 20, 40, 0.3), transparent 70%),
+                linear-gradient(180deg, #040710 0%, #070c1a 40%, #0a1020 70%, #080d18 100%);
             color: var(--hud-text);
             font-family: 'Crimson Text', Georgia, serif;
         }
 
+        /* ===== TYPOGRAPHY ===== */
         h1, h2, h3, h4 {
             font-family: 'Cinzel', 'Times New Roman', serif !important;
             color: #e8d5b0 !important;
-            letter-spacing: 0.04em;
-            text-shadow: 0 1px 3px rgba(0,0,0,0.5);
+            letter-spacing: 0.05em;
+            text-shadow: 0 2px 6px rgba(0,0,0,0.6), 0 0 20px rgba(212,168,67,0.08);
         }
-        h1 { color: #facc15 !important; }
+        h1 { color: var(--hud-accent) !important; }
 
+        /* ===== METRICS ===== */
         div[data-testid="stMetricValue"] {
-            color: #facc15 !important;
+            color: var(--hud-accent) !important;
             font-family: 'Cinzel', serif !important;
             font-weight: 700;
-            text-shadow: 0 0 8px rgba(250, 204, 21, 0.3);
+            text-shadow: 0 0 12px var(--hud-gold-glow);
         }
         div[data-testid="stMetricLabel"] {
             font-family: 'Cinzel', serif !important;
-            color: #a8a29e !important;
+            color: var(--hud-muted) !important;
             text-transform: uppercase;
             letter-spacing: 0.08em;
             font-size: 0.75rem !important;
         }
 
+        /* ===== BUTTONS ===== */
         div.stButton > button {
-            border-radius: 6px !important;
+            border-radius: 8px !important;
             border: 1px solid var(--hud-border) !important;
-            background: linear-gradient(180deg, #1a2740 0%, #10192d 100%) !important;
-            color: #d6e4ff !important;
+            background: var(--glass-bg) !important;
+            color: #c8d8f0 !important;
             font-family: 'Crimson Text', Georgia, serif !important;
             font-size: 1.05rem !important;
-            padding: 0.6rem 1rem !important;
-            transition: all 0.25s ease !important;
-            text-shadow: 0 1px 2px rgba(0,0,0,0.4);
+            padding: 0.65rem 1.1rem !important;
+            transition: all 0.3s cubic-bezier(0.25, 0.46, 0.45, 0.94) !important;
+            text-shadow: 0 1px 3px rgba(0,0,0,0.5);
             position: relative;
             overflow: hidden;
+            backdrop-filter: blur(8px);
+            -webkit-backdrop-filter: blur(8px);
+        }
+        div.stButton > button::before {
+            content: '';
+            position: absolute;
+            inset: 0;
+            background: linear-gradient(135deg, rgba(255,255,255,0.03) 0%, transparent 50%);
+            pointer-events: none;
         }
         div.stButton > button:hover {
-            background: linear-gradient(180deg, #223656 0%, #15233c 100%) !important;
-            border-color: #93c5fd !important;
-            box-shadow: 0 0 12px rgba(59, 130, 246, 0.2), inset 0 1px 0 rgba(255,255,255,0.05) !important;
-            color: #eff6ff !important;
-            transform: translateY(-1px);
+            background: linear-gradient(135deg, rgba(25, 40, 70, 0.9), rgba(18, 30, 55, 0.95)) !important;
+            border-color: #4a7cc9 !important;
+            box-shadow: 0 4px 20px rgba(59, 130, 246, 0.15), 0 0 1px rgba(59, 130, 246, 0.3), inset 0 1px 0 rgba(255,255,255,0.05) !important;
+            color: #e8f0ff !important;
+            transform: translateY(-2px);
         }
         div.stButton > button:active {
             transform: translateY(0px) !important;
+            transition-duration: 0.1s !important;
         }
         div.stButton > button[kind="primary"] {
-            background: linear-gradient(180deg, #7c2d12 0%, #4a1c0d 100%) !important;
-            border-color: #fb923c !important;
+            background: linear-gradient(135deg, #6b2510 0%, #3d1508 50%, #4a1a0a 100%) !important;
+            border: 1px solid rgba(251, 146, 60, 0.5) !important;
             color: #fef3c7 !important;
+            box-shadow: 0 2px 12px rgba(180, 80, 20, 0.15), inset 0 1px 0 rgba(255,200,100,0.08) !important;
         }
         div.stButton > button[kind="primary"]:hover {
-            background: linear-gradient(180deg, #9a3412 0%, #5c2511 100%) !important;
-            border-color: #fdba74 !important;
-            box-shadow: 0 0 16px rgba(249, 115, 22, 0.25) !important;
+            background: linear-gradient(135deg, #862f15 0%, #5c2511 50%, #6b3015 100%) !important;
+            border-color: rgba(253, 186, 116, 0.7) !important;
+            box-shadow: 0 4px 24px rgba(249, 115, 22, 0.25), 0 0 2px rgba(249, 115, 22, 0.4), inset 0 1px 0 rgba(255,200,100,0.1) !important;
+            transform: translateY(-2px);
         }
 
+        /* ===== EXPANDERS ===== */
         div[data-testid="stExpander"] {
-            border-color: var(--hud-border) !important;
-            background: rgba(11, 18, 32, 0.72) !important;
-            border-radius: 8px !important;
+            border: 1px solid var(--hud-border) !important;
+            background: var(--hud-panel-glass) !important;
+            border-radius: 10px !important;
+            backdrop-filter: blur(6px);
+            -webkit-backdrop-filter: blur(6px);
+            transition: border-color 0.3s ease !important;
+        }
+        div[data-testid="stExpander"]:hover {
+            border-color: var(--hud-border-light) !important;
         }
         div[data-testid="stExpander"] summary {
             font-family: 'Cinzel', serif !important;
-            color: #c9a54e !important;
+            color: var(--hud-gold) !important;
+            letter-spacing: 0.03em;
         }
 
+        /* ===== CONTAINERS ===== */
         div[data-testid="stVerticalBlock"] > div[data-testid="element-container"] > div[data-testid="stContainer"] {
             border-color: var(--hud-border) !important;
+            border-radius: 10px !important;
         }
 
+        /* ===== RADIO ===== */
         div[data-testid="stRadio"] > div {
             gap: 0.5rem !important;
         }
@@ -144,74 +209,105 @@ def inject_game_theme() -> None:
             letter-spacing: 0.03em;
         }
 
+        /* ===== SIDEBAR ===== */
         section[data-testid="stSidebar"] {
-            background: linear-gradient(180deg, #13111a 0%, #0a0910 100%) !important;
+            background: linear-gradient(180deg, #0c0a14 0%, #070610 100%) !important;
             border-right: 1px solid var(--hud-border) !important;
         }
         section[data-testid="stSidebar"] h1,
         section[data-testid="stSidebar"] h2,
         section[data-testid="stSidebar"] h3 {
-            color: #c9a54e !important;
+            color: var(--hud-gold) !important;
         }
 
+        /* ===== TEXTAREA ===== */
         textarea {
-            background: #0a1222 !important;
+            background: rgba(8, 14, 28, 0.9) !important;
             border-color: var(--hud-border) !important;
-            color: #d9e6ff !important;
+            color: #d0dcf0 !important;
             font-family: monospace !important;
+            border-radius: 8px !important;
         }
 
+        /* ===== FORM ELEMENTS ===== */
         div[data-testid="stCheckbox"] label span {
             font-family: 'Crimson Text', Georgia, serif !important;
         }
-
-        div[data-testid="stAlert"] {
-            border-radius: 6px !important;
-            font-family: 'Crimson Text', Georgia, serif !important;
-        }
-
-        hr {
-            border-color: var(--hud-border) !important;
-        }
-
-        ::-webkit-scrollbar {
-            width: 8px;
-        }
-        ::-webkit-scrollbar-track {
-            background: #0a0a15;
-        }
-        ::-webkit-scrollbar-thumb {
-            background: #2a2015;
-            border-radius: 4px;
-        }
-        ::-webkit-scrollbar-thumb:hover {
-            background: #3a3025;
-        }
-
-        /* Toggle switch styling */
         div[data-testid="stToggle"] label span {
             font-family: 'Crimson Text', Georgia, serif !important;
         }
 
+        /* ===== ALERTS ===== */
+        div[data-testid="stAlert"] {
+            border-radius: 8px !important;
+            font-family: 'Crimson Text', Georgia, serif !important;
+            backdrop-filter: blur(4px);
+            -webkit-backdrop-filter: blur(4px);
+        }
+
+        /* ===== DIVIDERS ===== */
+        hr {
+            border-color: var(--hud-border) !important;
+            opacity: 0.6;
+        }
+
+        /* ===== SCROLLBAR ===== */
+        ::-webkit-scrollbar {
+            width: 6px;
+        }
+        ::-webkit-scrollbar-track {
+            background: transparent;
+        }
+        ::-webkit-scrollbar-thumb {
+            background: rgba(42, 63, 102, 0.5);
+            border-radius: 3px;
+        }
+        ::-webkit-scrollbar-thumb:hover {
+            background: rgba(62, 88, 130, 0.7);
+        }
+
+        /* ===== HORIZONTAL BLOCK ===== */
         div[data-testid="stHorizontalBlock"] {
             align-items: start;
         }
 
+        /* ===== TABS ===== */
         button[data-baseweb="tab"] {
-            background: rgba(17, 26, 46, 0.72) !important;
+            background: var(--hud-panel-glass) !important;
             border: 1px solid var(--hud-border) !important;
-            border-radius: 8px !important;
+            border-radius: 10px !important;
             color: var(--hud-muted) !important;
             font-family: 'Cinzel', serif !important;
-            letter-spacing: 0.02em;
+            letter-spacing: 0.03em;
+            font-size: 0.82rem !important;
+            transition: all 0.3s ease !important;
+            backdrop-filter: blur(6px);
+            -webkit-backdrop-filter: blur(6px);
+        }
+        button[data-baseweb="tab"]:hover {
+            border-color: var(--hud-border-light) !important;
+            color: #b8c8e0 !important;
+            background: rgba(20, 32, 56, 0.8) !important;
         }
         button[data-baseweb="tab"][aria-selected="true"] {
-            border-color: #60a5fa !important;
+            border-color: rgba(96, 165, 250, 0.5) !important;
             color: #e5efff !important;
-            background: linear-gradient(180deg, rgba(36, 59, 99, 0.64), rgba(17, 30, 55, 0.82)) !important;
+            background: linear-gradient(135deg, rgba(30, 50, 85, 0.7), rgba(15, 25, 50, 0.85)) !important;
+            box-shadow: 0 2px 12px rgba(96, 165, 250, 0.1) !important;
         }
         [data-testid="stTabs"] [data-baseweb="tab-list"] {
-            gap: 0.35rem;
+            gap: 0.4rem;
+        }
+
+        /* ===== PROGRESS BAR ===== */
+        div[data-testid="stProgress"] > div {
+            border-radius: 6px !important;
+            overflow: hidden;
+        }
+
+        /* ===== GLOBAL CONTENT ANIMATION ===== */
+        [data-testid="stMainBlockContainer"] > div {
+            animation: fadeIn 0.4s ease-out;
         }
         </style>
         """,
@@ -232,14 +328,14 @@ def inject_fixed_game_layout() -> None:
         }
 
         [data-testid="stMainBlockContainer"] {
-            max-width: 1080px !important;
-            padding-top: 0.7rem !important;
-            padding-bottom: 0.7rem !important;
-            height: calc(100vh - 1.4rem) !important;
+            max-width: 1140px !important;
+            padding-top: 0.6rem !important;
+            padding-bottom: 0.6rem !important;
+            height: calc(100vh - 1.2rem) !important;
             overflow: auto !important;
             display: flex !important;
             flex-direction: column !important;
-            gap: 0.55rem !important;
+            gap: 0.5rem !important;
         }
 
         [data-testid="stMainBlockContainer"] > div {
@@ -255,11 +351,12 @@ def inject_fixed_game_layout() -> None:
             }
 
             [data-testid="stMainBlockContainer"] {
+                max-width: 100% !important;
                 height: auto !important;
                 overflow: visible !important;
-                padding-top: 0.6rem !important;
-                padding-bottom: 0.9rem !important;
-                gap: 0.7rem !important;
+                padding-top: 0.5rem !important;
+                padding-bottom: 1rem !important;
+                gap: 0.6rem !important;
             }
         }
         </style>
@@ -273,38 +370,94 @@ def render_game_header() -> None:
     st.markdown(
         """
         <div style="
-            padding: 1.2rem 1.5rem;
-            border: 1px solid #3a2a15;
-            border-radius: 8px;
-            background: linear-gradient(135deg, rgba(30,20,10,0.85), rgba(20,15,8,0.7), rgba(30,20,10,0.85));
-            margin-bottom: 1rem;
+            padding: 1.8rem 2rem;
+            border: 1px solid rgba(212, 168, 67, 0.2);
+            border-radius: 12px;
+            background:
+                linear-gradient(135deg, rgba(25, 18, 8, 0.9) 0%, rgba(15, 12, 6, 0.75) 50%, rgba(25, 18, 8, 0.9) 100%);
+            margin-bottom: 1.2rem;
             position: relative;
             overflow: hidden;
-            box-shadow: 0 4px 20px rgba(0,0,0,0.4), inset 0 1px 0 rgba(201,165,78,0.1);
+            box-shadow:
+                0 8px 32px rgba(0,0,0,0.5),
+                0 2px 8px rgba(0,0,0,0.3),
+                inset 0 1px 0 rgba(212, 168, 67, 0.1);
+            animation: fadeInUp 0.6s ease-out;
+            text-align: center;
         ">
+            <!-- Top shimmer line -->
             <div style="
                 position: absolute; top: 0; left: 0; right: 0; height: 1px;
-                background: linear-gradient(90deg, transparent, #c9a54e40, transparent);
+                background: linear-gradient(90deg, transparent 10%, rgba(212, 168, 67, 0.4) 50%, transparent 90%);
+            "></div>
+            <!-- Corner accents -->
+            <div style="
+                position: absolute; top: -1px; left: -1px; width: 24px; height: 24px;
+                border-top: 2px solid rgba(212, 168, 67, 0.3);
+                border-left: 2px solid rgba(212, 168, 67, 0.3);
+                border-radius: 12px 0 0 0;
+            "></div>
+            <div style="
+                position: absolute; top: -1px; right: -1px; width: 24px; height: 24px;
+                border-top: 2px solid rgba(212, 168, 67, 0.3);
+                border-right: 2px solid rgba(212, 168, 67, 0.3);
+                border-radius: 0 12px 0 0;
+            "></div>
+            <div style="
+                position: absolute; bottom: -1px; left: -1px; width: 24px; height: 24px;
+                border-bottom: 2px solid rgba(212, 168, 67, 0.15);
+                border-left: 2px solid rgba(212, 168, 67, 0.15);
+                border-radius: 0 0 0 12px;
+            "></div>
+            <div style="
+                position: absolute; bottom: -1px; right: -1px; width: 24px; height: 24px;
+                border-bottom: 2px solid rgba(212, 168, 67, 0.15);
+                border-right: 2px solid rgba(212, 168, 67, 0.15);
+                border-radius: 0 0 12px 0;
+            "></div>
+            <!-- Ornamental divider above title -->
+            <div style="
+                margin: 0 auto 0.8rem auto;
+                width: 60px;
+                height: 2px;
+                background: linear-gradient(90deg, transparent, rgba(212, 168, 67, 0.5), transparent);
             "></div>
             <h2 style="
                 margin: 0;
                 font-family: 'Cinzel', serif;
-                font-size: 1.6rem;
-                color: #facc15 !important;
-                text-shadow: 0 0 20px rgba(250, 204, 21, 0.2);
-                letter-spacing: 0.06em;
-            ">Oakrest: Deterministic Adventure</h2>
+                font-size: 1.8rem;
+                color: #f0c850 !important;
+                text-shadow: 0 0 30px rgba(240, 200, 80, 0.2), 0 2px 8px rgba(0,0,0,0.6);
+                letter-spacing: 0.08em;
+                line-height: 1.3;
+            ">Oakrest</h2>
             <p style="
-                margin: 0.3rem 0 0 0;
-                color: #8b7355;
+                margin: 0.15rem 0 0 0;
+                color: rgba(212, 168, 67, 0.6);
+                font-family: 'Cinzel', serif;
+                font-size: 0.72rem;
+                letter-spacing: 0.25em;
+                text-transform: uppercase;
+            ">Deterministic Adventure</p>
+            <!-- Ornamental divider below subtitle -->
+            <div style="
+                margin: 0.8rem auto 0 auto;
+                width: 120px;
+                height: 1px;
+                background: linear-gradient(90deg, transparent, rgba(212, 168, 67, 0.3), transparent);
+            "></div>
+            <p style="
+                margin: 0.7rem 0 0 0;
+                color: #6b5a40;
                 font-family: 'Crimson Text', Georgia, serif;
-                font-size: 1rem;
+                font-size: 1.05rem;
                 font-style: italic;
-                letter-spacing: 0.02em;
+                letter-spacing: 0.03em;
             ">No dice. No randomness. Every choice carries weight.</p>
+            <!-- Bottom shimmer line -->
             <div style="
                 position: absolute; bottom: 0; left: 0; right: 0; height: 1px;
-                background: linear-gradient(90deg, transparent, #c9a54e20, transparent);
+                background: linear-gradient(90deg, transparent 10%, rgba(212, 168, 67, 0.15) 50%, transparent 90%);
             "></div>
         </div>
         """,
@@ -316,19 +469,27 @@ def _render_class_selection() -> None:
     """Render a fantasy-themed class selection screen with pixel art class icons."""
     st.markdown(
         """
-        <div style="text-align: center; margin: 1rem 0 2rem 0;">
+        <div style="text-align: center; margin: 1.5rem 0 2.5rem 0; animation: fadeInUp 0.5s ease-out;">
             <h1 style="
                 font-family: 'Cinzel', serif;
-                color: #facc15 !important;
-                font-size: 2rem;
-                margin-bottom: 0.3rem;
-                text-shadow: 0 0 30px rgba(250, 204, 21, 0.15);
+                color: #f0c850 !important;
+                font-size: 2.2rem;
+                margin-bottom: 0.4rem;
+                text-shadow: 0 0 40px rgba(240, 200, 80, 0.15), 0 2px 8px rgba(0,0,0,0.5);
+                letter-spacing: 0.08em;
             ">Choose Your Path</h1>
+            <div style="
+                margin: 0.3rem auto;
+                width: 80px;
+                height: 1px;
+                background: linear-gradient(90deg, transparent, rgba(212, 168, 67, 0.4), transparent);
+            "></div>
             <p style="
-                color: #8b7355;
+                color: #7a6a50;
                 font-family: 'Crimson Text', Georgia, serif;
                 font-size: 1.15rem;
                 font-style: italic;
+                margin-top: 0.5rem;
             ">Oakrest needs a hero. Your class shapes available paths and solutions.</p>
         </div>
         """,
@@ -342,23 +503,24 @@ def _render_class_selection() -> None:
         st.markdown(
             f"""
             <div style="
-                padding: 0.6rem 1rem;
-                border: 1px solid #c9a54e40;
-                border-radius: 8px;
-                background: linear-gradient(135deg, rgba(30,20,10,0.6), rgba(20,15,8,0.4));
-                margin-bottom: 1rem;
+                padding: 0.7rem 1.2rem;
+                border: 1px solid rgba(212, 168, 67, 0.25);
+                border-radius: 10px;
+                background: linear-gradient(135deg, rgba(25, 18, 8, 0.7), rgba(15, 10, 5, 0.5));
+                margin-bottom: 1.2rem;
                 text-align: center;
+                animation: fadeIn 0.6s ease-out 0.2s both;
             ">
                 <p style="
                     margin: 0;
-                    color: #c9a54e;
+                    color: #d4a843;
                     font-family: 'Cinzel', serif;
                     font-size: 0.85rem;
                     letter-spacing: 0.04em;
                 ">Legacy items carried forward: <strong>{unlocked_text}</strong></p>
                 <p style="
-                    margin: 0.2rem 0 0 0;
-                    color: #8b7355;
+                    margin: 0.25rem 0 0 0;
+                    color: #7a6a50;
                     font-family: 'Crimson Text', Georgia, serif;
                     font-size: 0.85rem;
                     font-style: italic;
@@ -369,45 +531,77 @@ def _render_class_selection() -> None:
         )
 
     col1, col2, col3 = st.columns(3)
-    classes = [("Warrior", col1), ("Rogue", col2), ("Archer", col3)]
-    for class_name, col in classes:
+    classes = [("Warrior", col1, "0.3s"), ("Rogue", col2, "0.45s"), ("Archer", col3, "0.6s")]
+    for class_name, col, delay in classes:
         info = CLASS_INFO[class_name]
-        icon_svg = class_icon_svg(class_name, size=48)
+        icon_svg = class_icon_svg(class_name, size=56)
         with col:
             st.markdown(
                 f"""
                 <div style="
-                    padding: 1.2rem 1rem;
-                    border: 1px solid {info['color']}50;
-                    border-radius: 8px;
-                    background: linear-gradient(180deg, rgba(15,12,20,0.9), rgba(8,6,12,0.95));
+                    padding: 1.5rem 1.2rem;
+                    border: 1px solid {info['color']}40;
+                    border-radius: 12px;
+                    background:
+                        linear-gradient(180deg, rgba(12, 10, 18, 0.92) 0%, rgba(6, 5, 10, 0.96) 100%);
                     text-align: center;
-                    min-height: 260px;
-                    box-shadow: 0 2px 12px rgba(0,0,0,0.3), inset 0 1px 0 {info['color']}15;
-                    transition: border-color 0.3s ease, box-shadow 0.3s ease;
+                    min-height: 280px;
+                    box-shadow:
+                        0 4px 20px rgba(0,0,0,0.4),
+                        0 1px 4px rgba(0,0,0,0.2),
+                        inset 0 1px 0 {info['color']}10;
+                    position: relative;
+                    overflow: hidden;
+                    animation: fadeInUp 0.5s ease-out {delay} both;
                 ">
-                    <div style="margin-bottom: 0.5rem;">
+                    <!-- Top accent line -->
+                    <div style="
+                        position: absolute; top: 0; left: 15%; right: 15%; height: 2px;
+                        background: linear-gradient(90deg, transparent, {info['color']}50, transparent);
+                        border-radius: 0 0 2px 2px;
+                    "></div>
+                    <!-- Icon container with glow -->
+                    <div style="
+                        margin: 0.3rem auto 0.8rem auto;
+                        width: 72px;
+                        height: 72px;
+                        display: flex;
+                        align-items: center;
+                        justify-content: center;
+                        border-radius: 50%;
+                        background: radial-gradient(circle, {info['color']}10 0%, transparent 70%);
+                        box-shadow: 0 0 30px {info['color']}15;
+                    ">
                         {icon_svg}
                     </div>
                     <h3 style="
                         font-family: 'Cinzel', serif;
                         color: {info['accent']} !important;
-                        margin: 0 0 0.5rem 0;
-                        font-size: 1.25rem;
+                        margin: 0 0 0.6rem 0;
+                        font-size: 1.3rem;
+                        letter-spacing: 0.06em;
+                        text-shadow: 0 0 20px {info['color']}30;
                     ">{class_name}</h3>
                     <p style="
-                        color: #9ca3af;
+                        color: #8b90a0;
                         font-size: 0.9rem;
                         font-family: 'Crimson Text', Georgia, serif;
-                        line-height: 1.5;
-                        margin-bottom: 0.7rem;
+                        line-height: 1.6;
+                        margin-bottom: 0.8rem;
                     ">{info['desc']}</p>
+                    <!-- Stat divider -->
+                    <div style="
+                        margin: 0 auto 0.5rem auto;
+                        width: 40px;
+                        height: 1px;
+                        background: linear-gradient(90deg, transparent, {info['color']}30, transparent);
+                    "></div>
                     <p style="
                         color: {info['accent']};
                         font-family: 'Cinzel', serif;
-                        font-size: 0.75rem;
-                        letter-spacing: 0.06em;
-                        opacity: 0.8;
+                        font-size: 0.72rem;
+                        letter-spacing: 0.08em;
+                        opacity: 0.75;
                     ">{info['stats']}</p>
                 </div>
                 """,
@@ -453,7 +647,7 @@ def main() -> None:
         return
 
     inject_fixed_game_layout()
-    col_story, col_hud = st.columns([1.85, 1.15], gap="large")
+    col_story, col_hud = st.columns([1.9, 1.1], gap="large")
     with col_story:
         render_node()
     with col_hud:

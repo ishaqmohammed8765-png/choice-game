@@ -75,17 +75,21 @@ def _render_pending_confirmation(node_id: str, available_choices: List[Dict[str,
     st.markdown(
         """
         <div style="
-            padding: 0.8rem 1rem;
-            border: 1px solid #b9451c80;
-            border-radius: 8px;
-            background: linear-gradient(135deg, rgba(185,28,28,0.15), rgba(30,20,10,0.6));
+            padding: 0.8rem 1.1rem;
+            border: 1px solid rgba(232, 84, 84, 0.35);
+            border-radius: 10px;
+            background:
+                linear-gradient(135deg, rgba(185,28,28,0.12), rgba(14, 20, 35, 0.7));
             margin-bottom: 0.5rem;
+            box-shadow: 0 2px 12px rgba(185, 28, 28, 0.08);
+            animation: fadeIn 0.3s ease-out;
         ">
             <p style="
                 margin: 0 0 0.3rem 0;
                 font-family: 'Cinzel', serif;
                 color: #fca5a5;
-                font-size: 0.9rem;
+                font-size: 0.88rem;
+                letter-spacing: 0.04em;
             ">Confirm risky choice</p>
         </div>
         """,
@@ -116,10 +120,12 @@ def _render_locked_choices(locked_choices: List[tuple[Dict[str, Any], str]]) -> 
                 label_text = _escape_html(choice.get("label", "Unknown choice"))
                 reason_text = _escape_html(reason)
                 st.markdown(
-                    f'<div style="padding:4px 8px;margin-bottom:4px;border:1px solid #334155;'
-                    f'border-radius:6px;background:rgba(15,15,30,0.4);">'
-                    f'<span style="color:#64748b;font-family:\'Crimson Text\',serif;"><strong>{label_text}</strong></span>'
-                    f' - <span style="color:#94a3b8;font-style:italic;font-size:0.85rem;">{reason_text}</span></div>',
+                    f'<div style="padding:6px 10px;margin-bottom:5px;border:1px solid rgba(30,45,74,0.5);'
+                    f'border-radius:8px;background:rgba(12,18,32,0.5);'
+                    f'backdrop-filter:blur(4px);-webkit-backdrop-filter:blur(4px);">'
+                    f'<span style="color:#5a6a85;font-family:\'Crimson Text\',serif;"><strong>{label_text}</strong></span>'
+                    f' <span style="color:#4a5568;margin:0 4px;">&mdash;</span> '
+                    f'<span style="color:#7b8fad;font-style:italic;font-size:0.85rem;">{reason_text}</span></div>',
                     unsafe_allow_html=True,
                 )
 
@@ -160,11 +166,15 @@ def _render_outcome_summary() -> None:
         st.session_state.last_outcome_summary = None
         return
 
-    separator = '<span style="color:#334155;margin:0 6px;">|</span>'
+    separator = '<span style="color:rgba(42,63,102,0.5);margin:0 8px;">|</span>'
     st.markdown(
-        f'<div style="display:flex;flex-wrap:wrap;gap:8px;align-items:center;padding:6px 10px;'
-        f'border-left:3px solid #c9a54e40;background:rgba(15,15,30,0.3);border-radius:0 6px 6px 0;'
-        f'margin-bottom:0.5rem;font-family:\'Cinzel\',serif;">'
+        f'<div style="display:flex;flex-wrap:wrap;gap:10px;align-items:center;padding:8px 14px;'
+        f'border-left:3px solid rgba(212, 168, 67, 0.3);'
+        f'background:linear-gradient(90deg, rgba(14, 22, 40, 0.5), rgba(8, 13, 26, 0.3));'
+        f'border-radius:0 8px 8px 0;'
+        f'margin-bottom:0.6rem;font-family:\'Cinzel\',serif;'
+        f'animation:slideInLeft 0.3s ease-out;'
+        f'backdrop-filter:blur(4px);-webkit-backdrop-filter:blur(4px);">'
         f'{separator.join(parts)}</div>',
         unsafe_allow_html=True,
     )
@@ -396,25 +406,32 @@ def render_node() -> None:
     st.markdown(
         f"""
         <div style="
-            padding: 0.5rem 0;
-            margin-bottom: 0.3rem;
-            border-bottom: 1px solid #2a201540;
+            padding: 0.6rem 0;
+            margin-bottom: 0.4rem;
+            border-bottom: 1px solid rgba(212, 168, 67, 0.12);
+            position: relative;
+            animation: fadeInUp 0.4s ease-out;
         ">
             <h3 style="
                 font-family: 'Cinzel', serif;
                 color: #e8d5b0 !important;
                 margin: 0;
-                font-size: 1.3rem;
-                letter-spacing: 0.04em;
-                text-shadow: 0 1px 4px rgba(0,0,0,0.4);
+                font-size: 1.35rem;
+                letter-spacing: 0.05em;
+                text-shadow: 0 2px 6px rgba(0,0,0,0.5), 0 0 20px rgba(212,168,67,0.06);
             ">{_escape_html(node['title'])}</h3>
             <span style="
-                color: #4a3728;
+                color: rgba(120, 95, 65, 0.5);
                 font-family: 'Cinzel', serif;
-                font-size: 0.65rem;
-                letter-spacing: 0.08em;
+                font-size: 0.6rem;
+                letter-spacing: 0.1em;
                 text-transform: uppercase;
             ">{_escape_html(node_id)}</span>
+            <div style="
+                position: absolute; bottom: -1px; left: 0; width: 60px; height: 2px;
+                background: linear-gradient(90deg, rgba(212, 168, 67, 0.4), transparent);
+                border-radius: 1px;
+            "></div>
         </div>
         """,
         unsafe_allow_html=True,
@@ -433,17 +450,29 @@ def render_node() -> None:
     # Build the combined narrative + dialogue HTML
     narrative_html = f"""
     <div style="
-        padding: 0.8rem 1rem;
-        border: 1px solid #2a2015;
-        border-radius: 8px;
-        background: linear-gradient(135deg, rgba(20,15,10,0.7), rgba(10,10,20,0.5));
-        margin-bottom: 0.6rem;
-        line-height: 1.7;
+        padding: 1rem 1.2rem;
+        border: 1px solid rgba(30, 45, 74, 0.6);
+        border-radius: 12px;
+        background:
+            linear-gradient(135deg, rgba(14, 20, 35, 0.8) 0%, rgba(8, 12, 22, 0.9) 100%);
+        margin-bottom: 0.7rem;
+        line-height: 1.75;
         font-family: 'Crimson Text', Georgia, serif;
         font-size: 1.05rem;
-        color: #d4d4dc;
+        color: #c8cdd8;
+        position: relative;
+        overflow: hidden;
+        box-shadow: 0 4px 16px rgba(0,0,0,0.2), inset 0 1px 0 rgba(255,255,255,0.02);
+        backdrop-filter: blur(4px);
+        -webkit-backdrop-filter: blur(4px);
+        animation: fadeIn 0.5s ease-out;
     ">
-        <p style="margin:0 0 0.6rem 0;">{narrative_text}</p>
+        <div style="
+            position: absolute; top: 0; left: 0; bottom: 0; width: 3px;
+            background: linear-gradient(180deg, rgba(212, 168, 67, 0.3), rgba(212, 168, 67, 0.05));
+            border-radius: 3px 0 0 3px;
+        "></div>
+        <p style="margin:0 0 0.6rem 0; padding-left: 0.2rem;">{narrative_text}</p>
     """
 
     if dialogue:
@@ -451,22 +480,46 @@ def render_node() -> None:
             speaker = _escape_html(line.get("speaker", "Unknown"))
             quote = _escape_html(line.get("line", ""))
             narrative_html += (
-                f'<div style="margin:0.5rem 0;padding:4px 0 4px 12px;border-left:2px solid #c9a54e40;">'
-                f'<span style="color:#c9a54e;font-family:\'Cinzel\',serif;font-size:0.85rem;font-weight:600;">{speaker}:</span> '
-                f'<span style="color:#d4d4dc;font-style:italic;">&ldquo;{quote}&rdquo;</span>'
+                f'<div style="'
+                f'margin:0.6rem 0;'
+                f'padding:0.5rem 0 0.5rem 1rem;'
+                f'border-left:2px solid rgba(212, 168, 67, 0.25);'
+                f'background:rgba(212, 168, 67, 0.03);'
+                f'border-radius:0 6px 6px 0;'
+                f'">'
+                f'<span style="color:#d4a843;font-family:\'Cinzel\',serif;font-size:0.82rem;font-weight:600;letter-spacing:0.03em;">{speaker}</span>'
+                f'<br/>'
+                f'<span style="color:#b0b5c2;font-style:italic;line-height:1.6;">&ldquo;{quote}&rdquo;</span>'
                 f'</div>'
             )
 
     if ending_aftermath:
         narrative_html += (
-            '<div style="margin-top:0.7rem;padding-top:0.5rem;border-top:1px solid #c9a54e30;">'
-            '<p style="margin:0 0 0.35rem 0;color:#c9a54e;font-family:\'Cinzel\',serif;font-size:0.9rem;">Aftermath</p>'
+            '<div style="'
+            'margin-top:0.8rem;'
+            'padding-top:0.6rem;'
+            'border-top:1px solid rgba(212, 168, 67, 0.2);'
+            '">'
+            '<p style="'
+            'margin:0 0 0.5rem 0;'
+            'color:#d4a843;'
+            'font-family:\'Cinzel\',serif;'
+            'font-size:0.85rem;'
+            'letter-spacing:0.06em;'
+            'text-transform:uppercase;'
+            '">Aftermath</p>'
         )
         for detail in ending_aftermath:
             safe_detail = _escape_html(detail)
             narrative_html += (
-                f'<div style="margin:0.3rem 0;padding-left:12px;border-left:2px solid #c9a54e25;">'
-                f'<span style="color:#d4d4dc;">{safe_detail}</span>'
+                f'<div style="'
+                f'margin:0.35rem 0;'
+                f'padding:0.3rem 0.5rem 0.3rem 0.8rem;'
+                f'border-left:2px solid rgba(212, 168, 67, 0.15);'
+                f'border-radius:0 4px 4px 0;'
+                f'background:rgba(212, 168, 67, 0.02);'
+                f'">'
+                f'<span style="color:#b0b5c2;font-size:0.95rem;">{safe_detail}</span>'
                 f'</div>'
             )
         narrative_html += "</div>"
@@ -507,25 +560,35 @@ def render_node() -> None:
         st.markdown(
             """
             <div style="
-                padding: 0.8rem 1rem;
-                border: 1px solid #c9a54e40;
-                border-radius: 8px;
-                background: linear-gradient(135deg, rgba(30,20,10,0.6), rgba(20,15,8,0.4));
+                padding: 1.2rem 1.5rem;
+                border: 1px solid rgba(212, 168, 67, 0.25);
+                border-radius: 12px;
+                background:
+                    linear-gradient(135deg, rgba(25, 18, 8, 0.7), rgba(12, 10, 18, 0.6));
                 text-align: center;
-                margin: 1rem 0;
+                margin: 1.2rem 0;
+                position: relative;
+                overflow: hidden;
+                box-shadow: 0 4px 20px rgba(0,0,0,0.3);
+                animation: fadeInUp 0.5s ease-out;
             ">
+                <div style="
+                    position: absolute; top: 0; left: 20%; right: 20%; height: 1px;
+                    background: linear-gradient(90deg, transparent, rgba(212, 168, 67, 0.3), transparent);
+                "></div>
                 <p style="
                     margin: 0;
-                    color: #c9a54e;
+                    color: #d4a843;
                     font-family: 'Cinzel', serif;
-                    font-size: 1rem;
-                    letter-spacing: 0.04em;
+                    font-size: 1.05rem;
+                    letter-spacing: 0.06em;
+                    text-shadow: 0 0 20px rgba(212, 168, 67, 0.15);
                 ">The story has reached an ending.</p>
                 <p style="
-                    margin: 0.3rem 0 0 0;
-                    color: #8b7355;
+                    margin: 0.4rem 0 0 0;
+                    color: #6b5a40;
                     font-family: 'Crimson Text', Georgia, serif;
-                    font-size: 0.9rem;
+                    font-size: 0.95rem;
                     font-style: italic;
                 ">Restart to explore another path.</p>
             </div>
@@ -538,17 +601,26 @@ def render_node() -> None:
     st.markdown(
         """
         <div style="
-            margin: 0.8rem 0 0.4rem 0;
-            padding-bottom: 0.3rem;
-            border-bottom: 1px solid #c9a54e20;
+            margin: 1rem 0 0.5rem 0;
+            padding-bottom: 0.4rem;
+            border-bottom: 1px solid rgba(212, 168, 67, 0.12);
+            position: relative;
+            animation: fadeIn 0.4s ease-out 0.2s both;
         ">
             <h4 style="
                 font-family: 'Cinzel', serif;
-                color: #c9a54e !important;
+                color: #d4a843 !important;
                 margin: 0;
-                font-size: 1rem;
-                letter-spacing: 0.05em;
+                font-size: 0.95rem;
+                letter-spacing: 0.08em;
+                text-transform: uppercase;
+                text-shadow: 0 0 15px rgba(212, 168, 67, 0.1);
             ">Choose your path</h4>
+            <div style="
+                position: absolute; bottom: -1px; left: 0; width: 40px; height: 2px;
+                background: linear-gradient(90deg, rgba(212, 168, 67, 0.4), transparent);
+                border-radius: 1px;
+            "></div>
         </div>
         """,
         unsafe_allow_html=True,

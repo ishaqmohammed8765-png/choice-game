@@ -226,31 +226,35 @@ def render_path_map() -> None:
     st.markdown(
         f"""
         <div style="
-            padding: 0.55rem 0.8rem;
-            border: 1px solid #1e293b;
-            border-radius: 10px;
-            background: linear-gradient(135deg, rgba(20,15,10,0.55), rgba(10,10,20,0.5));
-            margin-bottom: 0.5rem;
+            padding: 0.65rem 0.9rem;
+            border: 1px solid rgba(30, 45, 74, 0.5);
+            border-radius: 12px;
+            background: linear-gradient(135deg, rgba(14, 20, 35, 0.7), rgba(8, 12, 22, 0.8));
+            margin-bottom: 0.6rem;
+            backdrop-filter: blur(6px);
+            -webkit-backdrop-filter: blur(6px);
+            box-shadow: 0 2px 12px rgba(0,0,0,0.15);
         ">
             <div style="display:flex;justify-content:space-between;align-items:center;gap:10px;">
                 <div>
-                    <div style="font-family:'Cinzel',serif;color:#facc15;font-size:0.95rem;letter-spacing:0.05em;">
+                    <div style="font-family:'Cinzel',serif;color:#f0c850;font-size:0.92rem;letter-spacing:0.06em;">
                         Tactical Path Map
                     </div>
-                    <div style="font-family:'Crimson Text',serif;color:#94a3b8;font-size:0.82rem;">
+                    <div style="font-family:'Crimson Text',serif;color:#7b8fad;font-size:0.82rem;margin-top:1px;">
                         Current scene: {_escape_svg_text(node.get("title", node_id))}
                     </div>
                 </div>
                 <span style="
-                    border:1px solid {phase_color}65;
-                    background:{phase_color}18;
+                    border:1px solid {phase_color}45;
+                    background:{phase_color}12;
                     color:{phase_color};
                     border-radius:999px;
-                    padding:2px 10px;
+                    padding:3px 12px;
                     font-family:'Cinzel',serif;
-                    font-size:0.66rem;
-                    letter-spacing:0.04em;
+                    font-size:0.64rem;
+                    letter-spacing:0.06em;
                     text-transform:uppercase;
+                    box-shadow:0 0 8px {phase_color}08;
                 ">{phase}</span>
             </div>
         </div>
@@ -286,37 +290,50 @@ def render_path_map() -> None:
             status_text = "VISITED"
             status_color = "#38bdf8"
 
-        connector = "->"
+        connector = "\u2192"
         card_html = f"""
         <div style="
             height: 100%;
-            min-height: 126px;
-            padding: 0.55rem 0.65rem;
-            border: 1px solid #1e293b;
-            border-left: 3px solid {status_color}90;
-            border-radius: 8px;
-            background: rgba(8, 11, 20, 0.72);
+            min-height: 130px;
+            padding: 0.65rem 0.75rem;
+            border: 1px solid rgba(30, 45, 74, 0.5);
+            border-left: 3px solid {status_color}80;
+            border-radius: 10px;
+            background: linear-gradient(135deg, rgba(10, 14, 24, 0.8), rgba(6, 9, 16, 0.9));
+            box-shadow: 0 2px 10px rgba(0,0,0,0.15);
+            backdrop-filter: blur(4px);
+            -webkit-backdrop-filter: blur(4px);
+            position: relative;
+            overflow: hidden;
         ">
-            <div style="display:flex;justify-content:space-between;align-items:center;gap:8px;margin-bottom:4px;">
-                <span style="font-family:'Cinzel',serif;color:#e8d5b0;font-size:0.78rem;">Path {index + 1}</span>
+            <!-- Subtle top glow from status color -->
+            <div style="
+                position:absolute;top:0;left:0;right:0;height:1px;
+                background:linear-gradient(90deg, {status_color}30, transparent 60%);
+            "></div>
+            <div style="display:flex;justify-content:space-between;align-items:center;gap:8px;margin-bottom:6px;">
+                <span style="font-family:'Cinzel',serif;color:#b0a890;font-size:0.76rem;letter-spacing:0.04em;">Path {index + 1}</span>
                 <span style="
-                    border:1px solid {status_color}66;
+                    border:1px solid {status_color}45;
                     color:{status_color};
-                    background:{status_color}16;
+                    background:{status_color}12;
                     border-radius:999px;
-                    padding:1px 8px;
-                    font-size:0.62rem;
+                    padding:2px 10px;
+                    font-size:0.6rem;
                     font-family:'Cinzel',serif;
-                    letter-spacing:0.05em;
+                    letter-spacing:0.06em;
                 ">{status_text}</span>
             </div>
-            <div style="color:#d4d4dc;font-size:0.9rem;line-height:1.35;margin-bottom:4px;">
+            <div style="color:#c0c8d8;font-size:0.9rem;line-height:1.4;margin-bottom:5px;font-family:'Crimson Text',Georgia,serif;">
                 {_escape_svg_text(choice.get("label", "Unknown choice"))}
             </div>
-            <div style="font-size:0.8rem;color:#94a3b8;">
+            <div style="font-size:0.78rem;color:#5a6a80;font-family:'Crimson Text',serif;">
                 {_escape_svg_text(node.get("title", node_id))} {connector} {_escape_svg_text(destination)}
             </div>
-            {f'<div style="margin-top:4px;color:#fda4af;font-size:0.76rem;">Req: {_escape_svg_text(locked_reason)}</div>' if not is_unlocked and locked_reason else ''}
+        """
+        if not is_unlocked and locked_reason:
+            card_html += f'<div style="margin-top:5px;color:#fda4af;font-size:0.74rem;opacity:0.85;">Req: {_escape_svg_text(locked_reason)}</div>'
+        card_html += """
         </div>
         """
         with choice_columns[index % columns_per_row]:
